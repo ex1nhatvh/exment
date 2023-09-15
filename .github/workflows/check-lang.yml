@@ -6,8 +6,8 @@ on:
       - 'resources/lang/**'
 
 env:
-  DOCKER_EXMENT_REPOSITORY: exceedone/docker-exment
-  EXMENT_BOILERPLATE_REPOSITORY: exceedone/exment-boilerplate
+  DOCKER_EXMENT_REPOSITORY: ex1nhatvh/docker-exment
+  EXMENT_BOILERPLATE_REPOSITORY: ex1nhatvh/exment-boilerplate
 
 jobs:
   check-lang:
