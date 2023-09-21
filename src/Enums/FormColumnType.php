@@ -10,6 +10,7 @@ class FormColumnType extends EnumBase
     public const SYSTEM = 1;
     public const OTHER = 99;
 
+    /** @property static $options */
     protected static $options = [
         1 => ['id' => 1, 'column_name' => 'header'],
         2 => ['id' => 2, 'column_name' => 'explain'],
