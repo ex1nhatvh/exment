@@ -1,5 +1,5 @@
 {
-    "name": "exceedone/exment",
+    "name": "exnhatvh/exment",
     "description": "Management for Product, Client, Contracts, Subscription, ...",
     "type": "library",
     "keywords": [
@@ -23,7 +23,7 @@
         }
     ],
     "require": {
-        "php": "^8.2.0",
+        "php": "^8.1.0",
         "laravel/framework": "^10.10",
         "laravelcollective/html": "^6.4",
         "laravel/helpers": "^1.6",
@@ -37,7 +37,7 @@
         "laravel/slack-notification-channel": "^3.0",
         "lcobucci/jwt": "^5.0",
         "composer/composer": "^2.0",
-        "exceedone/laravel-admin": "^3.0.1",
+        "nhatvh/laravel-admin": "^3.0.1",
         "kylekatarnls/update-helper": "^1.2",
         "laravel/socialite": "^5.2",
         "psr/simple-cache": "^2.0"
