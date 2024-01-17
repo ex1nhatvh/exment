@@ -214,7 +214,14 @@ class CCustomViewTest extends ExmentKitTestCase
                     $callback($query, $v);
                 }
 
-                $this->assertTrue($query->exists(), "custom view items not contains items.　custom_view_id:${id}, k:${k}, key:${key}, view_target:{$v['view_column_target']}, view_column_type:${column_type}, view_column_target_id:{$column_type_target}, view_column_table_id:${column_table_id}");
+                
+                $this->assertTrue($query->exists(), "custom view items not contains items.　custom_view_id:${id}, k:${k}, key:${key}, view_target:{$v['view_column_target']},
+                 view_column_type:{$column_type}, view_column_target_id:{$column_type_target}, view_column_table_id:${column_table_id},\n
+                 custom_view_columns hay custom_view_filters hay custom_view_sorts {$key} \n
+                 query ->where('custom_view_id', $id)
+                 ->where('view_column_type', $column_type)
+                 ->where('view_column_target_id', $column_type_target)
+                 ->where('view_column_table_id', $column_table_id)");
             }
         }
     }
