@@ -6,8 +6,7 @@ class MultipleImage extends \Encore\Admin\Form\Field\MultipleImage
 {
     /**
      *  Validation rules.
-     *
-     * @var array
+     * @phpstan-ignore-next-line Need to fix laravel-admin
      */
     protected $rules = [];
 
@@ -25,7 +24,8 @@ class MultipleImage extends \Encore\Admin\Form\Field\MultipleImage
     protected function getRules()
     {
         $rules = parent::getRules();
-        $rules[] = new \Exceedone\Exment\Validator\ImageRule;
+        /** @phpstan-ignore-next-line Cannot assign new offset to string. */
+        $rules[] = new \Exceedone\Exment\Validator\ImageRule();
         return $rules;
     }
 }

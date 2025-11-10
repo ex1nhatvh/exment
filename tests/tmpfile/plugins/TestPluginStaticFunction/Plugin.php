@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Plugins\TestPluginStaticFunction;
 
 use Exceedone\Exment\Services\Plugin\PluginBatchBase;
@@ -7,6 +8,8 @@ class Plugin extends PluginBatchBase
 {
     /**
      * execute
+     *
+     * @return void
      */
     public function execute()
     {

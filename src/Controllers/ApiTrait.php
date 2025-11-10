@@ -8,6 +8,7 @@ use Exceedone\Exment\Enums\Permission;
 use Exceedone\Exment\Model\CustomTable;
 use Exceedone\Exment\Model\CustomColumn;
 use Exceedone\Exment\Model\CustomValue;
+use Illuminate\Validation\Validator;
 
 /**
  * Api about target table
@@ -17,12 +18,13 @@ trait ApiTrait
     /**
      * Get error message from validator
      *
-     * @param \Exceedone\Exment\Validator\ExmentCustomValidator $validator
+     * @param \Exceedone\Exment\Validator\ExmentCustomValidator|Validator  $validator
      * @return array error messages
      */
     protected function getErrorMessages($validator)
     {
         $errors = [];
+        /** @phpstan-ignore-next-line Call to an undefined method Illuminate\Validation\Validator::getMessages() */
         foreach ($validator->getMessages() as $key => $message) {
             // remove "value." key
             $key = str_replace("value.", "", $key);
@@ -59,12 +61,12 @@ trait ApiTrait
      * Get count parameter for list count
      *
      * @param Request $request
-     * @return int
+     * @return \Illuminate\Config\Repository|\Illuminate\Contracts\Foundation\Application|mixed|\Symfony\Component\HttpFoundation\Response|null
      */
     protected function getCount(Request $request)
     {
         // get and check query parameter
-        
+
         if (!$request->has('count')) {
             return config('exment.api_default_data_count', 20);
         }
@@ -77,7 +79,7 @@ trait ApiTrait
 
         return $count;
     }
-    
+
     /**
      * get join table name list from querystring
      * @param Request $request

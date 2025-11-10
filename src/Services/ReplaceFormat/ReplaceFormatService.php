@@ -1,4 +1,5 @@
 <?php
+
 namespace Exceedone\Exment\Services\ReplaceFormat;
 
 use Exceedone\Exment\Model\Define;
@@ -31,17 +32,18 @@ class ReplaceFormatService
         try {
             // check string
             preg_match_all('/'.Define::RULES_REGEX_VALUE_FORMAT.'/', $format, $matches);
+            // @phpstan-ignore-next-line
             if (isset($matches)) {
                 // loop for matches. because we want to get inner {}, loop $matches[1].
                 for ($i = 0; $i < count($matches[1]); $i++) {
                     $str = null;
                     $matchString = null;
                     $matchOptions = [];
-                    
+
                     try {
                         $match = $matches[1][$i];
                         $matchString = $matches[0][$i];
-                        
+
                         //split slach
                         $length_array = explode("/", $match);
                         $matchOptions = [];
@@ -63,7 +65,7 @@ class ReplaceFormatService
                         //$targetFormat = strtolower($targetFormat);
                         // get length
                         $length_array = explode(":", $targetFormat);
-                        
+
                         $callbacked = false;
                         if (array_key_value_exists('matchBeforeCallback', $options)) {
                             // execute callback

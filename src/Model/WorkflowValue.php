@@ -2,6 +2,23 @@
 
 namespace Exceedone\Exment\Model;
 
+/**
+ * @property mixed $workflow_id
+ * @property mixed $workflow_status_to_id
+ * @property mixed $workflow_action_id
+ * @property mixed $workflow_action
+ * @property mixed $workflow
+ * @property mixed $workflow_value_authorities
+ * @property mixed $workflow_status_from_id
+ * @property mixed $latest_flg
+ * @property mixed $action_executed_flg
+ * @property mixed $morph_type
+ * @property mixed $morph_id
+ * @property mixed $comment
+ * @property mixed $created_user_id
+ * @method static \Illuminate\Database\Query\Builder orderBy($column, $direction = 'asc')
+ * @phpstan-consistent-constructor
+ */
 class WorkflowValue extends ModelBase
 {
     use Traits\AutoSUuidTrait;
@@ -14,7 +31,7 @@ class WorkflowValue extends ModelBase
     /**
      * Get "Executed" workflow action
      *
-     * @return void
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
      */
     public function workflow_action()
     {
@@ -65,14 +82,14 @@ class WorkflowValue extends ModelBase
     {
         $status = $this->workflow_status_cache;
 
-        return isset($status) ? ($status->editable_flg == 1): true;
+        return isset($status) ? ($status->editable_flg == 1) : true;
     }
 
     /**
      * Get Workflow Value Authorities.
-     * Check from worklfow value header, and check has workflow value authorities. If has, return
+     * Check from workflow value header, and check has workflow value authorities. If has, return
      *
-     * @return void
+     * @return mixed
      */
     public function getWorkflowValueAutorities()
     {
@@ -85,7 +102,7 @@ class WorkflowValue extends ModelBase
                 ->where('id', '<>', $this->id)
                 ->orderBy('id', 'desc')
                 ->get();
-            
+
             foreach ($workflow_values as $workflow_value) {
                 if ($workflow_value->workflow_status_to_id == $this->workflow_status_to_id) {
                     $authorities = $workflow_value->workflow_value_authorities;
@@ -98,13 +115,13 @@ class WorkflowValue extends ModelBase
         }
         return $authorities;
     }
-    
+
     /**
      * this workflow is completed
      *
      * @return bool
      */
-    public function isCompleted() : bool
+    public function isCompleted(): bool
     {
         $statusTo = $this->workflow_status_cache;
         return WorkflowStatus::getWorkflowStatusCompleted($statusTo);
@@ -143,13 +160,13 @@ class WorkflowValue extends ModelBase
             ->orderBy('id', 'desc')
             ->first();
     }
-    
+
     /**
      * Get last executed workflow value.
      * *Filtered action_executed_flg
      * *Sorted id desc. (First action... but last executed.)
      *
-     * @return WorkflowValue
+     * @return WorkflowValue|null
      */
     public static function getLastExecutedWorkflowValue($custom_value)
     {
@@ -159,7 +176,7 @@ class WorkflowValue extends ModelBase
             ->orderBy('id', 'desc')
             ->first();
     }
-    
+
     public function deletingChildren()
     {
         $this->workflow_value_authorities()->delete();
@@ -168,7 +185,7 @@ class WorkflowValue extends ModelBase
     protected static function boot()
     {
         parent::boot();
-        
+
         static::deleting(function ($model) {
             $model->deletingChildren();
         });

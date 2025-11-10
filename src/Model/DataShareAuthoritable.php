@@ -8,14 +8,15 @@ use Exceedone\Exment\Enums\ShareTargetType;
 use Exceedone\Exment\Form\Widgets\ModalForm;
 use Carbon\Carbon;
 
+/**
+ * @phpstan-consistent-constructor
+ */
 class DataShareAuthoritable extends ModelBase
 {
     use Traits\DataShareTrait;
 
     /**
      * Set Data Share Authoritable after custom value save
-     *
-     * @return void
      */
     public static function setDataAuthoritable($target_data)
     {
@@ -38,6 +39,7 @@ class DataShareAuthoritable extends ModelBase
     /**
      * Get share target type
      *
+     * @param $target_data
      * @return ShareTargetType
      */
     public static function getTargetType($target_data)
@@ -113,7 +115,7 @@ class DataShareAuthoritable extends ModelBase
 
         $default = static::getUserOrgSelectDefault($target_type->toString(), $id, Permission::DATA_SHARE_VIEW);
         list($options, $ajax) = static::getUserOrgSelectOptions($target_data->custom_table, null, false, $default);
-        
+
         $form->multipleSelect(Permission::DATA_SHARE_VIEW, exmtrans("role_group.role_type_option_value.data_share_view.label"))
             ->options($options)
             ->validationOptions(function ($value) use (&$validationOptions, $target_data) {
@@ -143,7 +145,7 @@ class DataShareAuthoritable extends ModelBase
             ->where('parent_type', $target_key)
             ->where('authoritable_type', $permission)
             ->get();
-        
+
         $defaults = $items->map(function ($item, $key) {
             return array_get($item, 'authoritable_user_org_type') . '_' . array_get($item, 'authoritable_target_id');
         })->toArray();
@@ -161,7 +163,7 @@ class DataShareAuthoritable extends ModelBase
         $custom_table = $target_data->custom_table;
 
         $request = request();
-        
+
         // check permission
         // if (!$custom_table->hasPermissionEditData($id) || !$custom_table->hasPermission(Permission::CUSTOM_VALUE_SHARE)) {
         //     return getAjaxResponse([
@@ -197,7 +199,7 @@ class DataShareAuthoritable extends ModelBase
                         'updated_at' => Carbon::now(),
                     ];
                 });
-                    
+
                 $shares = array_merge($shares, \Schema::insertDelete(SystemTableName::DATA_SHARE_AUTHORITABLE, $user_organizations, [
                     'dbValueFilter' => function (&$model) use ($target_data, $target_key, $item) {
                         $model->where('parent_type', $target_key)

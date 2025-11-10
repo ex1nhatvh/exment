@@ -27,12 +27,12 @@ class WorkflowItem extends SystemItem implements ConditionItemInterface
     {
         return $this->compareValue($condition, $custom_value);
     }
-    
 
     /**
      * Get Condition Label
      *
-     * @return void
+     * @param Condition $condition
+     * @return array|bool|\Illuminate\Contracts\Foundation\Application|\Illuminate\Contracts\Translation\Translator|mixed|string|void|null
      */
     public function getConditionLabel(Condition $condition)
     {
@@ -47,7 +47,7 @@ class WorkflowItem extends SystemItem implements ConditionItemInterface
      * @param Condition $condition
      * @return string
      */
-    public function getConditionText(Condition $condition)
+    public function getConditionText(Condition $condition): string
     {
         $enum = SystemColumn::getEnum($condition->target_column_id);
         switch ($enum) {
@@ -57,6 +57,7 @@ class WorkflowItem extends SystemItem implements ConditionItemInterface
                 // now only work user
                 return exmtrans('custom_view.filter_condition_options.eq-user');
         }
+        return '';
     }
 
 
@@ -65,19 +66,19 @@ class WorkflowItem extends SystemItem implements ConditionItemInterface
      *
      * @return string|null
      */
-    public function getQueryKey(Condition $condition) : ?string
+    public function getQueryKey(Condition $condition): ?string
     {
         $option = SystemColumn::getOption(['id' => $condition->target_column_id]);
         return $option ? $option['name'] : null;
     }
 
 
-    protected function getWorkflow() : ?Model\Workflow
+    protected function getWorkflow(): ?Model\Workflow
     {
         return Model\Workflow::getWorkflowByTable($this->custom_table);
     }
 
-    protected function getWorkflowStatus(Condition $condition) : ?string
+    protected function getWorkflowStatus(Condition $condition): ?string
     {
         $this->custom_table = $condition->getCustomTable();
         $workflow = $this->getWorkflow();

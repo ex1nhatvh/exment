@@ -18,7 +18,7 @@ class ModalMenuButton implements Renderable
     protected $modal_title;
     protected $uuid;
     protected $attributes = [];
-    
+
     /**
      * Menu Button list
      *
@@ -38,6 +38,9 @@ class ModalMenuButton implements Renderable
         $this->uuid = make_uuid();
     }
 
+    /**
+     * @return string|null
+     */
     public function render()
     {
         if (!is_nullorempty($this->menulist)) {
@@ -57,7 +60,7 @@ class ModalMenuButton implements Renderable
             'modal_title' => $this->modal_title,
             'menulist' => $this->menulist,
             'attributes' => \Exment::formatAttributes($this->attributes)
-            
+
         ])->render();
     }
 }

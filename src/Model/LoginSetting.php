@@ -2,10 +2,18 @@
 
 namespace Exceedone\Exment\Model;
 
+use Exceedone\Exment\Database\Eloquent\ExtendedBuilder;
 use Exceedone\Exment\Services\Login as LoginServiceRoot;
 use Exceedone\Exment\Enums\LoginType;
 use Exceedone\Exment\Enums\LoginProviderType;
 
+/**
+ * @phpstan-consistent-constructor
+ * @property mixed $login_view_name
+ * @property mixed $login_type
+ * @property mixed $active_flg
+ * @method static ExtendedBuilder create(array $attributes = [])
+ */
 class LoginSetting extends ModelBase
 {
     use Traits\DatabaseJsonOptionTrait;
@@ -20,14 +28,14 @@ class LoginSetting extends ModelBase
         $enum = LoginType::getEnum($this->login_type);
         return isset($enum) ? $enum->transKey('login.login_type_options') : null;
     }
-    
+
     public function getProviderNameAttribute()
     {
         if ($this->login_type == LoginType::OAUTH) {
             if (!is_nullorempty($name = $this->getOption('oauth_provider_name'))) {
                 return $name;
             }
-    
+
             return $this->getOption('oauth_provider_type');
         } elseif ($this->login_type == LoginType::SAML) {
             return $this->getOption('saml_name');
@@ -54,7 +62,7 @@ class LoginSetting extends ModelBase
      *
      * @return string
      */
-    public function getExmentLoginUrlAttribute() : ?string
+    public function getExmentLoginUrlAttribute(): ?string
     {
         if ($this->login_type == LoginType::OAUTH) {
             return admin_urls('auth', 'login', $this->provider_name);
@@ -72,13 +80,14 @@ class LoginSetting extends ModelBase
      *
      * @return string
      */
-    public function getExmentCallbackUrlAttribute() : string
+    public function getExmentCallbackUrlAttribute(): string
     {
         if ($this->login_type == LoginType::OAUTH) {
             return $this->getOption('oauth_redirect_url') ?? $this->exment_callback_url_default;
         } elseif ($this->login_type == LoginType::SAML) {
             return $this->exment_callback_url_default;
         }
+        return '';
     }
 
     /**
@@ -88,13 +97,14 @@ class LoginSetting extends ModelBase
      *
      * @return string
      */
-    public function getExmentCallbackUrlDefaultAttribute() : string
+    public function getExmentCallbackUrlDefaultAttribute(): string
     {
         if ($this->login_type == LoginType::OAUTH) {
             return admin_urls("auth/login/{$this->provider_name}/callback");
         } elseif ($this->login_type == LoginType::SAML) {
             return admin_urls("saml/login/{$this->provider_name}/acs");
         }
+        return '';
     }
 
     /**
@@ -103,13 +113,14 @@ class LoginSetting extends ModelBase
      *
      * @return string
      */
-    public function getExmentCallbackUrlTestAttribute() : string
+    public function getExmentCallbackUrlTestAttribute(): string
     {
         if ($this->login_type == LoginType::OAUTH) {
             return route('exment.logintest_callback', ['id' => $this->id]);
         } elseif ($this->login_type == LoginType::SAML) {
             return route('exment.logintest_acs', ['id' => $this->id]);
         }
+        return '';
     }
 
     /**
@@ -120,11 +131,11 @@ class LoginSetting extends ModelBase
     {
         return static::getEloquentDefault($id, $withs);
     }
-    
+
     /**
      * Get login button
      *
-     * @return void
+     * @return array
      */
     public function getLoginButton()
     {
@@ -191,7 +202,7 @@ class LoginSetting extends ModelBase
             return $record->getOption('oauth_provider_name') == $provider_name || $record->getOption('oauth_provider_type') == $provider_name;
         });
     }
-    
+
     /**
      * Get SAML's all settings
      *
@@ -203,7 +214,7 @@ class LoginSetting extends ModelBase
             return $record->login_type == LoginType::SAML;
         });
     }
-    
+
     /**
      * Get SAML's setting
      *
@@ -215,7 +226,7 @@ class LoginSetting extends ModelBase
             return $record->getOption('saml_name') == $provider_name;
         });
     }
-    
+
     /**
      * Get Ldap login's all settings
      *
@@ -227,7 +238,7 @@ class LoginSetting extends ModelBase
             return $record->login_type == LoginType::LDAP;
         });
     }
-    
+
     /**
      * Get Ldap login's setting
      *
@@ -239,12 +250,12 @@ class LoginSetting extends ModelBase
             return $record->provider_name == $provider_name;
         });
     }
-    
+
     /**
      * Whether redirect sso page force.
      * System setting "sso_redirect_force" is true and show_default_login_provider is false and active_flg count is 1
      *
-     * @return boolean
+     * @return boolean|string|null
      */
     public static function getRedirectSSOForceUrl()
     {
@@ -279,7 +290,7 @@ class LoginSetting extends ModelBase
             $provider = $login_provider;
             $provider_name = $provider->provider_name;
         }
-        
+
         // get redirect url
         // (1)config
         // (2)arg string
@@ -298,7 +309,7 @@ class LoginSetting extends ModelBase
         $scope = $provider->getOption('oauth_scope', []);
         $socialiteProvider = \Socialite::with($provider_name)
             ->scopes($scope)
-            ;
+        ;
 
         // If has custom setting, call custom config.
         if (!is_nullorempty($socialiteProvider) && is_subclass_of($socialiteProvider, \Exceedone\Exment\Auth\ProviderLoginConfig::class)) {
@@ -315,7 +326,7 @@ class LoginSetting extends ModelBase
     {
         if (!class_exists('\\Aacotroneo\\Saml2\\Saml2Auth')) {
             //TODO:exception
-            throw new \Exception;
+            throw new \Exception();
         }
 
         if (is_string($login_provider)) {
@@ -362,15 +373,16 @@ class LoginSetting extends ModelBase
             ],
 
             'security' => [
-                'nameIdEncrypted' => boolval($provider->getOption('saml_option_name_id_encrypted')) ??  false,
-                'authnRequestsSigned' => boolval($provider->getOption('saml_option_authn_request_signed')) ??  false,
-                'logoutRequestSigned' => boolval($provider->getOption('saml_option_logout_request_signed')) ??  false,
-                'logoutResponseSigned' => boolval($provider->getOption('saml_option_logout_response_signed')) ??  false,
+                'nameIdEncrypted' => boolval($provider->getOption('saml_option_name_id_encrypted')),
+                'authnRequestsSigned' => boolval($provider->getOption('saml_option_authn_request_signed')),
+                'logoutRequestSigned' => boolval($provider->getOption('saml_option_logout_request_signed')),
+                'logoutResponseSigned' => boolval($provider->getOption('saml_option_logout_response_signed')),
+                'requestedAuthnContext' => false,
             ],
         ];
 
         // set proxy vars
-        if (boolval($provider->getOption('saml_option_proxy_vars')) ?? false) {
+        if (boolval($provider->getOption('saml_option_proxy_vars'))) {
             \OneLogin\Saml2\Utils::setProxyVars(true);
         }
 
@@ -405,7 +417,7 @@ class LoginSetting extends ModelBase
      *
      * @return string
      */
-    public function getLoginServiceClassName() : string
+    public function getLoginServiceClassName(): string
     {
         return LoginType::getLoginServiceClassName($this->login_type);
     }
@@ -423,15 +435,15 @@ class LoginSetting extends ModelBase
         foreach ($keys as $key) {
             $value = $this->getOption($key);
             $original = array_get($originals, $key);
-    
+
             if (is_nullorempty($value)) {
                 continue;
             }
-            
+
             if ($value == $original) {
                 continue;
             }
-            
+
             if (isset($original) && trydecrypt($original) == $value) {
                 $this->setOption($key, $original);
             } else {
@@ -443,7 +455,7 @@ class LoginSetting extends ModelBase
     protected static function boot()
     {
         parent::boot();
-        
+
         static::saving(function ($model) {
             $model->prepareJson('options');
 

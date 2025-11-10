@@ -13,6 +13,7 @@ use Exceedone\Exment\Enums\SummaryCondition;
 use Exceedone\Exment\Grid\Filter as ExmFilter;
 use Exceedone\Exment\Services\ViewFilter\ViewFilterBase;
 use Encore\Admin\Show\Field as ShowField;
+use Illuminate\Contracts\Database\Query\Builder;
 
 /**
  *
@@ -31,7 +32,7 @@ trait ItemTrait
      * @var CustomTable
      */
     protected $custom_table;
-    
+
     /**
      * this column's target custom_table
      */
@@ -54,7 +55,7 @@ trait ItemTrait
      * @var array
      */
     protected $other_form_columns = [];
-    
+
     /**
      * Form items option
      *
@@ -62,7 +63,7 @@ trait ItemTrait
      *     'public_form': If this form is public_form, set publcform model
      *     'as_confirm' : If this form is before confirm, set true.
      * ]
-     * @var array
+     * @var array|null
      */
     protected $options = [];
 
@@ -102,11 +103,11 @@ trait ItemTrait
     {
         return $this->label = $label;
     }
-    
+
     /**
      * CustomForm
      *
-     * @var CustomForm
+     * @var CustomForm|null
      */
     protected $custom_form;
 
@@ -165,15 +166,15 @@ trait ItemTrait
         foreach ($values as $value) {
             $items[] = $singleValueCallback($value);
         }
-        
+
         $items = collect($items)->filter(function ($item) {
             return !is_nullorempty($item);
         });
- 
+
         if ($isList) {
             return $items;
         }
- 
+
         return $items->first();
     }
 
@@ -240,7 +241,7 @@ trait ItemTrait
     public function prepare()
     {
     }
-    
+
     /**
      * whether column is enabled index.
      *
@@ -373,7 +374,7 @@ trait ItemTrait
         $items['table_name'] = $this->custom_table->table_name;
         $items['column_name'] = $this->name();
         $items['label'] = $this->label();
-        
+
         if (method_exists($this, 'getSummaryConditionName')) {
             $summary_condition = $this->getSummaryConditionName();
             if (isset($summary_condition)) {
@@ -392,7 +393,7 @@ trait ItemTrait
      *
      * @return string Joined DB table name and column name.  Ex. "exm__3914ac5180d7dc43fcbb.column1" or "sfhwuiefhkmklml.column1"
      */
-    public function getTableColumn(?string $column_name = null) : string
+    public function getTableColumn(?string $column_name = null): string
     {
         if (!$column_name) {
             $column_name = $this->sqlname();
@@ -400,7 +401,7 @@ trait ItemTrait
         return $this->sqlUniqueTableName() . ".$column_name";
     }
 
-    
+
     /**
      * The column to use for sorting.
      * Join table: true
@@ -408,12 +409,12 @@ trait ItemTrait
      *
      * @return string
      */
-    public function getSortWrapTableColumn() : string
+    public function getSortWrapTableColumn(): string
     {
         return $this->getCastWrapTableColumn();
     }
 
-    
+
     /**
      * The cast column.
      * Join table: true
@@ -422,11 +423,11 @@ trait ItemTrait
      *
      * @return string
      */
-    public function getCastWrapTableColumn(?string $column_name = null) : string
+    public function getCastWrapTableColumn(?string $column_name = null): string
     {
         return $this->getCastColumn($column_name, true, true);
     }
-    
+
     /**
      * Get date format(Ex. date_format(XXXX,'%Y-%m-%d'))
      * Join table: true
@@ -434,7 +435,7 @@ trait ItemTrait
      *
      * get sqlname for summary
      */
-    public function getDateFormatWrapTableColumn(string $format) : string
+    public function getDateFormatWrapTableColumn(string $format): string
     {
         $table_column_name = $this->getTableColumn();
         return \DB::getQueryGrammar()->getDateFormatString($format, $table_column_name);
@@ -451,7 +452,7 @@ trait ItemTrait
      *
      * @return string
      */
-    public function getSummaryJoinResultWrapTableColumn() : string
+    public function getSummaryJoinResultWrapTableColumn(): string
     {
         $options = $this->getSummaryParams();
         // get normal summary condition.
@@ -462,6 +463,11 @@ trait ItemTrait
             case SummaryCondition::SUM:
             case SummaryCondition::COUNT:
                 $new_summary_condition = SummaryCondition::getSummaryConditionName(SummaryCondition::SUM);
+                break;
+            case SummaryCondition::MIN:
+            case SummaryCondition::MAX:
+                $new_summary_condition = SummaryCondition::getSummaryConditionName($summary_condition);
+                break;
         }
 
         // get wraped, joined table, and sub query's as name.
@@ -487,7 +493,7 @@ trait ItemTrait
      *
      * @return string|null
      */
-    public function getGroupByJoinResultWrapTableColumn() : ?string
+    public function getGroupByJoinResultWrapTableColumn(): ?string
     {
         $options = $this->getSummaryParams();
         // get normal summary condition.
@@ -512,7 +518,7 @@ trait ItemTrait
      * Ex1. If use cast type: CAST(`exm__3914ac5180d7dc43fcbb.column_sfbhiuewfb` AS signed)
      * Ex2. If not use cast type: `exm__3914ac5180d7dc43fcbb.column_sfbhiuewfb`
      */
-    protected function getCastColumn(?string $column_name = null, bool $wrap = true, bool $appendDatabaseTable = true) : string
+    protected function getCastColumn(?string $column_name = null, bool $wrap = true, bool $appendDatabaseTable = true): string
     {
         $cast = $this->getCastName();
 
@@ -528,7 +534,7 @@ trait ItemTrait
         if ($wrap) {
             $column_name = \Exment::wrapColumn($column_name);
         }
-        
+
         if (!isset($cast)) {
             return $column_name;
         }
@@ -552,10 +558,10 @@ trait ItemTrait
     }
 
 
-    protected function getLabelType() : string
+    protected function getLabelType(): string
     {
         $field_label_type = array_get($this->form_column_options, 'field_label_type') ?? FormLabelType::FORM_DEFAULT;
-        
+
         // get form info
         if ($field_label_type == FormLabelType::FORM_DEFAULT && isset($this->custom_form)) {
             $field_label_type = $this->custom_form->getOption('form_label_type') ?? FormLabelType::HORIZONTAL;
@@ -567,7 +573,8 @@ trait ItemTrait
     /**
      * Set show field options
      *
-     * @param mixed $field
+     * @param ShowField $field
+     * @param array $options
      * @return void
      */
     public function setShowFieldOptions(ShowField $field, array $options = [])
@@ -578,6 +585,7 @@ trait ItemTrait
 
         $item = $this;
         $field->as(function ($v) use ($item) {
+            /** @phpstan-ignore-next-line Call to function is_null() with $this(Exceedone\Exment\ColumnItems\SystemItem) will always evaluate to false. */
             if (is_null($this)) {
                 return '';
             }
@@ -593,9 +601,9 @@ trait ItemTrait
     /**
      * Set custom form column options
      *
-     * @param  array  $form_column_options  Custom form column options
+     * @param  array|CustomFormColumn|null  $form_column_options  Custom form column options
      *
-     * @return  self
+     * @return  self|void
      */
     public function setFormColumnOptions($form_column_options)
     {
@@ -609,13 +617,13 @@ trait ItemTrait
 
         return $this;
     }
-    
+
     /**
      * Set other_form_columns
      *
-     * @param  array  $other_form_columns Other form columns
+     * @param  array|null  $other_form_columns Other form columns
      *
-     * @return  self
+     * @return  self|void
      */
     public function setOtherFormColumns($other_form_columns)
     {
@@ -626,7 +634,7 @@ trait ItemTrait
 
         return $this;
     }
-    
+
     /**
      * Get relation.
      *
@@ -663,19 +671,19 @@ trait ItemTrait
     {
         return false;
     }
-    
+
     public function isMultipleEnabled()
     {
         return false;
     }
-    
+
 
     /**
      * Whether this form is public form.
      *
      * @return boolean
      */
-    public function isPublicForm() : bool
+    public function isPublicForm(): bool
     {
         return !is_nullorempty(array_get($this->options, 'public_form'));
     }
@@ -705,7 +713,7 @@ trait ItemTrait
      *
      * @return bool
      */
-    public function disableDisplayWhenShow() : bool
+    public function disableDisplayWhenShow(): bool
     {
         return false;
     }
@@ -724,9 +732,9 @@ trait ItemTrait
         list($mark, $pureValue) = $this->getQueryMarkAndValue($mark, $value, $q, $options);
 
         $query = $this->custom_table->getValueQuery();
-        
+
         $query->whereOrIn($this->custom_column->getIndexColumnName(), $mark, $pureValue)->select('id');
-        
+
         $query->take($takeCount);
 
         return [$query];
@@ -735,11 +743,11 @@ trait ItemTrait
     /**
      * Set Search orWhere for free text search
      *
-     * @param Builder $mark
+     * @param Builder $query
      * @param string $mark
      * @param string $value
      * @param string|null $q
-     * @return void
+     * @return $this
      */
     public function setSearchOrWhere(&$query, $mark, $value, $q)
     {
@@ -845,7 +853,7 @@ trait ItemTrait
     /**
      * Set admin filter options
      *
-     * @param [type] $filter
+     * @param $filter
      * @return void
      */
     protected function setAdminFilterOptions(&$filter)
@@ -855,17 +863,17 @@ trait ItemTrait
     /**
      * Get grid filter option. Use grid filter, Ex. LIKE search.
      *
-     * @return string
+     * @return string|null
      */
-    protected function getGridFilterOption() : ?string
+    protected function getGridFilterOption(): ?string
     {
-        return FilterOption::EQ;
+        return (string)FilterOption::EQ;
     }
-    
+
     /**
      * Set where query for grid filter. If class is "ExmWhere".
      *
-     * @param \Illuminate\Database\Query\Builder|\Illuminate\Database\Schema\Builder $query
+     * @param \Illuminate\Database\Query\Builder|\Illuminate\Database\Schema\Builder|\Illuminate\Database\Eloquent\Builder $query
      * @param mixed $input
      * @return void
      */
@@ -880,7 +888,6 @@ trait ItemTrait
      * Set where null query for grid filter. If class is "ExmWhere".
      *
      * @param \Illuminate\Database\Query\Builder|\Illuminate\Database\Schema\Builder $query
-     * @param mixed $input
      * @return void
      */
     public function getAdminFilterWhereNullQuery($query)
@@ -930,11 +937,11 @@ trait ItemTrait
     /**
      * Get weekday format
      *
-     * @return string
+     * @return string|null
      */
     protected function getWeekdayFormat($val)
     {
-        $queries = [];
+        if (is_null($val)) return null;
 
         // get weekday and no list
         $weekdayNos = $this->getWeekdayNolist();
@@ -960,11 +967,11 @@ trait ItemTrait
      *
      * @return bool
      */
-    public function isShowFilterNullCheck() : bool
+    public function isShowFilterNullCheck(): bool
     {
         return false;
     }
-    
+
 
 
 
@@ -987,7 +994,7 @@ trait ItemTrait
      *
      * @return bool
      */
-    public function isDefferentFormTable() : bool
+    public function isDefferentFormTable(): bool
     {
         if (!$this->custom_form) {
             return false;
@@ -1001,7 +1008,7 @@ trait ItemTrait
      *
      * @return string|null
      */
-    protected function getSeparateWord() : ?string
+    protected function getSeparateWord(): ?string
     {
         return exmtrans('common.separate_word');
     }
@@ -1012,7 +1019,7 @@ trait ItemTrait
      *
      * @return string|null
      */
-    public function getFontAwesomeClass() : ?string
+    public function getFontAwesomeClass(): ?string
     {
         return null;
     }

@@ -57,16 +57,23 @@ class ChangeField extends Field
     /**
      * decide admin field element Closure fucntioon
      *
-     * @var \Closure
+     * @var \Closure|null
      */
     protected $adminField;
 
     /**
      * filter kind (view, workflow, form)
      *
-     * @var bool
+     * @var bool|null
      */
     protected $filterKind = null;
+
+    /**
+     * allow null
+     *
+     * @var bool
+     */
+    protected $allowNull = false;
 
     protected static $scripts = [];
 
@@ -79,7 +86,7 @@ class ChangeField extends Field
         }
         return [];
     }
-    
+
     public function filterKind($filterKind = null)
     {
         if (isset($filterKind)) {
@@ -92,6 +99,13 @@ class ChangeField extends Field
     public function ajax($ajax)
     {
         $this->ajax = $ajax;
+
+        return $this;
+    }
+
+    public function allowNull($allowNull = true)
+    {
+        $this->allowNull = $allowNull;
 
         return $this;
     }
@@ -125,7 +139,7 @@ class ChangeField extends Field
     /**
      * Show Condition Key
      *
-     * @param string $showConditionKey
+     * @param bool $showConditionKey
      * @return $this
      */
     public function showConditionKey($showConditionKey)
@@ -188,7 +202,7 @@ EOT;
     {
         $script = collect(static::$scripts)->filter()->unique()->implode("");
         //static::$scripts = [];
-        \Admin::script($script);
+        //\Admin::script($script);
         return $script;
     }
 
@@ -203,11 +217,12 @@ EOT;
 
         if (isset($field)) {
             if (!($field instanceof \Exceedone\Exment\Form\Field\SwitchField) &&
-                !($field instanceof \Exceedone\Exment\Form\Field\Checkboxone)) {
+                !($field instanceof \Exceedone\Exment\Form\Field\Checkboxone) &&
+                !$this->allowNull) {
                 // required if visible
                 $field->required();
             }
-            
+
             $field->setWidth(12, 0)->setLabelClass(['hidden'])->setElementClass(['w-100'])->attribute(['style' => 'max-width:999999px']);
             $field->value($this->value());
             $field->setElementName($this->elementName)
@@ -219,12 +234,12 @@ EOT;
             static::$scripts[] = $field->getScript();
             return $view;
         } else {
+            $this->script = $this->getScript();
             return parent::render();
         }
     }
 
-    public function adminField($adminField)
-        :self
+    public function adminField($adminField): self
     {
         $this->adminField = $adminField;
         return $this;

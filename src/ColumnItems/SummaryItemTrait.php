@@ -41,7 +41,7 @@ trait SummaryItemTrait
         return null;
     }
 
-    
+
     /**
      * Get sqlname for summary
      * Join table: true
@@ -49,7 +49,7 @@ trait SummaryItemTrait
      *
      * @return string
      */
-    public function getSummaryWrapTableColumn() : string
+    public function getSummaryWrapTableColumn(): string
     {
         $options = $this->getSummaryParams();
         $value_table_column = $options['value_table_column'];
@@ -68,7 +68,7 @@ trait SummaryItemTrait
 
         return $result;
     }
-    
+
     /**
      * Get sqlname for group by
      * Join table: true
@@ -78,16 +78,17 @@ trait SummaryItemTrait
      * @param boolean $asSqlAsName if true, get sqlname as name.
      * @return string group by column name
      */
-    public function getGroupByWrapTableColumn(bool $asSelect = false, bool $asSqlAsName = false) : string
+    public function getGroupByWrapTableColumn(bool $asSelect = false, bool $asSqlAsName = false): string
     {
         $options = $this->getSummaryParams();
         $value_table_column = $asSqlAsName ? $this->getTableColumn($this->sqlAsName()) : $options['value_table_column'];
         $group_condition = $options['group_condition'];
-        
-        if (isset($group_condition)) {
+        $is_wrapped = $options['is_wrapped'];
+
+        if (isset($group_condition) && !$asSqlAsName) {
             $result = \DB::getQueryGrammar()->getDateFormatString($group_condition, $value_table_column, !$asSelect);
         } else {
-            $result = \Exment::wrapColumn($value_table_column);
+            $result = $is_wrapped? $value_table_column: \Exment::wrapColumn($value_table_column);
         }
 
         return $result;
@@ -100,13 +101,22 @@ trait SummaryItemTrait
 
         // get value_table_column(Contains table and column)
         $value_table_column = $this->getTableColumn($this->sqlname());
-        
+
+        $is_wrapped = false;
+
+        if ($this->isMultipleEnabled()) {
+            $value_table_column = \Exment::wrapColumn($value_table_column);
+            $value_table_column = "CASE WHEN {$value_table_column} = '[]' THEN NULL ELSE {$value_table_column} END";
+            $is_wrapped = true;
+        }
+
         return [
             'group_condition' => $group_condition,
             'value_table_column' => $value_table_column,
+            'is_wrapped' => $is_wrapped,
         ];
     }
-    
+
     /**
      * Get API column name
      *

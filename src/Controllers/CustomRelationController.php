@@ -21,7 +21,7 @@ class CustomRelationController extends AdminControllerTableBase
     public function __construct(?CustomTable $custom_table, Request $request)
     {
         parent::__construct($custom_table, $request);
-        
+
         $title = exmtrans("custom_relation.header") . ' : ' . ($custom_table ? $custom_table->table_view_name : null);
         $this->setPageInfo($title, $title, exmtrans("custom_relation.description"), 'fa-compress');
     }
@@ -29,7 +29,9 @@ class CustomRelationController extends AdminControllerTableBase
     /**
      * Index interface.
      *
-     * @return Content
+     * @param Request $request
+     * @param Content $content
+     * @return Content|void
      */
     public function index(Request $request, Content $content)
     {
@@ -40,15 +42,14 @@ class CustomRelationController extends AdminControllerTableBase
         return parent::index($request, $content);
     }
 
-
     /**
      * Edit
      *
      * @param Request $request
      * @param Content $content
-     * @param string $tableKey
-     * @param string|int|null $id
-     * @return Response|null
+     * @param $tableKey
+     * @param $id
+     * @return Content|void
      */
     public function edit(Request $request, Content $content, $tableKey, $id)
     {
@@ -65,7 +66,9 @@ class CustomRelationController extends AdminControllerTableBase
     /**
      * Create interface.
      *
-     * @return Content
+     * @param Request $request
+     * @param Content $content
+     * @return Content|void
      */
     public function create(Request $request, Content $content)
     {
@@ -83,7 +86,7 @@ class CustomRelationController extends AdminControllerTableBase
      */
     protected function grid()
     {
-        $grid = new Grid(new CustomRelation);
+        $grid = new Grid(new CustomRelation());
         $grid->column('parent_custom_table.table_view_name', exmtrans("custom_relation.parent_custom_table"))->sortable();
         $grid->column('child_custom_table.table_view_name', exmtrans("custom_relation.child_custom_table"))->sortable();
         $grid->column('relation_type', exmtrans("custom_relation.relation_type"))->sortable()->display(function ($relation_type) {
@@ -93,16 +96,17 @@ class CustomRelationController extends AdminControllerTableBase
         if (isset($this->custom_table)) {
             $grid->model()->where('parent_custom_table_id', $this->custom_table->id);
         }
-        
+
         $grid->tools(function (Grid\Tools $tools) {
+            /** @phpstan-ignore-next-line append() expects Encore\Admin\Grid\Tools\AbstractTool|string, Exceedone\Exment\Form\Tools\CustomTableMenuButton given */
             $tools->append(new Tools\CustomTableMenuButton('relation', $this->custom_table));
         });
-        
+
         $grid->disableExport();
         $grid->actions(function ($actions) {
             $actions->disableView();
         });
-        
+
         // filter
         $grid->filter(function ($filter) {
             // Remove the default id filter
@@ -126,7 +130,7 @@ class CustomRelationController extends AdminControllerTableBase
      */
     protected function form($id = null)
     {
-        $form = new Form(new CustomRelation);
+        $form = new Form(new CustomRelation());
         $form->internal('parent_custom_table_id')->default($this->custom_table->id);
 
         $form->descriptionHtml(sprintf(exmtrans('custom_relation.help.relation_caution'), getManualUrl('relation')));
@@ -168,7 +172,7 @@ class CustomRelationController extends AdminControllerTableBase
                 ->required()
                 ->attribute(['data-filtertrigger' =>true]);
         }
-        
+
         $form->embeds('options', exmtrans("custom_column.options.header"), function ($form) use ($custom_table) {
             $manual_url = getManualUrl('data_import_export?id='.exmtrans('custom_column.help.select_import_column_id_key'));
             $form->select('parent_import_column_id', exmtrans("custom_relation.parent_import_column_id"))
@@ -180,7 +184,7 @@ class CustomRelationController extends AdminControllerTableBase
                         'include_system' => false
                     ]) ?? [];
                 });
-            
+
             $form->select('parent_export_column_id', exmtrans("custom_relation.parent_export_column_id"))
                 ->help(exmtrans("custom_relation.help.parent_export_column_id", $manual_url))
                 ->attribute(['data-filter' => json_encode(['parent' => 1, 'key' => 'relation_type', 'value' => [RelationType::ONE_TO_MANY]])])
@@ -191,9 +195,10 @@ class CustomRelationController extends AdminControllerTableBase
                     ]) ?? [];
                 });
         })->disableHeader();
-        
+
         $custom_table = $this->custom_table;
         $form->tools(function (Form\Tools $tools) use ($custom_table) {
+            /** @phpstan-ignore-next-line add() expects string, Exceedone\Exment\Form\Tools\CustomTableMenuButton given */
             $tools->add(new Tools\CustomTableMenuButton('relation', $custom_table));
         });
         return $form;

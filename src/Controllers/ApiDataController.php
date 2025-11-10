@@ -2,12 +2,13 @@
 
 namespace Exceedone\Exment\Controllers;
 
+use Exceedone\Exment\Model\CustomViewColumn;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Exceedone\Exment\Model\CustomTable;
 use Exceedone\Exment\Model\CustomColumn;
 use Exceedone\Exment\Model\CustomView;
-use Exceedone\Exment\Model\Linkage;
+use Exceedone\Exment\Model\Plugin;
 use Exceedone\Exment\Model\File;
 use Exceedone\Exment\Enums\FileType;
 use Exceedone\Exment\Enums\Permission;
@@ -43,12 +44,12 @@ class ApiDataController extends AdminControllerTableBase
         if (!$this->custom_table) {
             return abortJson(404);
         }
-        
+
         return $this->{$method}(...array_values($parameters));
     }
 
     // custom_value --------------------------------------------------
-    
+
     /**
      * list all data
      * @return mixed
@@ -63,7 +64,7 @@ class ApiDataController extends AdminControllerTableBase
         if (($count = $this->getCount($request)) instanceof Response) {
             return $count;
         }
-        
+
         if (($orderby_list = $this->getOrderBy($request)) instanceof Response) {
             return $orderby_list;
         }
@@ -76,6 +77,9 @@ class ApiDataController extends AdminControllerTableBase
             $ids = explode(',', $request->get('id'));
             $model->whereIn('id', $ids);
         }
+
+        // set query
+        $this->setQueryInfo($model);
 
         // set order by
         $this->setOrderByQuery($model, $orderby_list);
@@ -99,7 +103,7 @@ class ApiDataController extends AdminControllerTableBase
     {
         return $this->_dataSelect($request);
     }
-    
+
     /**
      * find match data by query
      * use form select ajax
@@ -285,7 +289,7 @@ class ApiDataController extends AdminControllerTableBase
         return $this->saveData($request, $custom_value);
     }
 
-    
+
     /**
      * delete data
      * @return mixed
@@ -305,17 +309,34 @@ class ApiDataController extends AdminControllerTableBase
         $forceDelete = boolval($request->get('force'));
 
         $custom_values = [];
-        foreach ((array)$ids as $i) {
+        $validates = [];
+        foreach ((array)$ids as $index => $i) {
             if (($custom_value = $this->getCustomValue($this->custom_table, $i, $forceDelete)) instanceof Response) {
                 return $custom_value;
             }
             if (($code = $custom_value->enableDelete()) !== true) {
                 return abortJson(403, $code());
             }
-    
+            if ($res = $this->custom_table->validateValueDestroy($i)) {
+                $message = array_get($res, 'message')?? exmtrans('error.delete_failed');
+                if (count($ids) == 1) {
+                    $validates[] = $message;
+                } else {
+                    $validates[] = [
+                        'line_no' => $index,
+                        'error' => $message
+                    ];
+                }
+            }
             $custom_values[] = $custom_value;
         }
-        
+
+        if (count($validates) > 0) {
+            return abortJson(400, [
+                'errors' => $validates
+            ], ErrorCode::VALIDATION_ERROR());
+        }
+
         \ExmentDB::transaction(function () use ($custom_values, $forceDelete) {
             foreach ($custom_values as $custom_value) {
                 if ($forceDelete) {
@@ -337,7 +358,7 @@ class ApiDataController extends AdminControllerTableBase
 
 
     // viewdata ----------------------------------------------------
-    
+
     /**
      * list all data
      * @return mixed
@@ -365,7 +386,7 @@ class ApiDataController extends AdminControllerTableBase
         list($results, $apiDefinitions) = $this->viewDataAfter($custom_view, $valuetype, $paginator->items());
 
         $paginator->setCollection(collect($results));
-        
+
         // convert to array
         $array = $paginator->toArray();
 
@@ -461,7 +482,7 @@ class ApiDataController extends AdminControllerTableBase
     {
         list($headers, $bodies, $columnStyles, $columnClasses, $columnItems) =
             $custom_view->convertDataTable($target, ['appendLink' => false, 'valueType' => $valuetype]);
-                
+
         // get api name and definitions
         $apiNames = collect($columnItems)->map(function ($columnItem) {
             return $columnItem->apiName();
@@ -469,7 +490,7 @@ class ApiDataController extends AdminControllerTableBase
         $apiDefinitions = collect($columnItems)->mapWithKeys(function ($columnItem) {
             return [$columnItem->apiName() => $columnItem->apiDefinitions()];
         })->toArray();
-        
+
         $results = collect($bodies)->map(function ($body, $index) use ($apiNames) {
             return array_combine($apiNames, $body);
         });
@@ -483,7 +504,9 @@ class ApiDataController extends AdminControllerTableBase
      * Get Attachment files
      *
      * @param Request $request
-     * @return void
+     * @param $tableKey
+     * @param $id
+     * @return \Exceedone\Exment\Model\CustomValue|\Illuminate\Config\Repository|\Illuminate\Contracts\Foundation\Application|\Illuminate\Database\Eloquent\Collection|\Illuminate\Pagination\AbstractPaginator|mixed|Response|null
      */
     public function getDocuments(Request $request, $tableKey, $id)
     {
@@ -498,7 +521,7 @@ class ApiDataController extends AdminControllerTableBase
         if (($code = $custom_value->enableAccess()) !== true) {
             return abortJson(403, trans('admin.deny'), $code);
         }
-        
+
         // get and check query parameter
         if (($count = $this->getCount($request)) instanceof Response) {
             return $count;
@@ -516,7 +539,7 @@ class ApiDataController extends AdminControllerTableBase
         $documents->getCollection()->transform(function ($document) {
             return $this->getDocumentArray($document);
         });
-        
+
         return $documents;
     }
 
@@ -524,7 +547,9 @@ class ApiDataController extends AdminControllerTableBase
      * create Attachment files
      *
      * @param Request $request
-     * @return void
+     * @param $tableKey
+     * @param $id
+     * @return \Exceedone\Exment\Model\CustomValue|\Illuminate\Contracts\Foundation\Application|\Illuminate\Contracts\Routing\ResponseFactory|\Illuminate\Http\Response|Response
      */
     public function createDocument(Request $request, $tableKey, $id)
     {
@@ -557,7 +582,7 @@ class ApiDataController extends AdminControllerTableBase
             ->saveCustomValue($custom_value->id, null, $this->custom_table);
         // save document model
         $document_model = $file->saveDocumentModel($custom_value, $filename);
-        
+
         return response($this->getDocumentArray($document_model), 201);
     }
 
@@ -717,7 +742,7 @@ class ApiDataController extends AdminControllerTableBase
 
         if (!is_vector($values)) {
             $rootValue = ['value' => $values];
-            
+
             foreach ($systemKeys as $systemKey) {
                 if ($request->has($systemKey)) {
                     $rootValue[$systemKey] = $request->get($systemKey);
@@ -736,7 +761,7 @@ class ApiDataController extends AdminControllerTableBase
                     $rootValue = $value;
                 } else {
                     $rootValue = ['value' => $value];
-                    
+
                     foreach ($systemKeys as $systemKey) {
                         if (array_key_exists($systemKey, $rootValue['value'])) {
                             $rootValue[$systemKey] = $rootValue['value'][$systemKey];
@@ -757,7 +782,7 @@ class ApiDataController extends AdminControllerTableBase
         if (is_null($findKeys = $request->get('findKeys'))) {
             return true;
         }
-        
+
         $errors = [];
 
         $processOptions = [
@@ -812,6 +837,7 @@ class ApiDataController extends AdminControllerTableBase
         $custom_view->filterSortModel($model);
 
         $tasks = [];
+        /** @var CustomViewColumn $custom_view_column */
         foreach ($custom_view->custom_view_columns as $custom_view_column) {
             if ($custom_view_column->view_column_type == ConditionType::COLUMN) {
                 $target_start_column = $custom_view_column->custom_column->getIndexColumnName();
@@ -841,7 +867,7 @@ class ApiDataController extends AdminControllerTableBase
                     'url' => admin_url('data', [$table_name, $row->id]),
                     'color' => $custom_view_column->view_column_color,
                     'textColor' => $custom_view_column->view_column_font_color,
-                    
+
                     'id' => $row->id,
                     'value' => $row->value,
                 ];
@@ -851,7 +877,7 @@ class ApiDataController extends AdminControllerTableBase
                 }
 
                 $this->setCalendarDate($task, $row, $target_start_column, $target_end_column);
-                
+
                 $tasks[] = $task;
             }
         }
@@ -862,8 +888,13 @@ class ApiDataController extends AdminControllerTableBase
      * Get calendar query
      * ex. display: 4/1 - 4/30
      *
-     * @param mixed $query
-     * @return \Illuminate\Database\Query\Builder
+     * @param $model
+     * @param $start
+     * @param $end
+     * @param $target_start_column
+     * @param $target_end_column
+     * @return mixed
+     * @throws \Exception
      */
     protected function getCalendarQuery($model, $start, $end, $target_start_column, $target_end_column)
     {
@@ -937,14 +968,14 @@ class ApiDataController extends AdminControllerTableBase
         if (isset($dtEnd) && $dtEnd instanceof Carbon) {
             $dtEnd = $dtEnd->toDateTimeString();
         }
-        
+
         // get columnType
         $dtType = ColumnType::getDateType($dt);
         $dtEndType = ColumnType::getDateType($dtEnd);
 
         // set
         $allDayBetween = $dtType == ColumnType::DATE && $dtEndType == ColumnType::DATE;
-        
+
         $task['start'] = $dt;
         if (isset($dtEnd)) {
             $task['end'] = $dtEnd;
@@ -952,7 +983,7 @@ class ApiDataController extends AdminControllerTableBase
         $task['allDayBetween'] = $allDayBetween;
     }
 
-    
+
     /**
      * Convert base64 encode file
      *
@@ -965,7 +996,7 @@ class ApiDataController extends AdminControllerTableBase
         $file_columns = $this->custom_table->custom_columns_cache->filter(function ($column) {
             return ColumnType::isAttachment($column->column_type);
         });
-        
+
         $files = [];
 
         foreach ($file_columns as $file_column) {
@@ -986,7 +1017,7 @@ class ApiDataController extends AdminControllerTableBase
     }
 
 
-    protected function getFileValue(CustomColumn $file_column, $file_value) : array
+    protected function getFileValue(CustomColumn $file_column, $file_value): ?array
     {
         // whether is_vector, set as array
         if (!is_vector($file_value)) {
@@ -999,7 +1030,7 @@ class ApiDataController extends AdminControllerTableBase
             if (!array_has($file_v, 'name') && !array_has($file_v, 'base64')) {
                 continue;
             }
-    
+
             $file_name = $file_v['name'];
             $file_data = $file_v['base64'];
             $file_data = base64_decode($file_data);
@@ -1019,14 +1050,13 @@ class ApiDataController extends AdminControllerTableBase
         return [$names, $result];
     }
 
-
     /**
      * Save fileinfo after custom_value save
      *
      * @param CustomTable $custom_table
      * @param array $files
      * @param array $value
-     * @param array $oroginalValue
+     * @param array $originalValue
      * @return void
      */
     protected function saveFile($custom_table, $files, &$value, $originalValue)
@@ -1079,7 +1109,7 @@ class ApiDataController extends AdminControllerTableBase
      * Get order by array from request
      *
      * @param Request $request
-     * @return array offset 0 : target column name, 1 : 'asc' or 'desc'
+     * @return array|Response offset 0 : target column name, 1 : 'asc' or 'desc'
      */
     protected function getOrderBy(Request $request)
     {
@@ -1107,9 +1137,9 @@ class ApiDataController extends AdminControllerTableBase
                 }
                 $column_name = $column->getIndexColumnName();
             }
-            $orderby_list[] = [$column_name, count($values) > 1? $values[1]: 'asc'];
+            $orderby_list[] = [$column_name, count($values) > 1 ? $values[1] : 'asc'];
         }
-     
+
         return $orderby_list;
     }
 
@@ -1125,7 +1155,7 @@ class ApiDataController extends AdminControllerTableBase
         if (empty($orderby_list)) {
             return;
         }
-        
+
         // set order by
         $hasId = false;
         foreach ($orderby_list as $item) {

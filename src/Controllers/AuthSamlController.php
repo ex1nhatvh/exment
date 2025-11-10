@@ -26,7 +26,10 @@ class AuthSamlController extends \Encore\Admin\Controllers\AuthController
     /**
      * metadata
      *
-     * @return \Illuminate\Contracts\View\Factory|\Illuminate\View\View
+     * @param Request $request
+     * @param $provider_name
+     * @return \Illuminate\Contracts\Foundation\Application|\Illuminate\Contracts\Routing\ResponseFactory|\Illuminate\Http\Response
+     * @throws \Exception
      */
     public function metadata(Request $request, $provider_name)
     {
@@ -43,7 +46,9 @@ class AuthSamlController extends \Encore\Admin\Controllers\AuthController
     /**
      * Login page using provider (SSO).
      *
-     * @return \Illuminate\Contracts\View\Factory|\Illuminate\Http\RedirectResponse|\Illuminate\View\View
+     * @param Request $request
+     * @param $provider_name
+     * @return \Illuminate\Contracts\Foundation\Application|\Illuminate\Http\RedirectResponse|\Illuminate\Routing\Redirector|void
      */
     public function login(Request $request, $provider_name)
     {
@@ -56,7 +61,7 @@ class AuthSamlController extends \Encore\Admin\Controllers\AuthController
             if (!isset($saml2Auth)) {
                 abort(404);
             }
-            
+
             $saml2Auth->login();
         }
         // Sso exception
@@ -64,7 +69,7 @@ class AuthSamlController extends \Encore\Admin\Controllers\AuthController
             if ($ex->hasAdminError()) {
                 \Log::error($ex);
             }
-            
+
             return redirect($error_url)->withInput()->withErrors(
                 ['sso_error' => $ex->getSsoErrorMessage()]
             );
@@ -80,18 +85,20 @@ class AuthSamlController extends \Encore\Admin\Controllers\AuthController
      * Process an incoming saml2 assertion request.
      * Fires 'Saml2LoginEvent' event if a valid user is found.
      *
-     * @return \Illuminate\Http\Response
+     * @param Request $request
+     * @param $provider_name
+     * @return \Illuminate\Contracts\Foundation\Application|\Illuminate\Http\RedirectResponse|\Illuminate\Routing\Redirector
      */
     public function acs(Request $request, $provider_name)
     {
         if ($this->guard()->check()) {
             return redirect($this->redirectPath());
         }
-        
+
         $error_url = admin_url('auth/login');
         try {
             $saml2Auth = LoginSetting::getSamlAuth($provider_name);
-            
+
             $credentials = [
                 'login_type' => LoginType::SAML,
                 'login_setting' => LoginSetting::getSamlSetting($provider_name),
@@ -101,7 +108,7 @@ class AuthSamlController extends \Encore\Admin\Controllers\AuthController
 
             if ($this->guard()->attempt($credentials)) {
                 session([Define::SYSTEM_KEY_SESSION_AUTH_2FACTOR => true]);
-            
+
                 session([Define::SYSTEM_KEY_SESSION_SAML_SESSION => [
                     'sessionIndex' => $saml2Auth->getSaml2User()->getSessionIndex(),
                     'nameId' => $saml2Auth->getSaml2User()->getNameId(),
@@ -109,12 +116,12 @@ class AuthSamlController extends \Encore\Admin\Controllers\AuthController
 
                 return $this->sendLoginResponse($request);
             }
-    
+
             // If the login attempt was unsuccessful we will increment the number of attempts
             // to login and redirect the user back to the login form. Of course, when this
             // user surpasses their maximum number of attempts they will get locked out.
             $this->incrementLoginAttempts($request);
-    
+
             return back()->withInput()->withErrors([
                 'sso_error' => $this->getFailedLoginMessage(),
             ]);
@@ -124,7 +131,7 @@ class AuthSamlController extends \Encore\Admin\Controllers\AuthController
             if ($ex->hasAdminError()) {
                 \Log::error($ex);
             }
-            
+
             return redirect($error_url)->withInput()->withErrors(
                 ['sso_error' => $ex->getSsoErrorMessage()]
             );
@@ -141,9 +148,8 @@ class AuthSamlController extends \Encore\Admin\Controllers\AuthController
      * Fires 'Saml2LogoutEvent' event if its valid.
      * This means the user logged out of the SSO infrastructure, you 'should' log them out locally too.
      *
-     * @param Saml2Auth $saml2Auth
-     * @param $idpName
-     * @return \Illuminate\Http\Response
+     * @param Request $request
+     * @return \Illuminate\Contracts\Foundation\Application|\Illuminate\Http\RedirectResponse|\Illuminate\Routing\Redirector
      */
     public function sls(Request $request)
     {

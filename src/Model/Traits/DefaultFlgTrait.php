@@ -2,6 +2,9 @@
 
 namespace Exceedone\Exment\Model\Traits;
 
+/**
+ * @method whereIn($column, $values, $boolean = 'and', $not = false)
+ */
 trait DefaultFlgTrait
 {
     /**
@@ -12,7 +15,7 @@ trait DefaultFlgTrait
         // get custom table_id
         $this->setDefaultFlg('custom_table_id', $filterCallback);
     }
-    
+
     protected function setDefaultFlg($key = null, $filterCallback = null, $setCallback = null)
     {
         // create query

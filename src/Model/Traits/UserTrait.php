@@ -9,6 +9,9 @@ use Exceedone\Exment\Enums\SystemTableName;
 use Exceedone\Exment\Enums\JoinedOrgFilterType;
 use Exceedone\Exment\Services\AuthUserOrgHelper;
 
+/**
+ * @used-by \Exceedone\Exment\Services\ClassBuilder
+ */
 trait UserTrait
 {
     use ClearCacheTrait;
@@ -35,7 +38,7 @@ trait UserTrait
     {
         return $this->hasOne(Model\UserSetting::class, "user_id");
     }
-    
+
     /**
      * get organizations that this_user joins.
      *
@@ -63,7 +66,7 @@ trait UserTrait
         $db_table_name_pivot = Model\CustomRelation::getRelationNameByTables(SystemTableName::ORGANIZATION, SystemTableName::USER);
         return $this->{$db_table_name_pivot}();
     }
-    
+
     /**
      * get role_group user joined.
      *
@@ -75,7 +78,7 @@ trait UserTrait
             $query->where('role_group_target_id', $this->id);
         })->get();
     }
-    
+
     /**
      * get role_group user or org joined.
      *
@@ -83,12 +86,13 @@ trait UserTrait
      */
     public function belong_role_groups_all()
     {
-        return Model\RoleGroup::whereHas('role_group_user_organizations', function ($query) {
+        $filterType = JoinedOrgFilterType::getEnum(System::org_joined_type_role_group(), JoinedOrgFilterType::ALL);
+        return Model\RoleGroup::whereHas('role_group_user_organizations', function ($query) use ($filterType) {
             $query->where(function ($qry) {
                 $qry->where('role_group_target_id', $this->id)
                     ->where('role_group_user_org_type', 'user');
-            })->orWhere(function ($qry) {
-                $qry->whereIn('role_group_target_id', $this->getOrganizationIdsForQuery())
+            })->orWhere(function ($qry) use ($filterType) {
+                $qry->whereIn('role_group_target_id', $this->getOrganizationIdsForQuery($filterType))
                     ->where('role_group_user_org_type', 'organization');
             });
         })->get();
@@ -130,12 +134,12 @@ trait UserTrait
         // get default avatar
         return asset(Define::USER_IMAGE_LINK);
     }
-    
+
     public function isAdministrator()
     {
         return collect(System::system_admin_users())->contains($this->id);
     }
-    
+
     /**
      * Get User Model's ID
      * "This function name defines Custom value's user and login user. But this function always return Custom value's user

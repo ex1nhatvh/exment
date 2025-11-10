@@ -99,6 +99,9 @@ class PatchDataCommand extends Command
             case '2factor':
                 $this->import2factorTemplate();
                 return 0;
+            case 'error_sendmail':
+                $this->importErrorSendMailTemplate();
+                return 0;
             case 'zip_password':
                 $this->importZipPasswordTemplate();
                 return 0;
@@ -286,7 +289,7 @@ class PatchDataCommand extends Command
     protected function appendCustomColumn(string $target_table_name, string $target_column_name)
     {
         // get system template
-        $template = new TemplateImporter;
+        $template = new TemplateImporter();
         $json = $template->getMergeJson();
 
         try {
@@ -316,12 +319,14 @@ class PatchDataCommand extends Command
                             }
 
                             // Check already exists, if already setted, continue
+                            /** @var CustomColumn|null $obj_column */
                             $obj_column = CustomColumn::getEloquent($column_name, $obj_table);
                             if (isset($obj_column)) {
                                 continue;
                             }
 
                             // Import column
+                            /** @var CustomColumn|null $obj_column */
                             $obj_column = CustomColumn::importTemplate($column, false, [
                                 'system_flg' => true,
                                 'parent' => $obj_table,
@@ -712,8 +717,7 @@ class PatchDataCommand extends Command
 
         foreach ($defaultViews as $defaultView) {
             // if not found alldata view in same custom table, create
-            $alldata_view_count = CustomView
-                ::where('view_kind_type', ViewKindType::ALLDATA)
+            $alldata_view_count = CustomView::where('view_kind_type', ViewKindType::ALLDATA)
                 ->where('custom_table_id', $defaultView->custom_table_id)
                 ->count();
 
@@ -725,7 +729,7 @@ class PatchDataCommand extends Command
 
             $view_columns = [];
             foreach ($defaultView->custom_view_columns as $custom_view_column) {
-                $view_column = new CustomViewColumn;
+                $view_column = new CustomViewColumn();
                 $view_column->custom_view_id = $aldata_view->id;
                 $view_column->view_column_target = array_get($custom_view_column, 'view_column_target');
                 $view_column->order = array_get($custom_view_column, 'order');
@@ -735,7 +739,7 @@ class PatchDataCommand extends Command
 
             $view_sorts = [];
             foreach ($defaultView->custom_view_sorts as $custom_view_sort) {
-                $view_sort = new CustomViewSort;
+                $view_sort = new CustomViewSort();
                 $view_sort->custom_view_id = $aldata_view->id;
                 $view_sort->view_column_target = array_get($custom_view_sort, 'view_column_target');
                 $view_sort->sort = array_get($custom_view_sort, 'sort');
@@ -1012,6 +1016,10 @@ class PatchDataCommand extends Command
             Model\CustomFormColumn::class => ['type' => 'form_column_type', 'column' => 'form_column_target_id', 'whereval' => Enums\FormColumnType::COLUMN],
         ];
 
+        /**
+         * @var Model\CustomViewColumn|Model\CustomViewSort|Model\CustomViewFilter|Model\CustomViewSummary|Model\CustomOperationColumn|Model\Condition|Model\CustomFormColumn $class
+         * @var array $val
+         */
         foreach ($classes as $class => $val) {
             $items = $class::where($val['type'], $val['whereval'])
                 ->get();
@@ -1832,6 +1840,7 @@ class PatchDataCommand extends Command
         Model\File::where('parent_type', $custom_table->table_name)
             ->chunk(1000, function ($files) use ($custom_table) {
                 foreach ($files as $file) {
+                    /** @phpstan-ignore-next-line not found withTrashed method */
                     $exists = $custom_table->getValueModel()->query()
                         ->where('id', $file->parent_id)
                         ->withoutGlobalScopes()
@@ -1875,6 +1884,18 @@ class PatchDataCommand extends Command
             MailKeyName::PUBLICFORM_COMPLETE_USER,
             MailKeyName::PUBLICFORM_COMPLETE_ADMIN,
             MailKeyName::PUBLICFORM_ERROR,
+        ]);
+    }
+
+    /**
+     * import mail template for error sending mail
+     *
+     * @return void
+     */
+    protected function importErrorSendMailTemplate()
+    {
+        $this->patchMailTemplate([
+            MailKeyName::SENDMAIL_ERROR,
         ]);
     }
 
@@ -2010,7 +2031,9 @@ class PatchDataCommand extends Command
                 // get all CustomViewSummary
                 $className::with('custom_view')->get()
                 ->each(function ($custom_view_summary) {
+                    /** @var CustomViewSummary|CustomViewColumn $custom_view_summary */
                     // get view and table info
+                    /** @var CustomView|null $custom_view */
                     $custom_view = $custom_view_summary->custom_view;
                     // If not has custom view, continue
                     if (!$custom_view) {
@@ -2067,6 +2090,7 @@ class PatchDataCommand extends Command
             Notify::where('notify_trigger', Enums\NotifyTrigger::TIME)
             ->get()
             ->each(function ($notify) {
+                /** @var Notify $notify */
                 // get view and table info
                 $custom_table = $notify->custom_table;
                 $custom_table_id = $notify->target_id;
@@ -2099,14 +2123,17 @@ class PatchDataCommand extends Command
                 }
 
                 // Set view pivot info
+                /** @phpstan-ignore-next-line maybe $notify not implement setOption method */
                 $notify->setOption('view_pivot_table_id', $custom_table_id);
 
                 // If select table, set pivot column info
                 if (isMatchString($relation_table->searchType, Enums\SearchType::SELECT_TABLE)) {
+                    /** @phpstan-ignore-next-line maybe $notify not implement setOption method */
                     $notify->setOption('view_pivot_column_id', $relation_table->selectTablePivotColumn->id);
                 }
                 // relation, set "parent_id".
                 else {
+                    /** @phpstan-ignore-next-line maybe $notify not implement setOption method */
                     $notify->setOption('view_pivot_column_id', Define::PARENT_ID_NAME);
                 }
                 $notify->save();

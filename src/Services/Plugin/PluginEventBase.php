@@ -1,4 +1,5 @@
 <?php
+
 namespace Exceedone\Exment\Services\Plugin;
 
 /**
@@ -6,12 +7,14 @@ namespace Exceedone\Exment\Services\Plugin;
  */
 class PluginEventBase
 {
-    use PluginBase, PluginEventTrait;
-    
+    use PluginBase;
+    use PluginEventTrait;
+
     public $custom_table;
     public $custom_value;
     public $isCreate;
     public $isDelete;
+    public $isForceDelete;
 
     public function __construct($plugin, $custom_table, $custom_value, $options = [])
     {

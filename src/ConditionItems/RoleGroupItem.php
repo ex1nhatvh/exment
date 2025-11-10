@@ -16,7 +16,7 @@ class RoleGroupItem extends ConditionDetailBase implements ConditionItemInterfac
     {
         return $this->getFilterOptionConditon();
     }
-    
+
     /**
      * check if custom_value and user(organization, role) match for conditions.
      *
@@ -31,7 +31,7 @@ class RoleGroupItem extends ConditionDetailBase implements ConditionItemInterfac
 
         return $this->compareValue($condition, $role_groups);
     }
-    
+
     /**
      * get text.
      *
@@ -43,6 +43,7 @@ class RoleGroupItem extends ConditionDetailBase implements ConditionItemInterfac
     public function getText($key, $value, $showFilter = true)
     {
         $model = RoleGroup::find($value);
+        /** @phpstan-ignore-next-line Instanceof between Exceedone\Exment\Model\RoleGroup|null and Illuminate\Database\Eloquent\Collection will always evaluate to false. */
         if ($model instanceof Collection) {
             $result = $model->map(function ($row) {
                 return $row->role_group_view_name;
@@ -52,7 +53,7 @@ class RoleGroupItem extends ConditionDetailBase implements ConditionItemInterfac
         }
         return $result . ($showFilter ? FilterOption::getConditionKeyText($key) : '');
     }
-    
+
     /**
      * Get change field
      *
@@ -67,7 +68,7 @@ class RoleGroupItem extends ConditionDetailBase implements ConditionItemInterfac
         return $field->options($options);
     }
 
-    
+
     /**
      * Check has workflow authority with this item.
      *

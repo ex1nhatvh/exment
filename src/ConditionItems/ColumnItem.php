@@ -21,7 +21,7 @@ use Encore\Admin\Form\Field;
 class ColumnItem extends ConditionItemBase implements ConditionItemInterface
 {
     use ColumnSystemItemTrait;
-    
+
     /**
      * check if custom_value and user(organization, role) match for conditions.
      *
@@ -35,7 +35,7 @@ class ColumnItem extends ConditionItemBase implements ConditionItemInterface
 
         return $this->compareValue($condition, $value);
     }
-    
+
     /**
      * get Update Type Condition
      */
@@ -51,12 +51,12 @@ class ColumnItem extends ConditionItemBase implements ConditionItemInterface
         if (!$isEnableSystem) {
             return parent::getOperationUpdateType();
         }
-        
+
         return collect(Enums\OperationUpdateType::values())->map(function ($val) {
             return ['id' => $val->lowerkey(), 'text' => exmtrans('custom_operation.operation_update_type_options.'.$val->lowerkey())];
         });
     }
-    
+
     /**
      * get Operation filter value for field, Call as Ajax
      */
@@ -66,18 +66,22 @@ class ColumnItem extends ConditionItemBase implements ConditionItemInterface
         if (is_null($field)) {
             return [];
         }
-        
+
         $view = $field->render();
         return json_encode(['html' => $view->render(), 'script' => $field->getScript()]);
     }
-    
+
     /**
      * get Operation filter value for field
      */
     public function getOperationFilterValue($target_key, $target_name, $show_condition_key = true)
     {
+        /** @phpstan-ignore-next-line constructor expects array, string|null given */
         $field = new ChangeField($this->className, $this->label);
         $field->rules([new ChangeFieldRule($this->custom_table, $this->label, $this->target)]);
+        if ($target_key == Enums\OperationUpdateType::DEFAULT) {
+            $field->allowNull();
+        }
         $field->adminField(function ($data, $field) use ($target_key, $target_name, $show_condition_key) {
             return $this->getOperationFilterValueChangeField($target_key, $target_name, $show_condition_key);
         });
@@ -86,7 +90,7 @@ class ColumnItem extends ConditionItemBase implements ConditionItemInterface
         return $field;
     }
 
-    
+
     /**
      * get Operation filter value for field
      */
@@ -94,7 +98,7 @@ class ColumnItem extends ConditionItemBase implements ConditionItemInterface
     {
         $item = $this->getFormColumnItem();
         $options = Enums\OperationValueType::getOperationValueOptions($target_key, $item->getCustomColumn());
-        
+
         if (empty($options)) {
             return $this->getChangeField(null, $show_condition_key);
         }
@@ -104,7 +108,7 @@ class ColumnItem extends ConditionItemBase implements ConditionItemInterface
 
         return $field;
     }
-    
+
     /**
      * get condition value text.
      *
@@ -114,7 +118,7 @@ class ColumnItem extends ConditionItemBase implements ConditionItemInterface
     public function getConditionText(Condition $condition)
     {
         $custom_column = CustomColumn::getEloquent($condition->target_column_id);
-        
+
         $column_name = $custom_column->column_name;
         $column_item = $custom_column->column_item;
 
@@ -139,11 +143,11 @@ class ColumnItem extends ConditionItemBase implements ConditionItemInterface
 
         return ($custom_column->column_view_name ?? null) . ($showFilter ? FilterOption::getConditionKeyText($key) : '');
     }
-    
+
     /**
      * Get Condition Label
      *
-     * @return void
+     * @return string|null
      */
     public function getConditionLabel(Condition $condition)
     {
@@ -185,7 +189,7 @@ class ColumnItem extends ConditionItemBase implements ConditionItemInterface
         }
         return false;
     }
-    
+
     /**
      * Set condition query. For data list and use workflow status
      *
@@ -214,10 +218,10 @@ class ColumnItem extends ConditionItemBase implements ConditionItemInterface
         foreach ($custom_columns as $custom_column) {
             $query->orWhere(function ($query) use ($custom_column, $tableName, $ids) {
                 $indexName = $custom_column->getIndexColumnName();
-                
+
                 $query->where('authority_related_id', $custom_column->id)
                     ->where('authority_related_type', ConditionTypeDetail::COLUMN()->lowerkey());
-                    
+
                 if ($custom_column->column_type == ColumnType::USER) {
                     if ($custom_column->isMultipleEnabled()) {
                         $query->whereInArrayString($tableName . '.' . $indexName, \Exment::getUserId());
@@ -256,7 +260,7 @@ class ColumnItem extends ConditionItemBase implements ConditionItemInterface
         // $view_column_target is wraped
         $query->orderByRaw("$view_column_target $sort_order");
     }
-    
+
 
     /**
      * get select column display text
@@ -265,7 +269,7 @@ class ColumnItem extends ConditionItemBase implements ConditionItemInterface
      * @param Model\CustomTable $custom_table
      * @return string|null
      */
-    public function getSelectColumnText($custom_view_column, Model\CustomTable $custom_table) : ?string
+    public function getSelectColumnText($custom_view_column, Model\CustomTable $custom_table): ?string
     {
         $column = $custom_view_column->custom_column;
         $column_view_name = array_get($custom_view_column, 'view_column_name');
@@ -287,7 +291,7 @@ class ColumnItem extends ConditionItemBase implements ConditionItemInterface
      * @param Model\CustomViewColumn|Model\CustomViewSummary $custom_view_column
      * @return boolean
      */
-    public function isSelectColumnNumber($custom_view_column) : bool
+    public function isSelectColumnNumber($custom_view_column): bool
     {
         $column = $custom_view_column->custom_column;
         return ColumnType::isCalc(array_get($column, 'column_type'));
@@ -301,11 +305,11 @@ class ColumnItem extends ConditionItemBase implements ConditionItemInterface
      * @param Model\CustomColumn $custom_column
      * @return string|null
      */
-    public function getColumnValueKey($column_type_target, $custom_column) : ?string
+    public function getColumnValueKey($column_type_target, $custom_column): ?string
     {
         return "value.{$custom_column->column_name}";
     }
-    
+
 
 
     /**
@@ -313,7 +317,7 @@ class ColumnItem extends ConditionItemBase implements ConditionItemInterface
      *
      * @return array offset 0 : column id, 1 : table id
      */
-    public function getColumnAndTableId($column_name, $custom_table) : array
+    public function getColumnAndTableId($column_name, $custom_table): array
     {
         $target_column = CustomColumn::getEloquent($column_name, $custom_table);
         // get table and column id

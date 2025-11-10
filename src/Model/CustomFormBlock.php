@@ -3,20 +3,35 @@
 namespace Exceedone\Exment\Model;
 
 use Exceedone\Exment\Enums\FormBlockType;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
+/**
+ * @phpstan-consistent-constructor
+ * @property mixed $id
+ * @property mixed $label
+ * @property mixed $options
+ * @property mixed $available
+ * @property mixed $custom_form_id
+ * @property mixed $target_table
+ * @property mixed $custom_form_columns
+ * @property mixed $form_block_type
+ * @property mixed $form_block_target_table_id
+ * @property mixed $form_block_view_name
+ */
 class CustomFormBlock extends ModelBase implements Interfaces\TemplateImporterInterface
 {
     use Traits\UseRequestSessionTrait;
     use Traits\ClearCacheTrait;
     use Traits\DatabaseJsonOptionTrait;
     use Traits\TemplateTrait;
-    
+
     protected $casts = ['options' => 'json'];
 
     /**
      * request key. Used by custom form setting display. Ex. NEW__f482dce0-662c-11eb-8f65-5f9d12681ab1
      *
-     * @var string
+     * @var string|null
      */
     protected $_request_key;
 
@@ -52,17 +67,17 @@ class CustomFormBlock extends ModelBase implements Interfaces\TemplateImporterIn
         ],
     ];
 
-    public function custom_form()
+    public function custom_form(): BelongsTo
     {
         return $this->belongsTo(CustomForm::class, 'custom_form_id');
     }
 
-    public function custom_form_columns()
+    public function custom_form_columns(): HasMany
     {
         return $this->hasMany(CustomFormColumn::class, 'custom_form_block_id');
     }
 
-    public function target_table()
+    public function target_table(): BelongsTo
     {
         return $this->belongsTo(CustomTable::class, 'form_block_target_table_id');
     }
@@ -99,7 +114,7 @@ class CustomFormBlock extends ModelBase implements Interfaces\TemplateImporterIn
         return $this;
     }
 
-    
+
     public function isMultipleColumn()
     {
         foreach ($this->custom_form_columns as $custom_form_column) {
@@ -110,7 +125,7 @@ class CustomFormBlock extends ModelBase implements Interfaces\TemplateImporterIn
         return false;
     }
 
-    
+
     /**
      * get relation name etc for form block
      *
@@ -126,11 +141,11 @@ class CustomFormBlock extends ModelBase implements Interfaces\TemplateImporterIn
             $enum = FormBlockType::getEnum(array_get($this, 'form_block_type'));
             $block_label = exmtrans("custom_form.table_".$enum->lowerKey()."_label") . $target_table->table_view_name;
         }
-        
+
         if (isMatchString(array_get($this, 'form_block_type'), FormBlockType::DEFAULT)) {
             return [null, null, $block_label];
         }
-        
+
         // get relation
         // if has args $custom_form_table, use $custom_form_table. Almost use preview
         if ($custom_form_table) {
@@ -143,7 +158,7 @@ class CustomFormBlock extends ModelBase implements Interfaces\TemplateImporterIn
 
         $relation = CustomRelation::getRelationByParentChild($relation_custom_table, $target_table);
         $relation_name = $relation ? $relation->getRelationName() : null;
-        
+
         return [$relation, $relation_name, $block_label];
     }
 
@@ -183,7 +198,7 @@ class CustomFormBlock extends ModelBase implements Interfaces\TemplateImporterIn
             $this->available = true;
         }
     }
-    
+
     public function deletingChildren()
     {
         $this->custom_form_columns()->withoutGlobalScope('remove_system_column')->delete();
@@ -192,7 +207,7 @@ class CustomFormBlock extends ModelBase implements Interfaces\TemplateImporterIn
     protected static function boot()
     {
         parent::boot();
-        
+
         static::deleting(function ($model) {
             $model->deletingChildren();
         });

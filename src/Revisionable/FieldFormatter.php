@@ -76,6 +76,7 @@ class FieldFormatter
     public static function boolean($value, $options = null)
     {
         if (!is_null($options)) {
+            /** @phpstan-ignore-next-line explode expects string, array given */
             $options = explode('|', $options);
         }
 
@@ -102,21 +103,21 @@ class FieldFormatter
 
         return sprintf($format, $value);
     }
-    
+
     /**
      * Format the datetime
      *
      * @param string $value
      * @param string $format
-     *
-     * @return string formatted datetime
+     * @return string|null
+     * @throws \Exception
      */
     public static function datetime($value, $format = 'Y-m-d H:i:s')
     {
         if (empty($value)) {
             return null;
         }
-        
+
         $datetime = new \DateTime($value);
 
         return $datetime->format($format);

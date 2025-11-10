@@ -18,12 +18,20 @@ class ParentIdItem extends SystemItem
      */
     public function setQuerySort($query, CustomViewSort $custom_view_sort)
     {
-        $view_column_target = 'parent_id';
+        $column_item = $custom_view_sort->column_item;
+        if (!isset($column_item)) {
+            return;
+        }
+
+        $view_column_target = $column_item->getCastWrapTableColumn('parent_id');
+        $sort_order = $custom_view_sort->sort == Enums\ViewColumnSort::ASC ? 'asc' : 'desc';
+
         //set order
-        $query->orderby($view_column_target, $custom_view_sort->sort == Enums\ViewColumnSort::ASC ? 'asc' : 'desc');
+        // $view_column_target is wraped
+        $query->orderByRaw("$view_column_target $sort_order");
     }
 
-    
+
     /**
      * get select column display text
      *
@@ -31,10 +39,10 @@ class ParentIdItem extends SystemItem
      * @param Model\CustomTable $custom_table
      * @return string|null
      */
-    public function getSelectColumnText($custom_view_column, Model\CustomTable $custom_table) : ?string
+    public function getSelectColumnText($custom_view_column, Model\CustomTable $custom_table): ?string
     {
         $column_view_name = array_get($custom_view_column, 'view_column_name');
-        
+
         $relation = Model\CustomRelation::with('parent_custom_table')->where('child_custom_table_id', $custom_table->id)->first();
         ///// if this table is child relation(1:n), add parent table
         if (isset($relation)) {
@@ -50,7 +58,7 @@ class ParentIdItem extends SystemItem
      *
      * @return array offset 0 : column id, 1 : table id
      */
-    public function getColumnAndTableId($column_name, $custom_table) : array
+    public function getColumnAndTableId($column_name, $custom_table): array
     {
         $target_column_id = Define::CUSTOM_COLUMN_TYPE_PARENT_ID;
         // get parent table
@@ -59,7 +67,7 @@ class ParentIdItem extends SystemItem
         }
 
         return [
-            $target_column_id ?? null,
+            $target_column_id,
             $target_table_id ?? null,
         ];
     }

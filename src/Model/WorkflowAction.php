@@ -14,6 +14,16 @@ use Exceedone\Exment\Form\Widgets\ModalForm;
 use Exceedone\Exment\ConditionItems\ConditionItemBase;
 use Symfony\Component\HttpFoundation\Response;
 
+/**
+ * @phpstan-consistent-constructor
+ * @property mixed $workflow
+ * @property mixed $workflow_id
+ * @property mixed $workflow_condition_headers
+ * @property mixed $workflow_authorities
+ * @property mixed $status_from
+ * @property mixed $action_name
+ * @property mixed $ignore_work
+ */
 class WorkflowAction extends ModelBase
 {
     use Traits\DatabaseJsonOptionTrait;
@@ -68,7 +78,8 @@ class WorkflowAction extends ModelBase
             if (isset($val)) {
                 $result[$key] = $val;
             }
-                
+
+            /** @phpstan-ignore-next-line Left side of && is always true. */
             if ($key == 'work_target_type' && ($val == WorkflowWorkTargetType::FIX || $val == WorkflowWorkTargetType::GET_BY_USERINFO)) {
                 $authorities = WorkflowAuthority::where('workflow_action_id', $this->id)->get();
                 $authorities->each(function ($v) use (&$result) {
@@ -84,7 +95,7 @@ class WorkflowAction extends ModelBase
         if (is_nullorempty($work_targets)) {
             return;
         }
-        
+
         $this->work_targets = jsonToArray($work_targets);
 
         return $this;
@@ -93,7 +104,7 @@ class WorkflowAction extends ModelBase
     /**
      * Get work conditions. Contains status_to, enabled_flg, workflow_conditions, etc
      *
-     * @return void
+     * @return \Illuminate\Support\Collection|\Tightenco\Collect\Support\Collection
      */
     public function getWorkConditionsAttribute()
     {
@@ -110,7 +121,7 @@ class WorkflowAction extends ModelBase
             })->toArray();
             return array_only(
                 $header,
-                ['id', 'status_to', 'enabled_flg', 'workflow_conditions', 'condition_join']
+                ['id', 'status_to', 'enabled_flg', 'workflow_conditions', 'condition_join', 'condition_reverse']
             );
         });
     }
@@ -119,18 +130,18 @@ class WorkflowAction extends ModelBase
         if (is_nullorempty($work_conditions)) {
             return $this;
         }
-        
+
         $work_conditions = Condition::getWorkConditions($work_conditions);
 
         $this->work_condition_headers = $work_conditions;
-        
+
         return $this;
     }
 
     /**
      * Get work condition select(for common action). Only return first item's status_to
      *
-     * @return void
+     * @return array
      */
     public function getWorkConditionSelectAttribute()
     {
@@ -148,13 +159,13 @@ class WorkflowAction extends ModelBase
         $header = $headers->first() ?? new WorkflowConditionHeader([
             'enabled_flg' => 1,
         ]);
-        
+
         $this->work_condition_headers = [[
             'id' => array_get($header, 'id'),
             'status_to' => $work_condition,
             'enabled_flg' => 1,
         ]];
-        
+
         return $this;
     }
 
@@ -207,14 +218,14 @@ class WorkflowAction extends ModelBase
     {
         return static::getEloquentCache($id, $withs);
     }
-    
+
     /**
      * set action authority
      */
     protected function setActionAuthority()
     {
         $this->syncOriginal();
-        
+
         $keys = ['work_target_type'];
         $isSave = false;
         foreach ($keys as $key) {
@@ -260,7 +271,7 @@ class WorkflowAction extends ModelBase
                     return array_get((array)$dbValue, 'workflow_action_id') == $value['workflow_action_id']
                         && array_get((array)$dbValue, 'related_id') == $value['related_id']
                         && array_get((array)$dbValue, 'related_type') == $value['related_type']
-                        ;
+                    ;
                 },
             ]);
         }
@@ -275,7 +286,7 @@ class WorkflowAction extends ModelBase
         if (!isset($this->work_condition_headers)) {
             return;
         }
-        
+
         foreach ($this->work_condition_headers as $work_condition_header) {
             if (array_get($work_condition_header, 'enabled_flg') != '1') {
                 continue;
@@ -293,7 +304,7 @@ class WorkflowAction extends ModelBase
      *
      * @param CustomValue $custom_value
      * @param array $data
-     * @return void
+     * @return WorkflowValue|null
      */
     public function executeAction($custom_value, $data = [])
     {
@@ -369,7 +380,7 @@ class WorkflowAction extends ModelBase
      * @param array $data comment
      * @return WorkflowValue created workflow value
      */
-    protected function forwardWorkflowValue(CustomValue $custom_value, array $data = []) : WorkflowValue
+    protected function forwardWorkflowValue(CustomValue $custom_value, array $data = []): WorkflowValue
     {
         $next = $this->isActionNext($custom_value);
         $status_to = $this->getStatusToId($custom_value);
@@ -519,8 +530,8 @@ class WorkflowAction extends ModelBase
         if (count($userIds) > 0) {
             $users = getModelName(SystemTableName::USER)::find(array_unique($userIds));
         }
-        
-        $orgs = new \Illuminate\Database\Eloquent\Collection;
+
+        $orgs = new \Illuminate\Database\Eloquent\Collection();
         if (System::organization_available() && count($organizationIds) > 0) {
             $orgs = getModelName(SystemTableName::ORGANIZATION)::find(array_unique($organizationIds));
         }
@@ -551,7 +562,7 @@ class WorkflowAction extends ModelBase
      *     $getAutorities if true, get by authority
      *     $asNextAction if true, get as next action. If false, get as current action. For use WorkflowWorkTargetType::GET_BY_USERINFO
      */
-    protected function getAuthorityTargetOption(string $workflowGetAuthorityType) : array
+    protected function getAuthorityTargetOption(string $workflowGetAuthorityType): array
     {
         $work_target_type = $this->getOption('work_target_type');
         switch ($workflowGetAuthorityType) {
@@ -610,7 +621,7 @@ class WorkflowAction extends ModelBase
     public function getStatusToId($custom_value)
     {
         $next = $this->isActionNext($custom_value);
-        
+
         if ($next === true) {
             // get matched condition
             $condition = $this->getMatchedCondtionHeader($custom_value);
@@ -688,7 +699,7 @@ class WorkflowAction extends ModelBase
         if (($flow_next_count = $this->getOption("flow_next_count", 1)) == 1 && $this->flow_next_type == WorkflowNextType::SOME) {
             return [true, null];
         }
-        
+
         if ($this->flow_next_type == WorkflowNextType::SOME) {
             return [false, $flow_next_count];
         }
@@ -706,7 +717,7 @@ class WorkflowAction extends ModelBase
     {
         $custom_table = $custom_value->custom_table;
         $path = admin_urls('data', $custom_table->table_name, $custom_value->id, 'actionClick');
-        
+
         // create form fields
         $form = new ModalForm();
         $form->action($path);
@@ -729,10 +740,10 @@ class WorkflowAction extends ModelBase
         if ($showSubmit) {
             $form->descriptionHtml(exmtrans('workflow.message.action_execute'));
         }
-        
+
         $form->display('action_name', exmtrans('workflow.action_name'))
             ->default($this->action_name);
-        
+
         $form->display('status', exmtrans('workflow.status'))
             ->displayText($showStatus)->escape(false);
 
@@ -755,7 +766,7 @@ class WorkflowAction extends ModelBase
                 $select_hidden = $nextActions->first(function ($nextAction) {
                     return $nextAction->getOption('work_target_type') == WorkflowWorkTargetType::GET_BY_USERINFO;
                 });
-    
+
                 $isDisableForm = false;
                 // if select, show options
                 if ($select) {
@@ -764,7 +775,7 @@ class WorkflowAction extends ModelBase
                         ->options($options)
                         ->ajax($ajax)
                         ->required();
-    
+
                     // If not ajax and $options is empty, disable form.
                     if (is_nullorempty($options) && is_nullorempty($ajax)) {
                         $showSubmit = false;
@@ -779,19 +790,19 @@ class WorkflowAction extends ModelBase
                     })->implode(exmtrans('common.separate_word'));
                     $form->display('next_work_users_display', exmtrans('workflow.next_work_users'))
                         ->displayText($displayText)->escape(false);
-    
+
                     // if has $select_hidden, set as hidden item
                     if (!is_nullorempty($select_hidden)) {
                         $form->hidden('get_by_userinfo_action')->default($select_hidden->id);
                     }
-    
+
                     if (is_nullorempty($toActionAuthorities)) {
                         $showSubmit = false;
                     }
                 }
             }
         }
-        
+
         // not next, showing message
         elseif ($next !== true) {
             list($flow_next_count, $action_executed_count) = $next;
@@ -800,7 +811,7 @@ class WorkflowAction extends ModelBase
             ->help(exmtrans('workflow.help.flow_executed_user_count'))
             ->default(exmtrans('workflow.flow_executed_user_count_format', $action_executed_count, $flow_next_count));
         }
-        
+
         // check already executed user
         if ($showSubmit) {
             if ($this->comment_type != WorkflowCommentType::NOTUSE) {
@@ -813,7 +824,7 @@ class WorkflowAction extends ModelBase
         }
 
         $form->hidden('action_id')->default($this->id);
-       
+
         $form->setWidth(9, 3);
 
         return getAjaxResponse([
@@ -845,10 +856,10 @@ class WorkflowAction extends ModelBase
                 $workflow_action->getAuthorityTargets($custom_value, WorkflowGetAuthorityType::NEXT_USER_ON_EXECUTING_MODAL)
             );
         });
-        
+
         return $toActionAuthorities;
     }
-    
+
     protected static function boot()
     {
         parent::boot();
@@ -857,12 +868,12 @@ class WorkflowAction extends ModelBase
             $model->setActionAuthority();
             $model->setActionCondition();
         });
-        
+
         static::deleting(function ($model) {
             $model->deletingChildren();
         });
     }
-    
+
     public function deletingChildren()
     {
         $keys = ['workflow_authorities', 'workflow_condition_headers'];
@@ -879,11 +890,11 @@ class WorkflowAction extends ModelBase
         }
     }
 
-    
+
     /**
      * Append workflow status from query.
      *
-     * @param \Illuminate\Database\Query\Builder|\Illuminate\Database\Schema\Builder $query
+     * @param \Illuminate\Database\Query\Builder|\Illuminate\Database\Schema\Builder|\Exceedone\Exment\Database\Eloquent\ExtendedBuilder $query
      * @param string $workflow_status
      * @return void
      */
@@ -891,7 +902,8 @@ class WorkflowAction extends ModelBase
     {
         // if sql server, append cast
         if (\Exment::isSqlServer()) {
-            /// create where raw query
+            // create where raw query
+            /** @phpstan-ignore-next-line */
             $column = \DB::getQueryGrammar()->getCastColumn(DatabaseDataType::TYPE_STRING, SystemTableName::WORKFLOW_ACTION . '.status_from');
             $whereStatusStart = $column . ' = ' . \Exment::wrapValue($workflow_status);
             $query->whereRaw($whereStatusStart);
@@ -899,7 +911,7 @@ class WorkflowAction extends ModelBase
             $query->where(SystemTableName::WORKFLOW_ACTION . '.status_from', $workflow_status);
         }
     }
-    
+
     /**
      * Append workflow status from and join workflow_status_to_id query.
      *
@@ -910,7 +922,8 @@ class WorkflowAction extends ModelBase
     {
         // if sql server, append cast
         if (\Exment::isSqlServer()) {
-            /// create where raw query
+            // create where raw query
+            /** @phpstan-ignore-next-line */
             $whereStatusStart = \Exment::wrapColumn(SystemTableName::WORKFLOW_ACTION . '.status_from') . ' = ' . \DB::getQueryGrammar()->getCastColumn(DatabaseDataType::TYPE_STRING, SystemTableName::WORKFLOW_VALUE . '.workflow_status_to_id');
             $query->whereRaw($whereStatusStart);
         } else {

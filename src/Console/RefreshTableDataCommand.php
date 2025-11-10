@@ -47,8 +47,9 @@ class RefreshTableDataCommand extends Command
      */
     public function handle()
     {
+        /** @var null|string $table_names */
         $table_names = $this->argument("table_name");
-        if (!isset($table_names)) {
+        if ($table_names === null) {
             throw new \Exception('parameter table name is empty');
         }
         $table_names = stringToArray($table_names);
@@ -61,7 +62,7 @@ class RefreshTableDataCommand extends Command
             $this->error('Table ' . $notExistsTables->implode(",") . " are not found.");
             return 1;
         }
-        
+
         // if contains user org mailtemplate table, return
         $userOrgTables = collect($table_names)->filter(function ($table_name) {
             return isMatchString($table_name, SystemTableName::USER) || isMatchString($table_name, SystemTableName::ORGANIZATION) || isMatchString($table_name, SystemTableName::MAIL_TEMPLATE);
@@ -76,7 +77,7 @@ class RefreshTableDataCommand extends Command
         }
 
         RefreshDataService::refreshTable($table_names);
-        
+
         return 0;
     }
 }

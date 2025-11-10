@@ -7,19 +7,31 @@ use Exceedone\Exment\Providers\LoginUserProvider;
 use Exceedone\Exment\Enums\SystemColumn;
 use Exceedone\Exment\Enums\SystemTableName;
 use Encore\Admin\Traits\AdminBuilder;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Laravel\Passport\HasApiTokens;
-use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Storage;
 use Exceedone\Exment\Notifications\MailSender;
 use Exceedone\Exment\Enums\MailKeyName;
 use Illuminate\Support\Facades\Hash;
 
+/**
+ * @phpstan-consistent-constructor
+ * @property mixed $password
+ * @property mixed $login_provider
+ * @property mixed $password_reset_flg
+ * @property mixed $base_user_id
+ * @property mixed $avatar
+ * @property mixed $base_user
+ * @property mixed $created_at
+ * @property mixed $updated_at
+ * @method static \Illuminate\Database\Query\Builder whereNull($columns, $boolean = 'and', $not = false)
+ */
 class LoginUser extends ModelBase implements \Illuminate\Contracts\Auth\Authenticatable, \Illuminate\Contracts\Auth\CanResetPassword
 {
     use AdminBuilder;
     use HasPermissions;
     use HasApiTokens;
-    
+
     protected $guarded = ['id'];
 
     protected $hidden = ['password'];
@@ -37,7 +49,7 @@ class LoginUser extends ModelBase implements \Illuminate\Contracts\Auth\Authenti
     /**
      * taale "user"
      */
-    public function base_user()
+    public function base_user(): BelongsTo
     {
         return $this->belongsTo(getModelName(SystemTableName::USER), 'base_user_id');
     }
@@ -73,6 +85,7 @@ class LoginUser extends ModelBase implements \Illuminate\Contracts\Auth\Authenti
                 $title = exmtrans('common.created_at');
                 $value = $this->base_user->created_at;
             } else {
+                /** @var CustomColumn|null $column */
                 $column = CustomColumn::find($field);
                 if (!isset($column)) {
                     continue;
@@ -103,21 +116,20 @@ class LoginUser extends ModelBase implements \Illuminate\Contracts\Auth\Authenti
 
     /**
      * Get organizations user joined.
-     * * ONLY JOIN. not contains upper and downer.
-     *
-     * @return void
+     * ONLY JOIN. not contains upper and downer.
+     * @return mixed
      */
     public function belong_organizations()
     {
         return $this->base_user->belong_organizations();
     }
-    
-    
+
+
     public function isLoginProvider()
     {
         return !is_nullorempty($this->login_provider);
     }
-    
+
     public function findForPassport($username, ?array $credentials = [])
     {
         return LoginUserProvider::RetrieveByCredential(array_merge(['username' => $username], $credentials));
@@ -152,7 +164,7 @@ class LoginUser extends ModelBase implements \Illuminate\Contracts\Auth\Authenti
     /**
      * send Password
      */
-    protected function send(bool $is_newuser) : ?MailSender
+    protected function send(bool $is_newuser): ?MailSender
     {
         if (!isset($this->send_password)) {
             return null;
@@ -202,15 +214,16 @@ class LoginUser extends ModelBase implements \Illuminate\Contracts\Auth\Authenti
             return null;
         }
         // set User Setting table
-        $usersetting = UserSetting::firstOrCreate(['base_user_id' => $this->getUserId()]);
-        $settings = $usersetting->settings;
+        /** @var UserSetting $userSetting */
+        $userSetting = UserSetting::firstOrCreate(['base_user_id' => $this->getUserId()]);
+        $settings = $userSetting->settings;
         if (!isset($settings)) {
             $settings = [];
         }
         // set value
         array_set($settings, $key, $value);
-        $usersetting->settings = $settings;
-        $usersetting->saveOrFail();
+        $userSetting->settings = $settings;
+        $userSetting->saveOrFail();
 
         // set settings from settion
         System::clearRequestSession("user_setting");
@@ -220,7 +233,8 @@ class LoginUser extends ModelBase implements \Illuminate\Contracts\Auth\Authenti
      * Clear setting value
      *
      * @param string $key
-     * @return UserSetting
+     * @return UserSetting|null
+     * @throws \Throwable
      */
     public function forgetSettingValue($key)
     {
@@ -228,14 +242,15 @@ class LoginUser extends ModelBase implements \Illuminate\Contracts\Auth\Authenti
             return null;
         }
         // set User Setting table
-        $usersetting = UserSetting::firstOrCreate(['base_user_id' => $this->getUserId()]);
-        $usersetting->forgetSetting($key);
-        $usersetting->saveOrFail();
+        /** @var UserSetting $userSetting */
+        $userSetting = UserSetting::firstOrCreate(['base_user_id' => $this->getUserId()]);
+        $userSetting->forgetSetting($key);
+        $userSetting->saveOrFail();
 
         // set settings from settion
         System::clearRequestSession("user_setting");
 
-        return $usersetting;
+        return $userSetting;
     }
 
     protected function setBcryptPassword()
@@ -246,11 +261,11 @@ class LoginUser extends ModelBase implements \Illuminate\Contracts\Auth\Authenti
         if (!isset($password)) {
             return;
         }
-        
+
         if ($password == $original) {
             return;
         }
-        
+
         if (isset($original) && Hash::check($password, $original)) {
             $this->password = $original;
         } else {
@@ -262,7 +277,7 @@ class LoginUser extends ModelBase implements \Illuminate\Contracts\Auth\Authenti
             }
         }
     }
-    
+
     protected static function boot()
     {
         parent::boot();

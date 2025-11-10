@@ -6,17 +6,17 @@ use Exceedone\Exment\Model\Define;
 
 class BackupTarget extends EnumBase
 {
-    const DATABASE = 'database';
-    const PLUGIN = 'plugin';
-    const ATTACHMENT = 'attachment';
-    const LOG = 'log';
-    const CONFIG = 'config';
+    public const DATABASE = 'database';
+    public const PLUGIN = 'plugin';
+    public const ATTACHMENT = 'attachment';
+    public const LOG = 'log';
+    public const CONFIG = 'config';
 
     /**
      * Get backup target disk and relative path
      *
-     * @param string $target
-     * @return \Storage|string
+     * @param string|array $target
+     * @return array|null
      */
     public static function dirOrDisk($target)
     {

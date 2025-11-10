@@ -2,19 +2,26 @@
 
 namespace Exceedone\Exment\Model;
 
+use Exceedone\Exment\Database\Query\Grammars\SqlServerGrammar;
 use Exceedone\Exment\Enums\DatabaseDataType;
 use Exceedone\Exment\Enums\MenuType;
 use Exceedone\Exment\Enums\TemplateImportResult;
 use Encore\Admin\Auth\Database\Menu as AdminMenu;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 
 /**
  * Class Menu.
  *
  * @property int $id
+ * @property mixed $icon
+ * @property mixed $menu_name
+ * @property mixed $menu_type
+ * @property mixed $parent_id
+ * @property mixed $title
+ * @property mixed $uri
  *
  * @method where($parent_id, $id)
+ * @phpstan-consistent-constructor
  */
 class Menu extends AdminMenu implements Interfaces\TemplateImporterInterface
 {
@@ -91,13 +98,13 @@ class Menu extends AdminMenu implements Interfaces\TemplateImporterInterface
 
     public static function getTableName()
     {
-        return with(new static)->getTable();
+        return (new static())->getTable();
     }
 
     /**
      * @return array
      */
-    public function allNodes() : array
+    public function allNodes(): array
     {
         $grammar = DB::getQueryGrammar();
         $orderColumn = $grammar->wrap($this->orderColumn);
@@ -105,6 +112,7 @@ class Menu extends AdminMenu implements Interfaces\TemplateImporterInterface
         // get column
         // if SqlServer, needs cast
         if ($grammar instanceof \Illuminate\Database\Query\Grammars\SqlServerGrammar) {
+            /** @var SqlServerGrammar $grammar */
             $tableQuery = $grammar->getCastColumn(DatabaseDataType::TYPE_STRING, 'c.id');
             $pluginQuery = $grammar->getCastColumn(DatabaseDataType::TYPE_STRING, 'p.id');
         } else {
@@ -191,7 +199,7 @@ class Menu extends AdminMenu implements Interfaces\TemplateImporterInterface
                 default:
                     break;
 
-                // database-row has icon column, set icon
+                    // database-row has icon column, set icon
             }
 
             if (!$result) {
@@ -313,7 +321,7 @@ class Menu extends AdminMenu implements Interfaces\TemplateImporterInterface
             $parent_name = null;
         } else {
             $parent_id = $this['parent_id'];
-            $menulist = (new Menu)->allNodes(); // allNodes:dimensional
+            $menulist = (new Menu())->allNodes(); // allNodes:dimensional
             $parent = collect($menulist)->first(function ($value, $key) use ($parent_id) {
                 return array_get($value, 'id') == $parent_id;
             });

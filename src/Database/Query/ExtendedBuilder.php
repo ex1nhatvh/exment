@@ -3,11 +3,15 @@
 namespace Exceedone\Exment\Database\Query;
 
 use Exceedone\Exment\Database\ExtendedBuilderTrait;
+use Illuminate\Database\Query\Builder;
 
-class ExtendedBuilder extends \Illuminate\Database\Query\Builder
+/**
+ * @template TModelClass of \Illuminate\Database\Eloquent\Model
+ */
+class ExtendedBuilder extends Builder
 {
     use ExtendedBuilderTrait;
-    
+
     /**
      * Get a new join clause.
      *

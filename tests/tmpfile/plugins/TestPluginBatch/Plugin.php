@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Plugins\TestPluginBatch;
 
 use Exceedone\Exment\Services\Plugin\PluginBatchBase;
@@ -15,7 +16,7 @@ class Plugin extends PluginBatchBase
 
         foreach ($tables as $table) {
             $modelname = getModelName($table);
-            if (!isset($modelname)) {
+            if ($modelname === null) {
                 continue;
             }
 

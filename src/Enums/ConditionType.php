@@ -12,12 +12,13 @@ namespace Exceedone\Exment\Enums;
  */
 class ConditionType extends EnumBase
 {
-    const COLUMN = "0";
-    const SYSTEM = "1";
-    const PARENT_ID = "2";
-    const WORKFLOW = "3";
-    const CONDITION = "4";
-    
+    public const COLUMN = "0";
+    public const SYSTEM = "1";
+    public const PARENT_ID = "2";
+    public const WORKFLOW = "3";
+    public const CONDITION = "4";
+    public const COMMENT = "5";
+
     public static function isTableItem($condition_type)
     {
         return in_array($condition_type, [
@@ -33,7 +34,7 @@ class ConditionType extends EnumBase
      *
      * @return string|null
      */
-    public static function getEnumByTargetKey($target) : ?string
+    public static function getEnumByTargetKey($target): ?string
     {
         $systemEnum = SystemColumn::getEnum($target, null, false);
         if ($systemEnum) {
@@ -43,12 +44,15 @@ class ConditionType extends EnumBase
             if (in_array($systemEnum, [SystemColumn::PARENT_ID])) {
                 return static::PARENT_ID;
             }
+            if (in_array($systemEnum, [SystemColumn::COMMENT])) {
+                return static::COMMENT;
+            }
             return static::SYSTEM;
         }
         if (is_numeric($target)) {
             return static::COLUMN;
         }
-        
+
         return static::CONDITION;
     }
 }

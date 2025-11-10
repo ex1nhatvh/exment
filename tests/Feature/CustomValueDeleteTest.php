@@ -25,8 +25,13 @@ use Exceedone\Exment\Revisionable\Revision;
  */
 class CustomValueDeleteTest extends FeatureTestBase
 {
-    use TestTrait, PluginTestTrait;
+    use TestTrait;
+    use PluginTestTrait;
 
+    /**
+     * @param bool $isDeleteHardForce
+     * @return void
+     */
     protected function init(bool $isDeleteHardForce)
     {
         $this->initAllTest();
@@ -38,13 +43,15 @@ class CustomValueDeleteTest extends FeatureTestBase
 
     /**
      * Initialize test data
-     *
+     * @param CustomTable $custom_table
+     * @param CustomColumn $custom_column
+     * @param \Closure $setValueCallback
      * @return CustomValue
      */
     protected function initTestData(CustomTable $custom_table, CustomColumn $custom_column, \Closure $setValueCallback = null)
     {
         $custom_value = $custom_table->getValueModel();
-        
+
         $file = Model\File::storeAs(FileType::CUSTOM_VALUE_COLUMN, TestDefine::FILE_TESTSTRING, $custom_table->table_name, 'test.txt');
 
         $custom_value->setValue('file', $file->path)
@@ -56,7 +63,7 @@ class CustomValueDeleteTest extends FeatureTestBase
         $custom_value->save();
 
         $file->saveCustomValue($custom_value->id, $custom_column, $custom_table);
-    
+
         // set 2 documents
         foreach ([0, 1] as $i) {
             $fileName = "test{$i}.txt";
@@ -78,7 +85,7 @@ class CustomValueDeleteTest extends FeatureTestBase
     {
         $custom_table = CustomTable::getEloquent(TestDefine::TESTDATA_TABLE_NAME_ALL_COLUMNS_FORTEST);
         $custom_column = CustomColumn::getEloquent('file', $custom_table);
-        
+
         return $this->initTestData($custom_table, $custom_column);
     }
 
@@ -86,13 +93,13 @@ class CustomValueDeleteTest extends FeatureTestBase
     /**
      * Initialize test data
      *
-     * @return array
+     * @return array<mixed>
      */
     protected function initTestDataRelation1n()
     {
         $custom_table_parent = CustomTable::getEloquent(TestDefine::TESTDATA_TABLE_NAME_PARENT_TABLE);
         $custom_column_parent = CustomColumn::getEloquent('file', $custom_table_parent);
-        
+
         $custom_value = $this->initTestData($custom_table_parent, $custom_column_parent);
 
         // init children
@@ -100,7 +107,7 @@ class CustomValueDeleteTest extends FeatureTestBase
         foreach (range(1, 10) as $index) {
             $custom_table_child = CustomTable::getEloquent(TestDefine::TESTDATA_TABLE_NAME_CHILD_TABLE);
             $custom_column_child = CustomColumn::getEloquent('file', $custom_table_child);
-        
+
             $children[] = $this->initTestData($custom_table_child, $custom_column_child, function ($child_custom_value) use ($custom_table_parent, $custom_value) {
                 $child_custom_value->parent_id = $custom_value->id;
                 $child_custom_value->parent_type = $custom_table_parent->table_name;
@@ -111,6 +118,9 @@ class CustomValueDeleteTest extends FeatureTestBase
     }
 
 
+    /**
+     * @return void
+     */
     public function testSoftDelete()
     {
         $this->init(false);
@@ -142,6 +152,9 @@ class CustomValueDeleteTest extends FeatureTestBase
     }
 
 
+    /**
+     * @return void
+     */
     public function testForceDelete()
     {
         $this->init(true);
@@ -164,7 +177,9 @@ class CustomValueDeleteTest extends FeatureTestBase
     }
 
 
-    
+    /**
+     * @return void
+     */
     public function testSoftDeleteRelation()
     {
         $this->init(false);
@@ -175,7 +190,7 @@ class CustomValueDeleteTest extends FeatureTestBase
         $this->assertMatch(count($info['files']), 3);
         $this->assertMatch(count($info['documents']), 2);
         $this->assertMatch(count($info['revisions']), 1);
-        
+
         // children
         $storagesCount = 0;
         foreach ($children as $child) {
@@ -196,14 +211,14 @@ class CustomValueDeleteTest extends FeatureTestBase
         $this->assertMatch(count($infoDeleted['documents']), 2); // not deleted
         $this->assertMatch(count($infoDeleted['storages']), count($infoDeleted['storages'])); // not deleted
         $this->assertMatch(count($infoDeleted['revisions']), 2);
-        
+
         $storagesCountChild = 0;
         foreach ($children as $child) {
             $infoChildDeleted = $this->getCustomValueInfo($child->custom_table, $child->id);
             $this->assertMatch(count($infoChildDeleted['files']), 3);
             $this->assertMatch(count($infoChildDeleted['documents']), 2);
             $this->assertMatch(count($infoChildDeleted['revisions']), 2);
-            
+
             $storagesCountChild = count($infoChildDeleted['storages']);
         }
         $this->assertMatch($storagesCount, $storagesCountChild);
@@ -217,21 +232,24 @@ class CustomValueDeleteTest extends FeatureTestBase
         $this->assertMatch(count($infoDeleted['documents']), 0); // Deleted
         $this->assertMatch(count($infoDeleted['storages']), count($info['storages']) - 3); // deleted
         $this->assertMatch(count($infoDeleted['revisions']), 0);
-        
+
         $storagesCountChild = 0;
         foreach ($children as $child) {
             $infoChildDeleted = $this->getCustomValueInfo($child->custom_table, $child->id);
             $this->assertMatch(count($infoChildDeleted['files']), 0);
             $this->assertMatch(count($infoChildDeleted['documents']), 0);
             $this->assertMatch(count($infoChildDeleted['revisions']), 0);
-            
+
             $storagesCountChild = count($infoChildDeleted['storages']);
         }
         $this->assertMatch($storagesCount - 30, $storagesCountChild); // (file + document2) * 10
         $this->assertCustomRelationCount($custom_value, 0, 0);
     }
 
-    
+
+    /**
+     * @return void
+     */
     public function testForceDeleteRelation()
     {
         $this->init(true);
@@ -242,7 +260,7 @@ class CustomValueDeleteTest extends FeatureTestBase
         $this->assertMatch(count($info['files']), 3);
         $this->assertMatch(count($info['documents']), 2);
         $this->assertMatch(count($info['revisions']), 1);
-        
+
         // children
         $storagesCount = 0;
         foreach ($children as $child) {
@@ -264,14 +282,14 @@ class CustomValueDeleteTest extends FeatureTestBase
         $this->assertMatch(count($infoDeleted['documents']), 0); // Deleted
         $this->assertMatch(count($infoDeleted['storages']), count($info['storages']) - 3); // deleted
         $this->assertMatch(count($infoDeleted['revisions']), 0);
-        
+
         $storagesCountChild = 0;
         foreach ($children as $child) {
             $infoChildDeleted = $this->getCustomValueInfo($child->custom_table, $child->id);
             $this->assertMatch(count($infoChildDeleted['files']), 0);
             $this->assertMatch(count($infoChildDeleted['documents']), 0);
             $this->assertMatch(count($infoChildDeleted['revisions']), 0);
-            
+
             $storagesCountChild = count($infoChildDeleted['storages']);
         }
         $this->assertMatch($storagesCount - 30, $storagesCountChild); // (file + document2) * 10
@@ -288,7 +306,7 @@ class CustomValueDeleteTest extends FeatureTestBase
      *
      * @param CustomTable $custom_table
      * @param string $custom_value_id
-     * @return array
+     * @return array<mixed>
      */
     protected function getCustomValueInfo(CustomTable $custom_table, $custom_value_id)
     {
@@ -308,7 +326,7 @@ class CustomValueDeleteTest extends FeatureTestBase
             ->select(['id', 'value'])
             ->get()
             ->toArray();
-        
+
         // get storage real files
         $storages = \Storage::disk(config('admin.upload.disk'))->files($custom_table->table_name);
 
@@ -327,29 +345,33 @@ class CustomValueDeleteTest extends FeatureTestBase
         ];
     }
 
-    
+
     /**
      * assert CustomRelation Count
+     * @param CustomValue $custom_value
+     * @param int $dataCount
+     * @param int $deleteCount
+     *
+     * @return void
      */
     protected function assertCustomRelationCount(CustomValue $custom_value, int $dataCount, int $deleteCount)
     {
         // delete custom relation is 1:n value
-        $relations = CustomRelation::getRelationsByParent($custom_value->custom_table, RelationType::ONE_TO_MANY);
-        // loop relations
-        foreach ($relations as $relation) {
-            $children = $custom_value->getChildrenValues($relation, true)
-                ->withTrashed()
-                ->get();
-        
-            $dataCountResult = $children->filter(function ($child) {
-                return !$child->trashed();
-            })->count();
-            $deleteCountResult = $children->filter(function ($child) {
-                return $child->trashed();
-            })->count();
+        $relation = CustomRelation::getRelationByParentChild($custom_value->custom_table, 
+            TestDefine::TESTDATA_TABLE_NAME_CHILD_TABLE, RelationType::ONE_TO_MANY);
 
-            $this->assertMatch($dataCountResult, $dataCount);
-            $this->assertMatch($deleteCountResult, $deleteCount);
-        }
+        $children = $custom_value->getChildrenValues($relation, true)
+            ->withTrashed()
+            ->get();
+
+        $dataCountResult = $children->filter(function ($child) {
+            return !$child->trashed();
+        })->count();
+        $deleteCountResult = $children->filter(function ($child) {
+            return $child->trashed();
+        })->count();
+
+        $this->assertMatch($dataCountResult, $dataCount);
+        $this->assertMatch($deleteCountResult, $deleteCount);
     }
 }

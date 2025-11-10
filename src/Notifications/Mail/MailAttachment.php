@@ -19,7 +19,7 @@ class MailAttachment
      * @var string
      */
     public $path;
-    
+
     /**
      * Sending file name
      *
@@ -32,7 +32,7 @@ class MailAttachment
      *
      * @return string|null
      */
-    public function getFullPath() : ?string
+    public function getFullPath(): ?string
     {
         return \Storage::disk(Define::DISKNAME_ADMIN)->path($this->path);
     }
@@ -49,7 +49,7 @@ class MailAttachment
      * Make instance
      *
      * @param File|array $attachment
-     * @return MailAttachment
+     * @return MailAttachment|null
      */
     public static function make($attachment)
     {
@@ -58,6 +58,5 @@ class MailAttachment
         } elseif (is_array($attachment)) {
             return new MailAttachment(array_get($attachment, 'path'), array_get($attachment, 'filename'));
         }
-        return null;
     }
 }

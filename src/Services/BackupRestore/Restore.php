@@ -6,11 +6,12 @@ use Exceedone\Exment\Enums\BackupTarget;
 use Exceedone\Exment\Services\Installer\EnvTrait;
 use Exceedone\Exment\Model\System;
 use Exceedone\Exment\Model\Define;
-use \File;
+use File;
 
 class Restore
 {
-    use BackupRestoreTrait, EnvTrait;
+    use BackupRestoreTrait;
+    use EnvTrait;
 
     /**
      * Create a new command instance.
@@ -26,7 +27,7 @@ class Restore
      *
      * @return array
      */
-    public function list() : array
+    public function list(): array
     {
         $disk = $this->disk();
 
@@ -51,9 +52,10 @@ class Restore
     /**
      * Execute restore.
      *
-     * @param string $file target file
-     * @param bool $tmp if 1, unzip and restore
-     * @return void
+     * @param $file string|null target file
+     * @param bool|null $tmp if 1, unzip and restore
+     * @return int
+     * @throws \Exception
      */
     public function execute($file = null, ?bool $tmp = null)
     {
@@ -83,7 +85,7 @@ class Restore
             $this->updateEnv();
 
             System::clearCache();
-            
+
             return $result;
         } catch (\Exception $e) {
             throw $e;
@@ -114,7 +116,7 @@ class Restore
         $tmpDisk = $this->diskService->tmpDiskItem()->disk();
 
         $directories = $tmpDisk->allDirectories($this->diskService->tmpDiskItem()->dirName());
-        
+
         foreach ($directories as $directory) {
             // check target key name
             $splits = explode("/", $directory);
@@ -127,7 +129,7 @@ class Restore
             if (is_null($setting)) {
                 continue;
             }
-            
+
             $fromDirectory = $tmpDisk->path(path_join($this->diskService->tmpDiskItem()->dirName(), $keyname));
 
             $s = $setting[0];
@@ -142,9 +144,9 @@ class Restore
             // is croud file
             else {
                 $disk = $setting[0];
-                
+
                 $to = path_join($this->diskService->tmpDiskItem()->dirName(), $setting[1]);
-                
+
                 \Exment::makeDirectoryDisk($this->tmpDisk(), $to);
 
                 $files = $tmpDisk->files($directory);
@@ -154,7 +156,7 @@ class Restore
                     $stream = $tmpDisk->readStream($file);
                     $disk->delete($path);
                     $disk->writeStream($path, $stream);
-                            
+
                     try {
                         fclose($stream);
                     } catch (\Exception $ex) {
@@ -166,7 +168,7 @@ class Restore
 
         return $result;
     }
-    
+
     /**
      * update env data
      *
@@ -210,7 +212,7 @@ class Restore
     {
         // get file
         $targetfile = array_get(pathinfo($file), 'filename');
-        
+
         $this->initBackupRestore($targetfile);
 
         // set to tmp zip file
@@ -232,7 +234,7 @@ class Restore
         return true;
     }
 
-    
+
     /**
      * restore backup table definition and table data.
      *

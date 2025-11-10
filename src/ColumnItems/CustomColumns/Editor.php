@@ -41,7 +41,7 @@ class Editor extends CustomItem
     protected function _text($v)
     {
         // replace img html
-        $v = $this->replaceImgUrl($v);
+        $v = $this::replaceImgUrl($v);
 
         return $v;
     }
@@ -57,15 +57,15 @@ class Editor extends CustomItem
             // if grid, remove tag and omit string
             $text = get_omitted_string(strip_tags($text));
         }
-        
+
         return  '<div class="show-tinymce">'.replaceBreak(html_clean($text), false).'</div>';
     }
-    
+
     protected function getAdminFieldClass()
     {
         return Field\Tinymce::class;
     }
-    
+
     protected function setAdminOptions(&$field)
     {
         $options = $this->custom_column->options;
@@ -73,14 +73,14 @@ class Editor extends CustomItem
 
         $item = $this;
         $field->callbackValue(function ($value) use ($item) {
-            return $item->replaceImgUrl($value);
+            return $item::replaceImgUrl($value);
         });
 
         if ($this->isPublicForm()) {
             $field->setPostImageUri($this->options['public_form']->getUrl());
         }
     }
-    
+
     protected function setValidates(&$validates)
     {
         // value string
@@ -97,23 +97,22 @@ class Editor extends CustomItem
      * @param ?string $v
      * @return string
      */
-    public function replaceImgUrl($v)
+    public static function replaceImgUrl($v, $options = [])
     {
         // replace img html
         preg_match_all('/\<img(.*?)data-exment-file-uuid="(?<file_uuid>.*?)"(.*?)\>/u', $v, $matches);
         if (is_nullorempty($matches)) {
             return $v;
         }
-        
+
         for ($index = 0; $index < count($matches[0]); $index++) {
             $replaceValue = $matches[0][$index];
             $file_uuid = array_get($matches, 'file_uuid')[$index];
             if (is_nullorempty($file_uuid)) {
                 continue;
             }
-
-            $url = ExmentFile::getUrl($file_uuid);
-
+            $url = ExmentFile::getUrl($file_uuid, $options);
+ 
             //replace src
             $replaceValue = preg_replace('/src="(.*?)"/u', 'src="' . $url . '"', $replaceValue);
             //$replaceValue = preg_replace('/data-exment-file-uuid="(.*?)"/u', "", $replaceValue);
@@ -164,7 +163,7 @@ class Editor extends CustomItem
             if ($tmpUrl === false && $fileUrl === false) {
                 continue;
             }
-            
+
             // save tmp files
             $uuid = null;
             if ($exists && $tmpUrl !== false) {
@@ -174,7 +173,7 @@ class Editor extends CustomItem
                 $original_name = session()->get($filename);
                 // save file info
                 $exmentfile = ExmentFile::put(FileType::CUSTOM_VALUE_DOCUMENT, path_join($this->custom_table->table_name, make_uuid()), $file);
-                    
+
                 // save document model
                 $this->tmpfiles[] = [
                     'file' => $exmentfile,
@@ -199,7 +198,7 @@ class Editor extends CustomItem
                 $uuid = $exmentfile->uuid;
                 $this->custom_value->file_uuids($file_uuid);
             }
-        
+
             // replace src to uuid
             $replaceValue = $match;
             preg_match('/src="(.*?)"/u', $replaceValue, $replaceMatch);
@@ -227,7 +226,7 @@ class Editor extends CustomItem
         if (is_nullorempty($type)) {
             return null;
         }
-        
+
         $types = [
             'image/gif' => 'gif',
             'image/jpeg'=>'jpg',
@@ -244,7 +243,7 @@ class Editor extends CustomItem
         return null;
     }
 
-    
+
     /**
      * Set Custom Column Option Form. Using laravel-admin form option
      * https://laravel-admin.org/docs/#/en/model-form-fields

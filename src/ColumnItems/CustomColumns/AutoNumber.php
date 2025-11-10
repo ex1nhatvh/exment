@@ -15,24 +15,24 @@ class AutoNumber extends CustomItem
     {
         return Field\Display::class;
     }
-    
+
     protected function setAdminOptions(&$field)
     {
         if (!isset($this->id)) {
             $field->default(exmtrans('custom_value.auto_number_create'));
         }
     }
-    
+
     /**
      * Get grid filter option. Use grid filter, Ex. LIKE search.
      *
-     * @return string
+     * @return string|null
      */
-    protected function getGridFilterOption() : ?string
+    protected function getGridFilterOption(): ?string
     {
-        return FilterOption::LIKE;
+        return (string)FilterOption::LIKE;
     }
-    
+
     /**
      * get auto number value
      */
@@ -42,12 +42,12 @@ class AutoNumber extends CustomItem
         if (isset($this->value)) {
             return null;
         }
-        
+
         $options = $this->custom_column->options;
         if (!isset($options)) {
             return null;
         }
-        
+
         if (array_get($options, 'auto_number_type') == 'format') {
             return $this->createAutoNumberFormat($options);
         }
@@ -62,7 +62,7 @@ class AutoNumber extends CustomItem
 
         return null;
     }
-    
+
     /**
      * Create Auto Number value using format.
      */
@@ -71,7 +71,7 @@ class AutoNumber extends CustomItem
         // get format
         $format = array_get($options, "auto_number_format");
         // get value
-        $value = getModelName($this->custom_column->custom_table)::find($this->id);
+        $value = getModelName($this->custom_column->custom_table)::withoutGlobalScopes()->find($this->id);
         $auto_number = replaceTextFromFormat($format, $value);
         return $auto_number;
     }

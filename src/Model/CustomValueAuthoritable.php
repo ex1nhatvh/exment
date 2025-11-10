@@ -13,6 +13,11 @@ use Exceedone\Exment\Form\Widgets\ModalForm;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
 
+/**
+ * @phpstan-consistent-constructor
+ * @property mixed $authoritable_user_org_type
+ * @property mixed $authoritable_target_id
+ */
 class CustomValueAuthoritable extends ModelBase
 {
     use Traits\DataShareTrait;
@@ -54,7 +59,7 @@ class CustomValueAuthoritable extends ModelBase
         if ($save_autoshare == CustomValueAutoShare::USER_ONLY) {
             return;
         }
-        
+
         // get organizations. OK only_join users
         getModelName(SystemTableName::ORGANIZATION);
         $belong_organizations = $user->base_user->belong_organizations;
@@ -148,7 +153,7 @@ class CustomValueAuthoritable extends ModelBase
                 })) {
                     return false;
                 }
-                
+
                 // get not contains "$total_user_organizations" (This method's saved user)
                 return !collect($total_user_organizations)->contains(function ($total_user_organization) use ($beforesaved_user_organization) {
                     return array_get($beforesaved_user_organization, 'authoritable_target_id') == array_get($total_user_organization, 'related_id')
@@ -173,7 +178,7 @@ class CustomValueAuthoritable extends ModelBase
      * Set Authoritable By User and Org Array
      *
      * @param CustomValue $custom_value
-     * @param array $arrays saved target user or organization
+     * @param array|\Illuminate\Support\Collection $arrays saved target user or organization
      * @param bool $is_edit is true, as edit permission
      * @param bool $sync is true, delete items if not has array
      */
@@ -206,7 +211,7 @@ class CustomValueAuthoritable extends ModelBase
             $model = static::firstOrNew([
                 'parent_id' => $custom_value->id,
                 'parent_type' => $table_name,
-                'authoritable_type' => $is_edit ? Permission::CUSTOM_VALUE_EDIT: Permission::CUSTOM_VALUE_VIEW,
+                'authoritable_type' => $is_edit ? Permission::CUSTOM_VALUE_EDIT : Permission::CUSTOM_VALUE_VIEW,
                 'authoritable_user_org_type' => $related_type,
                 'authoritable_target_id' => $related_id,
             ]);
@@ -269,7 +274,7 @@ class CustomValueAuthoritable extends ModelBase
         // select target users
         $default = static::getUserOrgSelectDefault($custom_value, Permission::CUSTOM_VALUE_EDIT);
         list($options, $ajax) = static::getUserOrgSelectOptions($custom_value->custom_table, null, false, $default);
-        
+
         // for validation options
         $validationOptions = null;
 
@@ -309,7 +314,10 @@ class CustomValueAuthoritable extends ModelBase
     /**
      * Set share form
      *
-     * @return \Illuminate\Http\Response
+     * @param $custom_value
+     * @return \Symfony\Component\HttpFoundation\Response
+     * @throws \Psr\Container\ContainerExceptionInterface
+     * @throws \Psr\Container\NotFoundExceptionInterface
      */
     public static function saveShareDialogForm($custom_value)
     {
@@ -319,7 +327,7 @@ class CustomValueAuthoritable extends ModelBase
         // create form fields
         $tableKey = $custom_table->table_name;
         $id = $custom_value->id;
-        
+
         // check permission
         if (!$custom_table->hasPermissionEditData($id) || !$custom_table->hasPermission(Permission::CUSTOM_VALUE_SHARE)) {
             return getAjaxResponse([
@@ -327,7 +335,7 @@ class CustomValueAuthoritable extends ModelBase
                 'toastr' => trans('admin.deny'),
             ]);
         }
-        
+
         // validation
         $form = static::getShareDialogForm($custom_value);
         if (($response = $form->validateRedirect($request)) instanceof \Illuminate\Http\RedirectResponse) {
@@ -361,7 +369,7 @@ class CustomValueAuthoritable extends ModelBase
                         'updated_at' => Carbon::now(),
                     ];
                 });
-                    
+
                 $shares = array_merge($shares, \Schema::insertDelete(SystemTableName::CUSTOM_VALUE_AUTHORITABLE, $user_organizations, [
                     'dbValueFilter' => function (&$model) use ($custom_value, $item) {
                         $model->where('parent_type', $custom_value->custom_table->table_name)
@@ -387,7 +395,7 @@ class CustomValueAuthoritable extends ModelBase
             $shares = collect($shares)->map(function ($share) {
                 return CustomTable::getEloquent($share['authoritable_user_org_type'])->getValueModel($share['authoritable_target_id']);
             });
-            
+
             static::notifyUser($custom_value, $shares);
 
             return getAjaxResponse([
@@ -436,11 +444,11 @@ class CustomValueAuthoritable extends ModelBase
                     return $id != $user_id;
                 });
             }
-                
+
             $options = $options->merge(collect($optionItem)->mapWithKeys(function ($i, $k) use ($key) {
                 return [$key . '_' . $k => $i];
             }));
-         
+
             // add ajax
             if (isset($ajaxItem)) {
                 $ajax = admin_urls_query('webapi/user_organization/select', ['display_table_id' => ($custom_table ? $custom_table->id : null)]);
@@ -461,14 +469,14 @@ class CustomValueAuthoritable extends ModelBase
     {
         $custom_table = $custom_value->custom_table;
         $table_name = $custom_table->table_name;
-        
+
         // get values
         $items = static::query()
             ->where('parent_id', $custom_value->id)
             ->where('parent_type', $table_name)
             ->where('authoritable_type', $permission)
             ->get();
-        
+
         $defaults = $items->map(function ($item, $key) {
             return array_get($item, 'authoritable_user_org_type') . '_' . array_get($item, 'authoritable_target_id');
         })->toArray();
@@ -507,7 +515,7 @@ class CustomValueAuthoritable extends ModelBase
      * Notify target user.
      *
      * @param CustomValue $custom_value shared target custom_value.
-     * @param Collection $shareTargets user and organization notify targets collection
+     * @param Collection|\Tightenco\Collect\Support\Collection $shareTargets user and organization notify targets collection
      * @return void
      */
     protected static function notifyUser($custom_value, $shareTargets)

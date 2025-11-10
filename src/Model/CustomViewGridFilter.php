@@ -6,6 +6,14 @@ use Exceedone\Exment\Enums\ConditionType;
 
 /**
  * Custom view's header "Filter" button's setting
+ *
+ * @phpstan-consistent-constructor
+ * @property mixed $view_column_target_id
+ * @property mixed $view_column_table_id
+ * @property mixed $suuid
+ * @property mixed $custom_view_id
+ * @property mixed $view_filter_condition_value_text
+ * @property mixed $view_filter_condition
  */
 class CustomViewGridFilter extends ModelBase
 {
@@ -61,11 +69,11 @@ class CustomViewGridFilter extends ModelBase
     {
         return static::getEloquentDefault($id, $withs);
     }
-    
+
     protected static function boot()
     {
         parent::boot();
-        
+
         static::saving(function ($model) {
             $model->prepareJson('options');
         });
@@ -82,7 +90,7 @@ class CustomViewGridFilter extends ModelBase
     {
         return $this->setViewPivotIdTrait('view_pivot_column_id', $view_pivot_column_id);
     }
-    
+
     public function getViewPivotTableIdAttribute()
     {
         return $this->getViewPivotIdTrait('view_pivot_table_id');

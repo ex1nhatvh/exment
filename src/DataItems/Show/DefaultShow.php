@@ -40,6 +40,7 @@ use Exceedone\Exment\Enums\ShowPositionType;
 use Exceedone\Exment\Services\PartialCrudService;
 use Exceedone\Exment\ColumnItems\ItemInterface;
 
+/** @phpstan-consistent-constructor */
 class DefaultShow extends ShowBase
 {
     protected static $showClassName = \Exceedone\Exment\Form\Show::class;
@@ -69,18 +70,22 @@ class DefaultShow extends ShowBase
         $this->setDocumentBox($row);
 
         $this->setRevisionBox($row);
- 
+
         $this->setCommentBox($row);
     }
-    
+
     /**
      * set system values
-     * @param Show $show
+     *
+     * @param $show
+     * @return void
+     * @throws \Psr\Container\ContainerExceptionInterface
+     * @throws \Psr\Container\NotFoundExceptionInterface
      */
     protected function setSystemValues($show)
     {
         $trashed = boolval(request()->get('trashed'));
-
+        /** @phpstan-ignore-next-line class Encore\Admin\Show\Field constructor expects string, null given */
         $field = (new ShowField(null, null))->system_values([
             'withTrashed' => $trashed])->setWidth(12, 0);
 
@@ -92,7 +97,7 @@ class DefaultShow extends ShowBase
         ]);
         $field->border = false;
     }
-    
+
     /**
      * create show form list
      */
@@ -118,6 +123,7 @@ class DefaultShow extends ShowBase
 
                     $field = new ShowField($item->name(), $item->label());
                     $field->as(function ($v) use ($item) {
+                        /** @phpstan-ignore-next-line Call to function is_null() with $this(Exceedone\Exment\DataItems\Show\DefaultShow) will always evaluate to false. */
                         if (is_null($this)) {
                             return '';
                         }
@@ -149,7 +155,7 @@ class DefaultShow extends ShowBase
                 $this->rowCount = $show->getMaxRow() + 1;
                 $this->setSystemValues($show);
             }
-            
+
             // if modal, disable list and delete
             $show->panel()->tools(function ($tools) {
                 $enableEdit = $this->custom_value->enableEdit(true);
@@ -164,7 +170,7 @@ class DefaultShow extends ShowBase
                     $tools->disableList();
                 }
 
-                if (!is_null($parent_value = $this->custom_value->getParentValue()) && $parent_value->enableEdit(true) !== true) {
+                if (!is_null($parent_value = $this->custom_value->getParentValue(null, true)) && $parent_value->enableEdit(true) !== true) {
                     $tools->disableEdit();
                     $tools->disableDelete();
                 }
@@ -194,7 +200,7 @@ class DefaultShow extends ShowBase
                     $tools->disableList();
                 } elseif (!$this->modal) {
                     $tools->setListPath($this->custom_table->getGridUrl(true));
-                    
+
                     if ($this->custom_table->enableTableMenuButton()) {
                         $tools->append((new Tools\CustomTableMenuButton('data', $this->custom_table)));
                     }
@@ -203,7 +209,7 @@ class DefaultShow extends ShowBase
                     $copyButtons = $this->custom_table->from_custom_copies;
                     $notifies = $this->custom_table->notifies;
                     $operations = $this->custom_table->operations;
-     
+
                     // only not trashed
                     if (!$this->custom_value->trashed()) {
                         foreach ($listButtons as $plugin) {
@@ -221,10 +227,10 @@ class DefaultShow extends ShowBase
                                 ]
                             ));
                         }
-                            
+
                         foreach ($copyButtons as $copyButton) {
                             $b = new Tools\CopyMenuButton($copyButton, $this->custom_table, $this->custom_value->id);
-                        
+
                             $tools->append($b->render());
                         }
                         foreach ($notifies as $notify) {
@@ -232,9 +238,12 @@ class DefaultShow extends ShowBase
                                 $tools->append(new Tools\NotifyButton($notify, $this->custom_table, $this->custom_value->id));
                             }
                         }
-                        foreach ($operations as $operation) {
-                            if ($operation->isOperationTarget($this->custom_value, CustomOperationType::BUTTON)) {
-                                $tools->append(new Tools\OperationButton($operation, $this->custom_table, $this->custom_value->id));
+
+                        if ($enableEdit === true) {
+                            foreach ($operations as $operation) {
+                                if ($operation->active_flg && $operation->isOperationTarget($this->custom_value, CustomOperationType::BUTTON)) {
+                                    $tools->append(new Tools\OperationButton($operation, $this->custom_table, $this->custom_value->id));
+                                }
                             }
                         }
 
@@ -263,18 +272,21 @@ class DefaultShow extends ShowBase
                                 'redirectUrl' => admin_urls("data", $this->custom_table->table_name),
                             ]));
 
-                            // add restore button
-                            $tools->prepend(new Tools\SwalInputButton([
-                                'url' => admin_urls("data", $this->custom_table->table_name, $this->custom_value->id, "restoreClick"),
-                                'label' => exmtrans('custom_value.restore'),
-                                'icon' => 'fa-undo',
-                                'btn_class' => 'btn-warning',
-                                'title' => exmtrans('custom_value.message.restore'),
-                                'method' => 'get',
-                            ]));
+                            // if parent data does not exist or has not been deleted 
+                            if (!$parent_value || !$parent_value->trashed()) {
+                                // add restore button
+                                $tools->prepend(new Tools\SwalInputButton([
+                                    'url' => admin_urls("data", $this->custom_table->table_name, $this->custom_value->id, "restoreClick"),
+                                    'label' => exmtrans('custom_value.restore'),
+                                    'icon' => 'fa-undo',
+                                    'btn_class' => 'btn-warning',
+                                    'title' => exmtrans('custom_value.message.restore'),
+                                    'method' => 'get',
+                                ]));
+                            }
                         }
                     }
-                    
+
                     PartialCrudService::setAdminShowTools($this->custom_table, $tools, $this->custom_value->id);
                 }
             });
@@ -301,14 +313,14 @@ class DefaultShow extends ShowBase
             if ($form_column->form_column_type == FormColumnType::SYSTEM) {
                 continue;
             }
-            
+
             $item = $form_column->column_item;
             if (!isset($item)) {
                 continue;
             }
 
             $this->setColumnItemOption($item, $form_column);
-            
+
             // if hidden field, continue
             if ($item->disableDisplayWhenShow()) {
                 continue;
@@ -318,7 +330,7 @@ class DefaultShow extends ShowBase
             $item->setShowFieldOptions($field, [
                 'gridShows' => $this->gridShows(),
             ]);
-            
+
             if ($this->modal) {
                 $field->setWidth(9, 3);
             }
@@ -331,15 +343,13 @@ class DefaultShow extends ShowBase
         }
     }
 
-
     /**
      * Append child block box.
      *
      * @param Row $row
-     * @param CustomValue $this->custom_value
-     * @param int $id
-     * @param boolean $modal
      * @return void
+     * @throws \Psr\Container\ContainerExceptionInterface
+     * @throws \Psr\Container\NotFoundExceptionInterface
      */
     protected function setChildBlockBox($row)
     {
@@ -350,8 +360,11 @@ class DefaultShow extends ShowBase
 
         $trashed = boolval(request()->get('trashed'));
 
+        $custom_form_blocks = $this->custom_form->custom_form_blocks->sortBy(function ($item, $key) {
+            return $item->getOption('form_block_order')?? -1;
+        });
         // loop for custom form blocks
-        foreach ($this->custom_form->custom_form_blocks as $custom_form_block) {
+        foreach ($custom_form_blocks as $custom_form_block) {
             // if available is false, continue
             if (!$custom_form_block->available) {
                 continue;
@@ -373,9 +386,11 @@ class DefaultShow extends ShowBase
                 }
 
                 $classname = getModelName($target_table);
-                $grid = new Grid(new $classname);
+                $grid = new Grid(new $classname());
                 $grid->setTitle($block_label);
-                
+                $grid->setName($target_table->table_name);
+                $grid->model()->setSortName($target_table->table_name . '_sort');
+
                 // one to many
                 if ($custom_form_block->form_block_type == FormBlockType::ONE_TO_MANY) {
                     $table_name = getDBTableName($target_table);
@@ -389,16 +404,17 @@ class DefaultShow extends ShowBase
                 }
                 // many to many
                 elseif ($custom_form_block->form_block_type == FormBlockType::MANY_TO_MANY) {
+                    $table_name = getDBTableName($target_table);
                     // first, getting children ids
                     $children_ids = $this->custom_value->{$relation_name}()->get()->pluck('id');
                     // second, filtering children ids
-                    $grid->model()->whereIn('id', $children_ids->toArray());
+                    $grid->model()->whereIn("$table_name.id", $children_ids->toArray());
                 }
-                
+
                 $custom_view = CustomView::getAllData($target_table);
                 $custom_view->setGrid($grid);
                 $custom_view->setValueSort($grid->model());
-                
+
                 $grid->disableFilter();
                 $grid->disableCreateButton();
                 $grid->disableExport();
@@ -423,7 +439,7 @@ class DefaultShow extends ShowBase
                     $actions->disableView();
                     $actions->disableEdit();
                     $actions->disableDelete();
-                
+
                     // add show link
                     $actions->append($actions->row->getUrl([
                         'tag' => true,
@@ -432,7 +448,7 @@ class DefaultShow extends ShowBase
                         'add_id' => true,
                     ]));
                 });
-
+                /** @phpstan-ignore-next-line column() expects int, array<string, int> given */
                 $row->column(['xs' => 12, 'sm' => 12], $grid->render());
             }
         }
@@ -500,7 +516,7 @@ class DefaultShow extends ShowBase
         if ($pjax) {
             return view("exment::custom-value.revision-compare-inner", $prms);
         }
-        
+
         $script = <<<EOT
         $("#revisions").off('change').on('change', function(e, params) {
             let url = admin_url(URLJoin('data', '$table_name', '$id', 'compare'));
@@ -512,10 +528,10 @@ class DefaultShow extends ShowBase
 
             $.pjax({container:'#pjax-container-revision', url: url +'?' + $.param(query) });
         });
-    
+
 EOT;
         Admin::script($script);
-        
+
         return view("exment::custom-value.revision-compare", $prms);
     }
 
@@ -526,8 +542,8 @@ EOT;
         if (count($revisions) == 0) {
             return;
         }
-    
-        $form = new WidgetForm;
+
+        $form = new WidgetForm();
         $form->disableReset();
         $form->disableSubmit();
         $form->attribute(['class' => 'form-horizontal form-revision']);
@@ -542,9 +558,10 @@ EOT;
                 'No.'.($revision->revision_no)
             )->setWidth(9, 2);
         }
+        /** @phpstan-ignore-next-line Encore\Admin\Widgets\Box constructor expects string, Encore\Admin\Widgets\Form given */
         $row->column(['xs' => 12, 'sm' => 6], (new Box(exmtrans('revision.update_history'), $form))->style('info'));
     }
-    
+
     /**
      * whether file upload field
      */
@@ -554,10 +571,10 @@ EOT;
         if ($this->custom_value->enableEdit() !== true) {
             return false;
         }
-        
+
         return !$this->modal && boolval($this->custom_table->getOption('attachment_flg') ?? true);
     }
-    
+
     /**
      * whether comment field
      */
@@ -565,7 +582,7 @@ EOT;
     {
         return !$this->modal && boolval($this->custom_table->getOption('comment_flg') ?? true);
     }
-    
+
     protected function getDocuments()
     {
         if ($this->modal) {
@@ -573,7 +590,7 @@ EOT;
         }
         return $this->custom_value->getDocuments();
     }
-    
+
     protected function setDocumentBox($row)
     {
         $documents = $this->getDocuments();
@@ -583,17 +600,18 @@ EOT;
             return;
         }
 
-        $form = new WidgetForm;
+        $form = new WidgetForm();
         $form->disableReset();
         $form->disableSubmit();
 
         // show document list
         if (count($documents) > 0) {
             $html = [];
+            $allow_delete = config('exment.allow_delete_attachment', false);
             foreach ($documents as $index => $d) {
                 $html[] = "<p>" . view('exment::form.field.documentlink', [
                     'document' => $d,
-                    'candelete' => $this->custom_value->enableDelete(true) === true,
+                    'candelete' => $this->custom_value->enableDelete(!$allow_delete) === true,
                 ])->render() . "</p>";
             }
             // loop and add as link
@@ -643,21 +661,20 @@ EOT;
 
             Admin::script($script);
         }
-
+        /** @phpstan-ignore-next-line Encore\Admin\Widgets\Box constructor expects string, Encore\Admin\Widgets\Form given */
         $row->column(['xs' => 12, 'sm' => 6], (new Box(exmtrans("common.attachment"), $form))->style('info'));
     }
-    
+
     protected function getComments()
     {
         if ($this->modal) {
             return [];
         }
-        return getModelName(SystemTableName::COMMENT)
-            ::where('parent_id', $this->custom_value->id)
+        return getModelName(SystemTableName::COMMENT)::where('parent_id', $this->custom_value->id)
             ->where('parent_type', $this->custom_table->table_name)
             ->get();
     }
-    
+
     protected function setCommentBox($row)
     {
         $useComment = $this->useComment();
@@ -666,7 +683,7 @@ EOT;
         }
 
         $comments = $this->getComments();
-        $form = new WidgetForm;
+        $form = new WidgetForm();
         $form->disableReset();
         $form->action(admin_urls('data', $this->custom_table->table_name, $this->custom_value->id, 'addcomment'));
         $form->setWidth(10, 2);
@@ -696,10 +713,10 @@ EOT;
             ->setLabelClass(['d-none'])
             ->setWidth(12, 0);
         }
-
+        /** @phpstan-ignore-next-line Encore\Admin\Widgets\Box constructor expects string, Encore\Admin\Widgets\Form given */
         $row->column(['xs' => 12, 'sm' => 6], (new Box(exmtrans("common.comment"), $form))->style('info'));
     }
-    
+
     public function getWorkflowHistory()
     {
         $workflows = $this->custom_value->getWorkflowHistories(true)->toArray();
@@ -707,7 +724,7 @@ EOT;
             return;
         }
 
-        $form = new ModalForm;
+        $form = new ModalForm();
 
         $workflow = $this->custom_value->workflow_value->workflow;
 
@@ -728,7 +745,7 @@ EOT;
         ->disableHeader()
         ->setRelatedValue($workflows)
         ->setTableColumnWidth(2, 2, 2, 2, 4, 0);
-        
+
         return $form;
     }
 
@@ -740,7 +757,7 @@ EOT;
         $this->custom_value->setRevision($revision_suuid)->restore_revision()->save();
         return redirect($this->custom_value->getUrl());
     }
-  
+
     /**
      * get target data revisions
      */
@@ -758,11 +775,11 @@ EOT;
         if (!$this->custom_table->hasPermissionEditData($this->custom_value->id)) {
             return [];
         }
-        
+
         $query = $this->custom_value
             ->revisionHistory()
             ->orderby('id', 'desc');
-        
+
         // if not all
         if (!$all) {
             $query = $query->take(10);
@@ -770,7 +787,7 @@ EOT;
         return $query->get() ?? [];
     }
 
-    
+
     /**
      * for file upload function.
      */
@@ -791,7 +808,7 @@ EOT;
                 ->saveCustomValue($custom_value->id, null, $this->custom_table);
             // save document model
             $document_model = $file->saveDocumentModel($custom_value, $filename);
-            
+
             // loop for $notifies
             foreach ($this->custom_table->notifies as $notify) {
                 $notify->notifyCreateUpdateUser($custom_value, NotifySavedType::ATTACHMENT, ['attachment' => $filename]);
@@ -816,6 +833,7 @@ EOT;
 
         // get custom column and item
         $custom_column = CustomColumn::getEloquent($del_column_name, $this->custom_table);
+        /** @var ColumnItems\CustomItem|null $custom_item */
         $custom_item = $custom_column ? $custom_column->column_item : null;
         if ($custom_item && method_exists($custom_item, 'deleteFile')) {
             $custom_item->setCustomValue($this->custom_value)->deleteFile($del_key);
@@ -832,7 +850,7 @@ EOT;
             ],
         ]);
     }
- 
+
     /**
      * add comment.
      */
@@ -847,7 +865,7 @@ EOT;
                 'comment_detail' => $comment,
             ]);
             $model->save();
-                
+
             // execute notify
             foreach ($this->custom_table->notifies as $notify) {
                 $notify->notifyCreateUpdateUser($this->custom_value, NotifySavedType::COMMENT, ['comment' => $comment]);
@@ -859,7 +877,7 @@ EOT;
         return redirect($url);
     }
 
- 
+
     /**
      * delete comment.
      */
@@ -878,13 +896,12 @@ EOT;
             'toastr' => trans('admin.delete_succeeded'),
         ]);
     }
-    
-
 
     /**
      * Set ColumnItem's option to column item
      *
      * @param ItemInterface $column_item
+     * @param CustomFormColumn|null $form_column
      * @return void
      */
     protected function setColumnItemOption(ItemInterface $column_item, ?CustomFormColumn $form_column = null)
@@ -898,9 +915,9 @@ EOT;
     /**
      * Whether this form is publicform
      *
-     * @return boolean
+     * @return bool
      */
-    protected function isPublicForm() : bool
+    protected function isPublicForm(): bool
     {
         return $this instanceof PublicFormShow;
     }

@@ -24,6 +24,8 @@ use Encore\Admin\Layout\Content;
 use Encore\Admin\Grid\Linker;
 use Encore\Admin\Widgets\Box;
 use Encore\Admin\Auth\Permission as Checker;
+use Encore\Admin\Form as AdminForm;
+use Exceedone\Exment\Services\DataImportExport;
 
 class RoleGroupController extends AdminControllerBase
 {
@@ -41,9 +43,10 @@ class RoleGroupController extends AdminControllerBase
      */
     protected function grid()
     {
-        $grid = new Grid(new RoleGroup);
+        $grid = new Grid(new RoleGroup());
         $grid->column('role_group_name', exmtrans('role_group.role_group_name'));
         $grid->column('role_group_view_name', exmtrans('role_group.role_group_view_name'));
+        $grid->column('role_group_order', exmtrans('role_group.role_group_order'))->sortable()->editable();
         $grid->column('role_group_users', exmtrans('role_group.users_count'))->display(function ($counts) {
             return is_null($counts) ? null : count($counts);
         });
@@ -53,18 +56,27 @@ class RoleGroupController extends AdminControllerBase
                 return is_null($counts) ? null : count($counts);
             });
         }
-        
+
         // check has ROLE_GROUP_ALL
         $hasCreatePermission = \Exment::user()->hasPermission(Permission::ROLE_GROUP_ALL);
         if (!$hasCreatePermission) {
             $grid->disableCreateButton();
         }
-        
-        $grid->tools(function (Grid\Tools $tools) use ($hasCreatePermission) {
+
+        // create exporter
+        $service = $this->getImportExportService($grid);
+        $grid->exporter($service);
+
+        $grid->tools(function (Grid\Tools $tools) use ($grid, $hasCreatePermission) {
             if (!$hasCreatePermission) {
                 $tools->disableBatchActions();
             }
             $tools->prepend(new Tools\SystemChangePageMenu());
+            if (boolval(config('exment.role_group_import_export', false)) && $hasCreatePermission) {
+                $button = new Tools\ExportImportButton(admin_url('role_group'), $grid, false, true);
+                $button->setBaseKey('common');
+                $tools->prepend($button->render());
+            }
         });
 
         $grid->disableExport();
@@ -75,20 +87,20 @@ class RoleGroupController extends AdminControllerBase
                 $actions->disableDelete();
             }
 
-            $linker = (new Linker)
+            $linker = (new Linker())
                 ->url(admin_urls('role_group', $actions->row->id, 'edit?form_type=2'))
                 ->icon('fa-users')
                 ->tooltip(exmtrans('role_group.user_organization_setting'));
             $actions->prepend($linker);
 
-            $linker = (new Linker)
+            $linker = (new Linker())
                 ->url(admin_urls('role_group', $actions->row->id, 'edit'))
                 ->icon('fa-user-secret')
                 ->linkattributes(['class' => 'rowclick'])
                 ->tooltip(exmtrans('role_group.permission_setting'));
             $actions->prepend($linker);
         });
-        
+
         $grid->filter(function ($filter) {
             $filter->disableIdFilter();
             $filter->like('role_group_name', exmtrans("role_group.role_group_name"));
@@ -96,6 +108,21 @@ class RoleGroupController extends AdminControllerBase
         });
 
         return $grid;
+    }
+
+    protected function getImportExportService($grid = null)
+    {
+        // create exporter
+        return (new DataImportExport\DataImportExportService())
+            ->exportAction(new DataImportExport\Actions\Export\RoleGroupAction(
+                [
+                    'grid' => $grid,
+                ]
+            ))->importAction(new DataImportExport\Actions\Import\RoleGroupAction(
+                [
+                    'primary_key' => app('request')->input('select_primary_key') ?? null,
+                ]
+            ));
     }
 
     /**
@@ -108,6 +135,7 @@ class RoleGroupController extends AdminControllerBase
     {
         $isRolePermissionPage = $request->get('form_type') != 2;
         $form = $isRolePermissionPage ? $this->form() : $this->formUserOrganization();
+        /** @phpstan-ignore-next-line Encore\Admin\Widgets\Box constructor expects string, Encore\Admin\Widgets\Form given */
         $box = new Box(trans('admin.create'), $form);
         $this->appendTools($box, null, $isRolePermissionPage);
         return $this->AdminContent($content)->body($box);
@@ -116,15 +144,18 @@ class RoleGroupController extends AdminControllerBase
     /**
      * Edit interface.
      *
-     * @param mixed   $id
+     * @param Request $request
      * @param Content $content
+     * @param $id
      * @return Content
      */
     public function edit(Request $request, Content $content, $id)
     {
         $isRolePermissionPage = $request->get('form_type') != 2;
+        /** @var Form $form */
         $form = $isRolePermissionPage ? $this->form($id) : $this->formUserOrganization($id);
-        $box = new Box(trans('admin.edit'), $form->edit($id));
+        $edit = $form->edit($id);
+        $box = new Box(trans('admin.edit'), $edit);
         $this->appendTools($box, $id, $isRolePermissionPage);
         return $this->AdminContent($content)->body($box);
     }
@@ -136,7 +167,7 @@ class RoleGroupController extends AdminControllerBase
      */
     protected function form($id = null)
     {
-        $model = isset($id) ? RoleGroup::with(['role_group_permissions'])->findOrFail($id) : new RoleGroup;
+        $model = isset($id) ? RoleGroup::with(['role_group_permissions'])->findOrFail($id) : new RoleGroup();
         $form = new Form($model->toArray());
         $form->disableReset();
         $form->action(admin_urls('role_group', $id));
@@ -165,11 +196,13 @@ class RoleGroupController extends AdminControllerBase
             ->required()
             ->disable(!$enable)
             ->rules("max:64");
-        
+
         $form->textarea('description', exmtrans("custom_table.field_description"))
             ->disable(!$enable)
             ->rows(3);
-            
+
+        $form->number('role_group_order', exmtrans("role_group.role_group_order"))->rules("integer");
+
         $form->exmheader(exmtrans('role_group.role_type_options.' . RoleGroupType::SYSTEM()->lowerKey()) . exmtrans('role_group.permission_setting'))->hr();
 
         $form->descriptionHtml(exmtrans('role_group.description_system_admin'));
@@ -186,11 +219,11 @@ class RoleGroupController extends AdminControllerBase
             'name' => "system_permission[system][permissions]",
             'key' => "system_permission.system.permissions",
         ]];
-        
+
         $form->checkboxTable("system_permission_permissions", "")
             ->options(RoleGroupType::SYSTEM()->getRoleGroupOptions())
             ->disable(!$enable)
-            ->checkWidth(120)
+            ->checkWidth(150)
             ->headerHelp(RoleGroupType::SYSTEM()->getRoleGroupHelps())
             ->items($items)
             ->setWidth(10, 2);
@@ -198,7 +231,7 @@ class RoleGroupController extends AdminControllerBase
         $form->hidden("system_permission[system][id]")
             ->default(SystemRoleType::SYSTEM);
 
-        
+
         // Role --------------------------------------------------------
         $values = $model->role_group_permissions->first(function ($role_group_permission) {
             return $role_group_permission->role_group_permission_type == RoleType::SYSTEM && $role_group_permission->role_group_target_id == SystemRoleType::ROLE_GROUP;
@@ -210,11 +243,11 @@ class RoleGroupController extends AdminControllerBase
             'name' => "system_permission[role_groups][permissions]",
             'key' => "system_permission.role_groups.permissions",
         ]];
-        
+
         $form->checkboxTable("role_permission_permissions", "")
             ->options(RoleGroupType::ROLE_GROUP()->getRoleGroupOptions())
             ->disable(!$enable)
-            ->checkWidth(120)
+            ->checkWidth(150)
             ->headerHelp(RoleGroupType::ROLE_GROUP()->getRoleGroupHelps())
             ->items($items)
             ->setWidth(10, 2);
@@ -250,7 +283,7 @@ class RoleGroupController extends AdminControllerBase
                 $form->hidden("plugin_permission[$plugin->plugin_name][id]")
                     ->default($plugin->id);
             }
-            
+
             $form->checkboxTable("plugin_permission_permissions", "")
                 ->options(RoleGroupType::PLUGIN()->getRoleGroupOptions())
                 ->disable(!$enable)
@@ -282,11 +315,11 @@ class RoleGroupController extends AdminControllerBase
             $form->hidden("master_permission[$table->table_name][id]")
                 ->default($table->id);
         }
-        
+
         $form->checkboxTable("master_permission_permissions", "")
             ->options(RoleGroupType::MASTER()->getRoleGroupOptions())
             ->disable(!$enable)
-            ->checkWidth(100)
+            ->checkWidth(150)
             ->headerHelp(RoleGroupType::MASTER()->getRoleGroupHelps())
             ->items($items)
             ->setWidth(10, 2);
@@ -316,7 +349,8 @@ class RoleGroupController extends AdminControllerBase
         $form->checkboxTable("table_permission_permissions", "")
             ->options(RoleGroupType::TABLE()->getRoleGroupOptions())
             ->disable(!$enable)
-            ->checkWidth(100)
+            ->checkWidth(150)
+            ->scrollx(true)
             ->headerHelp(RoleGroupType::TABLE()->getRoleGroupHelps())
             ->items($items)
             ->headerEsacape(false)
@@ -325,7 +359,7 @@ class RoleGroupController extends AdminControllerBase
         if (!$enable) {
             $form->disableSubmit();
         }
-        
+
         $form->submitRedirect([
             'key' => 'form_type_2',
             'value' => 'form_type_2',
@@ -342,7 +376,7 @@ class RoleGroupController extends AdminControllerBase
     /**
      * Make a form builder for User Organization.
      *
-     * @return Form
+     * @return Form|false
      */
     protected function formUserOrganization($id = null)
     {
@@ -356,7 +390,7 @@ class RoleGroupController extends AdminControllerBase
         $form->disableReset();
         $form->action(admin_urls('role_group', $id . '?form_type=2'));
         $form->method('put');
-        
+
         $form->progressTracker()->options($this->getProgressInfo(false, $id));
 
         $form->display('role_group_name', exmtrans('role_group.role_group_name'));
@@ -368,7 +402,7 @@ class RoleGroupController extends AdminControllerBase
         })->toArray();
 
         list($options, $ajax) = CustomValueAuthoritable::getUserOrgSelectOptions(null, null, false, $default);
-        
+
         if (!is_nullorempty($ajax)) {
             $form->multipleSelect('role_group_item', exmtrans('role_group.user_organization_setting'))
                 ->options($options)
@@ -402,13 +436,26 @@ class RoleGroupController extends AdminControllerBase
     /**
      * Update the specified resource in storage.
      *
-     * @param int $id
-     *
-     * @return \Illuminate\Http\Response
+     * @param mixed $id
+     * @return bool|\Illuminate\Contracts\Foundation\Application|\Illuminate\Http\RedirectResponse|\Illuminate\Routing\Redirector|void
+     * @throws \Psr\Container\ContainerExceptionInterface
+     * @throws \Psr\Container\NotFoundExceptionInterface
      */
     public function update($id)
     {
-        return request()->get('form_type') == 2 ? $this->saveUserOrganization($id) : $this->saveRolePermission($id);
+        if (request()->get('_editable') == 1 && request()->get('_method') == 'PUT') {
+            if (!$this->hasPermission_UserOrganization()) {
+                Checker::error();
+                return false;
+            }
+
+            $model = RoleGroup::findOrFail($id);
+            $form = new AdminForm($model);
+            $form->number('role_group_order', exmtrans("role_group.role_group_order"))->rules("integer");
+            $form->update($id);
+        } else {
+            return request()->get('form_type') == 2 ? $this->saveUserOrganization($id) : $this->saveRolePermission($id);
+        }
     }
 
     /**
@@ -445,12 +492,13 @@ class RoleGroupController extends AdminControllerBase
         \DB::beginTransaction();
 
         try {
-            $role_group = isset($id) ? RoleGroup::findOrFail($id) : new RoleGroup;
+            $role_group = isset($id) ? RoleGroup::findOrFail($id) : new RoleGroup();
             if (!isset($id)) {
                 $role_group->role_group_name = $request->get('role_group_name');
             }
             $role_group->role_group_view_name = $request->get('role_group_view_name');
             $role_group->description = $request->get('description');
+            $role_group->role_group_order = $request->get('role_group_order');
             $role_group->save();
 
             $items = [
@@ -473,7 +521,7 @@ class RoleGroupController extends AdminControllerBase
                         'role_group_permission_type' => $item['role_group_permission_type'],
                         'role_group_target_id' => array_get($requestItem, 'id'),
                     ];
-    
+
                     $role_group_permission = RoleGroupPermission::firstOrNew($relation);
                     $role_group_permission->permissions = array_filter(array_get($requestItem, 'permissions', []));
                     $role_group_permission->save();
@@ -523,14 +571,14 @@ class RoleGroupController extends AdminControllerBase
                 list($role_group_user_org_type, $role_group_target_id) = explode('_', $role_group_target);
                 $item['role_group_user_org_type'] = $role_group_user_org_type;
                 $item['role_group_target_id'] = $role_group_target_id;
-                
+
                 return [
                     'role_group_id' => $id,
                     'role_group_user_org_type' => $role_group_user_org_type,
                     'role_group_target_id' => $role_group_target_id,
                 ];
             });
-                
+
             \Schema::insertDelete(SystemTableName::ROLE_GROUP_USER_ORGANIZATION, $role_group, [
                 'dbValueFilter' => function (&$model) use ($id) {
                     $model->where('role_group_id', $id);
@@ -549,7 +597,7 @@ class RoleGroupController extends AdminControllerBase
             \DB::commit();
 
             System::clearCache();
-            
+
             admin_toastr(trans('admin.save_succeeded'));
 
             if ($request->get('after-save', 0) == 1) {
@@ -581,7 +629,7 @@ class RoleGroupController extends AdminControllerBase
             'url' => isset($id) ? admin_urls('role_group', $id, 'edit') : null,
             'description' => exmtrans('role_group.permission_setting')
         ];
-        
+
         $steps[] = [
             'active' => !$isSelectTarget,
             'complete' => false,
@@ -668,7 +716,7 @@ class RoleGroupController extends AdminControllerBase
             'icon' => 'fa-list',
             'btn_class' => 'btn-default',
         ]));
-        
+
         $box->tools(new Tools\SystemChangePageMenu());
 
         if (!isset($id)) {
@@ -735,5 +783,34 @@ class RoleGroupController extends AdminControllerBase
     protected function hasPermission_UserOrganization()
     {
         return \Exment::user()->hasPermission([Permission::ROLE_GROUP_ALL, Permission::ROLE_GROUP_USER_ORGANIZATION]);
+    }
+
+    /**
+     * get import modal
+     */
+    public function importModal(Request $request)
+    {
+        $service = $this->getImportExportService();
+        return $service->getImportModal();
+    }
+
+    /**
+     * @param Request $request
+     */
+    public function import(Request $request)
+    {
+        // create exporter
+        $service = $this->getImportExportService()
+            ->format($request->file('custom_table_file'));
+        
+        if ($service->format() == 'csv') {
+            $file = $request->file('custom_table_file');
+            $file_name = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
+            $service->filebasename($file_name);
+        }
+
+        $result = $service->import($request);
+
+        return getAjaxResponse($result);
     }
 }

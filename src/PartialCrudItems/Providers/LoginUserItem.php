@@ -10,9 +10,11 @@ use Exceedone\Exment\Enums\SystemTableName;
 use Exceedone\Exment\Enums\Permission;
 use Exceedone\Exment\Enums\LoginType;
 use Exceedone\Exment\Services\Login\LoginService;
+use Illuminate\Http\RedirectResponse;
 
 /**
  * Login User item
+ * @phpstan-consistent-constructor
  */
 class LoginUserItem extends ProviderBase
 {
@@ -41,6 +43,7 @@ class LoginUserItem extends ProviderBase
 
         if ($has_loginuser) {
             $form->switchbool('reset_password', exmtrans('user.reset_password'))
+                /** @phpstan-ignore-next-line Negated boolean expression is always false. */
                         ->default(!$has_loginuser)
                         ->help(exmtrans('user.help.reset_password'))
                         ->attribute(['data-filter' => json_encode(['key' => 'use_loginuser', 'value' => '1'])]);
@@ -80,7 +83,7 @@ class LoginUserItem extends ProviderBase
                     , ['key' => 'reset_password', 'value' => "1"]
                     ])]);
         }
-    
+
         // "send_password"'s data-filter is whether $id is null or hasvalue
         $send_password_filter = [
             ['key' => 'use_loginuser', 'value' => '1'],
@@ -105,7 +108,7 @@ class LoginUserItem extends ProviderBase
         if (!\Exment::user()->hasPermission(Permission::LOGIN_USER)) {
             return;
         }
-        
+
         if (!LoginSetting::isUseDefaultLoginForm()) {
             return;
         }
@@ -118,7 +121,7 @@ class LoginUserItem extends ProviderBase
 
         return true;
     }
-    
+
     /**
      * saved event
      */
@@ -127,7 +130,7 @@ class LoginUserItem extends ProviderBase
         if (!\Exment::user()->hasPermission(Permission::LOGIN_USER)) {
             return;
         }
-        
+
         if (!LoginSetting::isUseDefaultLoginForm()) {
             return;
         }
@@ -160,7 +163,7 @@ class LoginUserItem extends ProviderBase
      *
      * @param array $data
      * @param null|string $id
-     * @return array|\Illuminate\Http\Response  if error, return redirect. if success, array.
+     * @return array|\Illuminate\Http\Response|RedirectResponse|void  if error, return redirect. if success, array.
      */
     protected function getLoginUserInfo($data, $id)
     {
@@ -175,13 +178,14 @@ class LoginUserItem extends ProviderBase
             }
             return;
         }
-        
+
         // if "$user" doesn't have "login_user" obj and checked "use_loginuser", create login user object.
         $has_change = false;
         $is_newuser = false;
         $password = null;
+        /** @phpstan-ignore-next-line Right side of && is always true. Maybe boolval is unessasary. */
         if (is_null($login_user) && boolval(array_get($data, 'use_loginuser'))) {
-            $login_user = new LoginUser;
+            $login_user = new LoginUser();
             $is_newuser = true;
             $login_user->base_user_id = $user ? $user->getUserId() : null;
             $has_change = true;
@@ -257,7 +261,7 @@ class LoginUserItem extends ProviderBase
             $tools->disableDelete();
         }
     }
-    
+
     protected function getLoginUser($base_user_id)
     {
         if (!isset($base_user_id)) {

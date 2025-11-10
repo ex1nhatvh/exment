@@ -42,7 +42,7 @@ class PluginType extends EnumBase
     public const EVENT = '12';
     public const VIEW = '13';
     public const CRUD = '14';
-    
+
     /**
      * Plugin type. Can call from endpoint.
      * @return array
@@ -200,7 +200,7 @@ class PluginType extends EnumBase
     /**
      * Get plugin class using plugin type
      *
-     * @param string $plugin_type
+     * @param string|null $plugin_type
      * @param Plugin $plugin
      * @param array $options
      * @return mixed
@@ -217,7 +217,7 @@ class PluginType extends EnumBase
 
         // get class name.
         $classname = static::getPluginClassName($plugin_type, $plugin, $options);
-    
+
         if (!is_null($classname)) {
             // if only one record, set $plugin_type
             if (count($plugin->plugin_types) == 1) {
@@ -245,6 +245,7 @@ class PluginType extends EnumBase
                             'event_type' => array_get($options, 'event_type'),
                             'page_type' => array_get($options, 'page_type'),
                             'is_modal' => array_get($options, 'is_modal'),
+                            'force_delete' => array_get($options, 'force_delete'),
                         ]
                     );
                 case PluginType::BATCH:
@@ -284,7 +285,7 @@ class PluginType extends EnumBase
         return null;
     }
 
-    
+
     /**
      * Get plugin class name
      *
@@ -292,7 +293,7 @@ class PluginType extends EnumBase
      * @param array $options
      * @return ?string
      */
-    public static function getPluginClassName($plugin_type, $plugin, $options = []) : ?string
+    public static function getPluginClassName($plugin_type, $plugin, $options = []): ?string
     {
         $options = array_merge([
             'custom_table' => null,
@@ -307,7 +308,7 @@ class PluginType extends EnumBase
 
         $classname = $plugin->getNameSpace($classShortName);
         $fuleFullPath = $plugin->getFullPath($classShortName . '.php');
-    
+
         if (\File::exists($fuleFullPath) && class_exists($classname)) {
             return $classname;
         }

@@ -1,4 +1,5 @@
 <?php
+
 namespace Exceedone\Exment\Services\Plugin;
 
 use Encore\Admin\Widgets\Box;
@@ -11,7 +12,7 @@ class PluginCrudController extends Controller
 {
     protected $pluginPage;
     protected $plugin;
-    
+
     public function __construct(?PluginCrudBase $pluginPage)
     {
         $this->pluginPage = $pluginPage;
@@ -21,7 +22,8 @@ class PluginCrudController extends Controller
     /**
      * Index. for grid.
      *
-     * @return void
+     * @param $endpoint
+     * @return \Illuminate\Http\RedirectResponse|Response
      */
     public function index($endpoint = null)
     {
@@ -37,7 +39,9 @@ class PluginCrudController extends Controller
     /**
      * Show. for detail.
      *
-     * @return void
+     * @param $endpoint
+     * @param $id
+     * @return \Illuminate\Http\RedirectResponse|Response
      */
     public function show($endpoint = null, $id = null)
     {
@@ -58,7 +62,8 @@ class PluginCrudController extends Controller
     /**
      * create.
      *
-     * @return void
+     * @param $endpoint
+     * @return \Illuminate\Http\RedirectResponse|Response
      */
     public function create($endpoint = null)
     {
@@ -71,11 +76,11 @@ class PluginCrudController extends Controller
         return (new $className($this->plugin, $targetClass))->create();
     }
 
-
     /**
      * store.
      *
-     * @return void
+     * @param $endpoint
+     * @return \Illuminate\Http\RedirectResponse|Response
      */
     public function store($endpoint = null)
     {
@@ -88,11 +93,12 @@ class PluginCrudController extends Controller
         return (new $className($this->plugin, $targetClass))->store();
     }
 
-
     /**
      * edit.
      *
-     * @return void
+     * @param $endpoint
+     * @param $id
+     * @return \Illuminate\Http\RedirectResponse|Response
      */
     public function edit($endpoint = null, $id = null)
     {
@@ -113,7 +119,9 @@ class PluginCrudController extends Controller
     /**
      * update.
      *
-     * @return void
+     * @param $endpoint
+     * @param $id
+     * @return \Illuminate\Http\RedirectResponse|Response
      */
     public function update($endpoint = null, $id = null)
     {
@@ -134,7 +142,9 @@ class PluginCrudController extends Controller
     /**
      * destroy.
      *
-     * @return void
+     * @param $endpoint
+     * @param $id
+     * @return \Illuminate\Http\RedirectResponse|Response
      */
     public function destroy($endpoint = null, $id = null)
     {
@@ -158,12 +168,12 @@ class PluginCrudController extends Controller
         ]);
     }
 
-    
     /**
      * Execute login oauth
      *
-     * @param Request $request
-     * @return void
+     * @param $endpoint
+     * @return \Illuminate\Http\RedirectResponse|Response
+     * @throws SsoLoginErrorException
      */
     public function oauth($endpoint = null)
     {
@@ -187,8 +197,9 @@ class PluginCrudController extends Controller
     /**
      * Execute login oauth callback
      *
-     * @param Request $request
-     * @return void
+     * @param $endpoint
+     * @return \Illuminate\Contracts\Foundation\Application|\Illuminate\Http\RedirectResponse|\Illuminate\Routing\Redirector|Response
+     * @throws SsoLoginErrorException
      */
     public function oauthcallback($endpoint = null)
     {
@@ -219,8 +230,9 @@ class PluginCrudController extends Controller
     /**
      * Execute oauth logout
      *
-     * @param Request $request
-     * @return void
+     * @param $endpoint
+     * @return \Illuminate\Contracts\Foundation\Application|\Illuminate\Http\RedirectResponse|\Illuminate\Routing\Redirector|Response
+     * @throws SsoLoginErrorException
      */
     public function oauthlogout($endpoint = null)
     {
@@ -245,14 +257,15 @@ class PluginCrudController extends Controller
     /**
      * No Auth page.
      *
-     * @return void
+     * @param $endpoint
+     * @return \Encore\Admin\Layout\Content|false|string
      */
     public function noauth($endpoint = null)
     {
         $targetClass = $this->getClass($endpoint, false, true);
-        
+
         $content = $targetClass->getContent();
-       
+
         if (!$targetClass->enableAccessCrud()) {
             admin_error($targetClass->getCannotAccessTitle(), $targetClass->getCannotAccessMessage());
         } else {
@@ -287,10 +300,11 @@ class PluginCrudController extends Controller
 
     /**
      * Get plugin target class.
-     * *If plugin supports multiple endpoint, get class using endpoint.*
-     *
+     * If plugin supports multiple endpoint, get class using endpoint.*
      * @param string|null $endpoint
-     * @return PluginCrudBase
+     * @param bool $isCheckAuthorize
+     * @param bool $isEmptyEndpoint
+     * @return \Illuminate\Contracts\Foundation\Application|\Illuminate\Http\RedirectResponse|\Illuminate\Routing\Redirector|mixed|true|null
      */
     protected function getClass(?string $endpoint, bool $isCheckAuthorize = true, bool $isEmptyEndpoint = false)
     {
@@ -306,14 +320,16 @@ class PluginCrudController extends Controller
         if ($isCheckAuthorize && ($response = $this->authorizePlugin($endpoint, $class)) instanceof Response) {
             return $response;
         }
-        
+
         return $class;
     }
 
     /**
      * Authorize plugin.
      *
-     * @return true|
+     * @param string|null $endpoint
+     * @param $targetClass
+     * @return \Illuminate\Contracts\Foundation\Application|\Illuminate\Http\RedirectResponse|\Illuminate\Routing\Redirector|true|void
      */
     protected function authorizePlugin(?string $endpoint, $targetClass)
     {

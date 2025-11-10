@@ -75,11 +75,10 @@ trait ModalTrait
         }
         return $this;
     }
+
     /**
-     * @param string|array $attr
-     * @param string       $value
-     *
-     * @return $this
+     * @param $attributes
+     * @return string
      */
     protected function convert_attribute($attributes)
     {
@@ -101,7 +100,7 @@ trait ModalTrait
             'id' => 'modal-form',
             'class' => 'modal fade',
         ], $this->modalAttributes);
-        
+
         $this->modalInnerAttributes = array_merge([
             'role' => 'document',
             'class' => 'exment-modal-dialog modal-dialog modal-lg',

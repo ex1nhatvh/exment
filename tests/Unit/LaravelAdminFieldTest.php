@@ -10,10 +10,13 @@ use Tests\TestCase;
 class LaravelAdminFieldTest extends TestCase
 {
     use TestTrait;
-    
+
 
     // number ----------------------------------------------------
 
+    /**
+     * @return void
+     */
     public function testNumberSuccess1()
     {
         $this->_testLaravelField(function ($form) {
@@ -21,6 +24,9 @@ class LaravelAdminFieldTest extends TestCase
         }, 1, true);
     }
 
+    /**
+     * @return void
+     */
     public function testNumberSuccess2()
     {
         $this->_testLaravelField(function ($form) {
@@ -28,6 +34,9 @@ class LaravelAdminFieldTest extends TestCase
         }, "1", true);
     }
 
+    /**
+     * @return void
+     */
     public function testNumberSuccess3()
     {
         $this->_testLaravelField(function ($form) {
@@ -35,6 +44,9 @@ class LaravelAdminFieldTest extends TestCase
         }, null, true);
     }
 
+    /**
+     * @return void
+     */
     public function testNumberError1()
     {
         $this->_testLaravelField(function ($form) {
@@ -43,6 +55,10 @@ class LaravelAdminFieldTest extends TestCase
             'foo' => [$this->getErrorMessage('numeric', 'Foo')],
         ]);
     }
+
+    /**
+     * @return void
+     */
     public function testNumberError2()
     {
         $this->_testLaravelField(function ($form) {
@@ -53,7 +69,9 @@ class LaravelAdminFieldTest extends TestCase
     }
 
 
-
+    /**
+     * @return void
+     */
     public function testNumberMinSuccess1()
     {
         $this->_testLaravelField(function ($form) {
@@ -62,6 +80,9 @@ class LaravelAdminFieldTest extends TestCase
         }, 0, true);
     }
 
+    /**
+     * @return void
+     */
     public function testNumberMinSuccess2()
     {
         $this->_testLaravelField(function ($form) {
@@ -69,7 +90,10 @@ class LaravelAdminFieldTest extends TestCase
             ->min(0);
         }, 1, true);
     }
-    
+
+    /**
+     * @return void
+     */
     public function testNumberMinError()
     {
         $this->_testLaravelField(function ($form) {
@@ -81,7 +105,9 @@ class LaravelAdminFieldTest extends TestCase
     }
 
 
-
+    /**
+     * @return void
+     */
     public function testNumberMaxSuccess1()
     {
         $this->_testLaravelField(function ($form) {
@@ -90,6 +116,9 @@ class LaravelAdminFieldTest extends TestCase
         }, 100, true);
     }
 
+    /**
+     * @return void
+     */
     public function testNumberMaxSuccess2()
     {
         $this->_testLaravelField(function ($form) {
@@ -97,7 +126,10 @@ class LaravelAdminFieldTest extends TestCase
                 ->max(100);
         }, 1, true);
     }
-    
+
+    /**
+     * @return void
+     */
     public function testNumberMaxError()
     {
         $this->_testLaravelField(function ($form) {
@@ -109,7 +141,9 @@ class LaravelAdminFieldTest extends TestCase
     }
 
 
-
+    /**
+     * @return void
+     */
     public function testNumberBetweenSuccess1()
     {
         $this->_testLaravelField(function ($form) {
@@ -118,6 +152,9 @@ class LaravelAdminFieldTest extends TestCase
         }, 0, true);
     }
 
+    /**
+     * @return void
+     */
     public function testNumberBetweenSuccess2()
     {
         $this->_testLaravelField(function ($form) {
@@ -125,7 +162,10 @@ class LaravelAdminFieldTest extends TestCase
             ->between(0, 100);
         }, 1, true);
     }
-    
+
+    /**
+     * @return void
+     */
     public function testNumberBetweenSuccess3()
     {
         $this->_testLaravelField(function ($form) {
@@ -133,7 +173,10 @@ class LaravelAdminFieldTest extends TestCase
             ->between(0, 100);
         }, 99, true);
     }
-    
+
+    /**
+     * @return void
+     */
     public function testNumberBetweenSuccess4()
     {
         $this->_testLaravelField(function ($form) {
@@ -141,7 +184,10 @@ class LaravelAdminFieldTest extends TestCase
             ->between(0, 100);
         }, 100, true);
     }
-    
+
+    /**
+     * @return void
+     */
     public function testNumberBetweenError1()
     {
         $this->_testLaravelField(function ($form) {
@@ -152,6 +198,9 @@ class LaravelAdminFieldTest extends TestCase
         ]);
     }
 
+    /**
+     * @return void
+     */
     public function testNumberBetweenError2()
     {
         $this->_testLaravelField(function ($form) {
@@ -166,6 +215,10 @@ class LaravelAdminFieldTest extends TestCase
 
 
     // select ----------------------------------------------------
+
+    /**
+     * @return void
+     */
     public function testSelectSuccess1()
     {
         $this->_testLaravelField(function ($form) {
@@ -174,6 +227,9 @@ class LaravelAdminFieldTest extends TestCase
         }, 'x', true);
     }
 
+    /**
+     * @return void
+     */
     public function testSelectSuccess2()
     {
         $this->_testLaravelField(function ($form) {
@@ -182,6 +238,9 @@ class LaravelAdminFieldTest extends TestCase
         }, 'y', true);
     }
 
+    /**
+     * @return void
+     */
     public function testSelectSuccess3()
     {
         $this->_testLaravelField(function ($form) {
@@ -190,6 +249,9 @@ class LaravelAdminFieldTest extends TestCase
         }, null, true);
     }
 
+    /**
+     * @return void
+     */
     public function testSelectError1()
     {
         $this->_testLaravelField(function ($form) {
@@ -201,6 +263,9 @@ class LaravelAdminFieldTest extends TestCase
     }
 
 
+    /**
+     * @return void
+     */
     public function testSelectError2()
     {
         $this->_testLaravelField(function ($form) {
@@ -211,10 +276,14 @@ class LaravelAdminFieldTest extends TestCase
         ]);
     }
 
-    
+
 
 
     // multipleSelect ----------------------------------------------------
+
+    /**
+     * @return void
+     */
     public function testMultipleSelectSuccess1()
     {
         $this->_testLaravelField(function ($form) {
@@ -223,6 +292,9 @@ class LaravelAdminFieldTest extends TestCase
         }, 'x', true);
     }
 
+    /**
+     * @return void
+     */
     public function testMultipleSelectSuccess2()
     {
         $this->_testLaravelField(function ($form) {
@@ -231,6 +303,9 @@ class LaravelAdminFieldTest extends TestCase
         }, ['y'], true);
     }
 
+    /**
+     * @return void
+     */
     public function testMultipleSelectSuccess3()
     {
         $this->_testLaravelField(function ($form) {
@@ -239,6 +314,9 @@ class LaravelAdminFieldTest extends TestCase
         }, ['x', 'y'], true);
     }
 
+    /**
+     * @return void
+     */
     public function testMultipleSelectSuccess4()
     {
         $this->_testLaravelField(function ($form) {
@@ -247,6 +325,9 @@ class LaravelAdminFieldTest extends TestCase
         }, null, true);
     }
 
+    /**
+     * @return void
+     */
     public function testMultipleSelectSuccess5()
     {
         $this->_testLaravelField(function ($form) {
@@ -255,6 +336,9 @@ class LaravelAdminFieldTest extends TestCase
         }, [], true);
     }
 
+    /**
+     * @return void
+     */
     public function testMultipleSelectError1()
     {
         $this->_testLaravelField(function ($form) {
@@ -265,6 +349,9 @@ class LaravelAdminFieldTest extends TestCase
         ]);
     }
 
+    /**
+     * @return void
+     */
     public function testMultipleSelectError2()
     {
         $this->_testLaravelField(function ($form) {
@@ -277,6 +364,10 @@ class LaravelAdminFieldTest extends TestCase
 
 
     // switch ----------------------------------------------------
+
+    /**
+     * @return void
+     */
     public function testSwitchSuccess1()
     {
         $this->_testLaravelField(function ($form) {
@@ -284,6 +375,9 @@ class LaravelAdminFieldTest extends TestCase
         }, 0, true);
     }
 
+    /**
+     * @return void
+     */
     public function testSwitchSuccess2()
     {
         $this->_testLaravelField(function ($form) {
@@ -291,6 +385,9 @@ class LaravelAdminFieldTest extends TestCase
         }, "1", true);
     }
 
+    /**
+     * @return void
+     */
     public function testSwitchSuccess4()
     {
         $this->_testLaravelField(function ($form) {
@@ -298,6 +395,9 @@ class LaravelAdminFieldTest extends TestCase
         }, null, true);
     }
 
+    /**
+     * @return void
+     */
     public function testSwitchError1()
     {
         $this->_testLaravelField(function ($form) {
@@ -307,6 +407,9 @@ class LaravelAdminFieldTest extends TestCase
         ]);
     }
 
+    /**
+     * @return void
+     */
     public function testSwitchError2()
     {
         $this->_testLaravelField(function ($form) {
@@ -318,6 +421,10 @@ class LaravelAdminFieldTest extends TestCase
 
 
     // switchbool ----------------------------------------------------
+
+    /**
+     * @return void
+     */
     public function testSwitchBoolSuccess1()
     {
         $this->_testLaravelField(function ($form) {
@@ -325,6 +432,9 @@ class LaravelAdminFieldTest extends TestCase
         }, 0, true);
     }
 
+    /**
+     * @return void
+     */
     public function testSwitchBoolSuccess2()
     {
         $this->_testLaravelField(function ($form) {
@@ -332,6 +442,9 @@ class LaravelAdminFieldTest extends TestCase
         }, "1", true);
     }
 
+    /**
+     * @return void
+     */
     public function testSwitchBoolSuccess3()
     {
         $this->_testLaravelField(function ($form) {
@@ -339,6 +452,9 @@ class LaravelAdminFieldTest extends TestCase
         }, false, true);
     }
 
+    /**
+     * @return void
+     */
     public function testSwitchBoolSuccess4()
     {
         $this->_testLaravelField(function ($form) {
@@ -346,6 +462,9 @@ class LaravelAdminFieldTest extends TestCase
         }, true, true);
     }
 
+    /**
+     * @return void
+     */
     public function testSwitchBoolSuccess5()
     {
         $this->_testLaravelField(function ($form) {
@@ -353,6 +472,9 @@ class LaravelAdminFieldTest extends TestCase
         }, null, true);
     }
 
+    /**
+     * @return void
+     */
     public function testSwitchBoolError1()
     {
         $this->_testLaravelField(function ($form) {
@@ -362,6 +484,9 @@ class LaravelAdminFieldTest extends TestCase
         ]);
     }
 
+    /**
+     * @return void
+     */
     public function testSwitchBoolError2()
     {
         $this->_testLaravelField(function ($form) {
@@ -373,6 +498,10 @@ class LaravelAdminFieldTest extends TestCase
 
 
     // checkbox ----------------------------------------------------
+
+    /**
+     * @return void
+     */
     public function testCheckboxSuccess1()
     {
         $this->_testLaravelField(function ($form) {
@@ -381,6 +510,9 @@ class LaravelAdminFieldTest extends TestCase
         }, 'x', true);
     }
 
+    /**
+     * @return void
+     */
     public function testCheckboxSuccess2()
     {
         $this->_testLaravelField(function ($form) {
@@ -389,6 +521,9 @@ class LaravelAdminFieldTest extends TestCase
         }, ['y'], true);
     }
 
+    /**
+     * @return void
+     */
     public function testCheckboxSuccess3()
     {
         $this->_testLaravelField(function ($form) {
@@ -397,6 +532,9 @@ class LaravelAdminFieldTest extends TestCase
         }, ['x', 'y'], true);
     }
 
+    /**
+     * @return void
+     */
     public function testCheckboxSuccess4()
     {
         $this->_testLaravelField(function ($form) {
@@ -405,6 +543,9 @@ class LaravelAdminFieldTest extends TestCase
         }, null, true);
     }
 
+    /**
+     * @return void
+     */
     public function testCheckboxSuccess5()
     {
         $this->_testLaravelField(function ($form) {
@@ -413,6 +554,9 @@ class LaravelAdminFieldTest extends TestCase
         }, [], true);
     }
 
+    /**
+     * @return void
+     */
     public function testCheckboxError1()
     {
         $this->_testLaravelField(function ($form) {
@@ -423,6 +567,9 @@ class LaravelAdminFieldTest extends TestCase
         ]);
     }
 
+    /**
+     * @return void
+     */
     public function testCheckboxError2()
     {
         $this->_testLaravelField(function ($form) {
@@ -434,8 +581,12 @@ class LaravelAdminFieldTest extends TestCase
     }
 
 
-    
+
     // checkboxone ----------------------------------------------------
+
+    /**
+     * @return void
+     */
     public function testCheckboxOneSuccess1()
     {
         $this->_testLaravelField(function ($form) {
@@ -444,6 +595,9 @@ class LaravelAdminFieldTest extends TestCase
         }, 'x', true);
     }
 
+    /**
+     * @return void
+     */
     public function testCheckboxOneSuccess2()
     {
         $this->_testLaravelField(function ($form) {
@@ -452,6 +606,9 @@ class LaravelAdminFieldTest extends TestCase
         }, null, true);
     }
 
+    /**
+     * @return void
+     */
     public function testCheckboxOneError1()
     {
         $this->_testLaravelField(function ($form) {
@@ -462,6 +619,9 @@ class LaravelAdminFieldTest extends TestCase
         ]);
     }
 
+    /**
+     * @return void
+     */
     public function testCheckboxOneError2()
     {
         $this->_testLaravelField(function ($form) {
@@ -472,10 +632,14 @@ class LaravelAdminFieldTest extends TestCase
         ]);
     }
 
-    
 
-    
+
+
     // radio ----------------------------------------------------
+
+    /**
+     * @return void
+     */
     public function testRadioSuccess1()
     {
         $this->_testLaravelField(function ($form) {
@@ -484,6 +648,9 @@ class LaravelAdminFieldTest extends TestCase
         }, 'x', true);
     }
 
+    /**
+     * @return void
+     */
     public function testRadioSuccess2()
     {
         $this->_testLaravelField(function ($form) {
@@ -492,6 +659,9 @@ class LaravelAdminFieldTest extends TestCase
         }, null, true);
     }
 
+    /**
+     * @return void
+     */
     public function testRadioError1()
     {
         $this->_testLaravelField(function ($form) {
@@ -502,6 +672,9 @@ class LaravelAdminFieldTest extends TestCase
         ]);
     }
 
+    /**
+     * @return void
+     */
     public function testRadioError2()
     {
         $this->_testLaravelField(function ($form) {
@@ -512,15 +685,13 @@ class LaravelAdminFieldTest extends TestCase
         ]);
     }
 
-
-
-
     /**
      * Execute laravel admin's test.
      *
+     * @param \Closure $fieldOptionCallback
      * @param mixed $value validation value.
-     * @param mixed $testResult expects test result.
-     * @param \Closure $fieldOptionCallback setting field to form.
+     * @param bool $testResult expects test result.
+     * @param array<mixed> $errors setting field to form.
      * @return void
      */
     protected function _testLaravelField(\Closure $fieldOptionCallback, $value, bool $testResult, array $errors = [])
@@ -530,14 +701,14 @@ class LaravelAdminFieldTest extends TestCase
 
         $this->initAllTest();
 
-        $form = new Form;
+        $form = new Form();
 
         $fieldOptionCallback($form);
 
         $messages = $form->validationMessages([
             'foo' => $value,
         ]);
-        
+
         if ($testResult === true) {
             $this->assertTrue($messages === false, 'This test expects true, but result is false. message is ' . json_encode($messages));
         } else {
@@ -546,6 +717,12 @@ class LaravelAdminFieldTest extends TestCase
         }
     }
 
+    /**
+     * @param string $validatekey
+     * @param string $column
+     * @param array<string, int> $messages
+     * @return mixed
+     */
     protected function getErrorMessage($validatekey, $column, array $messages = [])
     {
         $array = array_merge($messages, ['attribute' => $column]);
@@ -555,7 +732,7 @@ class LaravelAdminFieldTest extends TestCase
     /**
      * Get select option
      *
-     * @return array
+     * @return array<string, string>
      */
     protected function getSelectOption()
     {

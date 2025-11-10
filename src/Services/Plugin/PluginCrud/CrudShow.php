@@ -1,4 +1,5 @@
 <?php
+
 namespace Exceedone\Exment\Services\Plugin\PluginCrud;
 
 use Encore\Admin\Widgets\Form;
@@ -13,25 +14,25 @@ use Exceedone\Exment\Form\Tools;
 class CrudShow extends CrudBase
 {
     /**
-     * Show. for detil.
+     * Show. for detail.
      *
-     * @param Request $request
-     * @return void
+     * @param $id
+     * @return mixed
      */
     public function show($id)
     {
         $content = $this->pluginClass->getContent();
-        
+
         $content->body($this->detail($id)->render());
 
         return $content;
     }
 
-    
     /**
      * Make a show builder.
      *
-     * @return Form
+     * @param $id
+     * @return Box
      */
     protected function detail($id)
     {
@@ -40,9 +41,9 @@ class CrudShow extends CrudBase
         $form = new WidgetForm((array)$data);
         $form->disableReset();
         $form->disableSubmit();
-        
-        $this->setShowColumn($form);
 
+        $this->setShowColumn($form);
+        /** @phpstan-ignore-next-line constructor expects string, Encore\Admin\Widgets\Form given */
         $box = new Box(trans('admin.detail'), $form);
         $box->style('info');
         $this->setShowTools($id, $box);
@@ -74,7 +75,8 @@ class CrudShow extends CrudBase
     /**
      * Set form tools.
      *
-     * @param Box $Box
+     * @param $id
+     * @param Box $box
      * @return void
      */
     protected function setShowTools($id, Box $box)
@@ -84,7 +86,7 @@ class CrudShow extends CrudBase
         if ($oauthLogoutView) {
             $box->tools($oauthLogoutView->render());
         }
-        
+
         if ($this->pluginClass->enableDeleteAll() && $this->pluginClass->enableDelete($id)) {
             $box->tools((new Tools\DeleteButton(admin_url($this->getFullUrl($id))))->render());
         }

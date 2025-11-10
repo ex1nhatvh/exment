@@ -33,6 +33,20 @@ class BatchUpdate extends BatchAction
         }
     }
 
+    /**
+     * Set title for this action.
+     *
+     * @param string $title
+     *
+     * @return $this
+     */
+    public function setTitle($title)
+    {
+        $this->title = esc_html($title);
+
+        return $this;
+    }
+
     protected function scriptSwal($suuid)
     {
         $url = url($this->resource);
@@ -41,6 +55,7 @@ class BatchUpdate extends BatchAction
         $cancel = trans('admin.cancel');
 
         $label = $this->operation->getOption('button_label') ?? $this->operation->operation_name;
+        $label = esc_html($label);
         $text = exmtrans('common.message.confirm_execute', $label);
 
         return <<<EOT
@@ -63,7 +78,7 @@ $('{$this->getElementClass()}').on('click', function() {
 
 EOT;
     }
-    
+
     protected function scriptModal($suuid)
     {
         $url = url($this->resource);

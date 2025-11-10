@@ -5,6 +5,22 @@ namespace Exceedone\Exment\Model;
 use Exceedone\Exment\Enums\WorkflowType;
 use Exceedone\Exment\Enums\NotifyTrigger;
 
+/**
+ * @phpstan-consistent-constructor
+ * @property mixed $workflow_type
+ * @property mixed $workflow_tables
+ * @property mixed $workflow_statuses
+ * @property mixed $workflow_view_name
+ * @property mixed $workflow_actions
+ * @property mixed $start_status_name
+ * @property mixed $setting_completed_flg
+ * @property mixed $notifies
+ * @property mixed $options
+ * @property mixed $created_user_id
+ * @property mixed $updated_user_id
+ * @property mixed $created_at
+ * @property mixed $updated_at
+ */
 class Workflow extends ModelBase
 {
     use Traits\AutoSUuidTrait;
@@ -36,7 +52,7 @@ class Workflow extends ModelBase
     {
         return $this->hasMany(WorkflowAction::class, 'workflow_id');
     }
-        
+
     public function notifies()
     {
         return $this->hasMany(Notify::class, 'target_id')
@@ -47,14 +63,14 @@ class Workflow extends ModelBase
     protected static function boot()
     {
         parent::boot();
-        
+
         // delete event
         static::deleting(function ($model) {
             // Delete items
             $model->deletingChildren();
         });
     }
-    
+
     /**
      * Delete children items
      */
@@ -72,7 +88,7 @@ class Workflow extends ModelBase
 
             $this->{$key}()->delete();
         }
-        
+
         foreach ($this->workflow_actions()->withTrashed()->get() as $item) {
             $item->deletingChildren();
         }
@@ -115,7 +131,7 @@ class Workflow extends ModelBase
     {
         return static::getEloquentCache($id, $withs);
     }
-    
+
     /**
      * Get status string
      *
@@ -129,7 +145,7 @@ class Workflow extends ModelBase
     /**
      * Get status options. contains start and end.
      *
-     * @return \Illuminate\Support\Collection
+     * @return \Illuminate\Support\Collection|null
      */
     public function getStatusOptions($onlyStart = false)
     {
@@ -175,7 +191,7 @@ class Workflow extends ModelBase
         if (!$custom_table) {
             return null;
         }
-        
+
         $today = \Carbon\Carbon::today();
 
         $workflowTable = WorkflowTable::allRecordsCache(function ($record) use ($custom_table, $today) {
@@ -199,7 +215,7 @@ class Workflow extends ModelBase
             if (!$workflow || !boolval($workflow->setting_completed_flg)) {
                 return false;
             }
-            
+
             return true;
         }, false)->first();
 
@@ -278,7 +294,7 @@ class Workflow extends ModelBase
             return boolval($workflow->setting_completed_flg);
         })->count() > 0;
     }
-    
+
     /**
      * Whether this model disable delete
      *
@@ -288,11 +304,11 @@ class Workflow extends ModelBase
     {
         return boolval($this->setting_completed_flg);
     }
-    
+
     /**
      * Target Custom Table
      *
-     * @return boolean
+     * @return boolean|null
      */
     public function getTargetTableAttribute()
     {
@@ -310,7 +326,7 @@ class Workflow extends ModelBase
      *
      * @return Workflow
      */
-    public function appendStartStatus() : Workflow
+    public function appendStartStatus(): Workflow
     {
         $this->workflow_statuses->prepend(WorkflowStatus::getWorkflowStartStatus($this));
 

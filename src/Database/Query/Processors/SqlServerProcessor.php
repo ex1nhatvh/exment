@@ -10,7 +10,7 @@ class SqlServerProcessor extends BaseSqlServerProcessor
      * Process the results of a get version.
      *
      * @param  array  $results
-     * @return array
+     * @return string|null
      */
     public function processGetVersion($results)
     {
@@ -36,7 +36,7 @@ class SqlServerProcessor extends BaseSqlServerProcessor
             return ((object) $result)->table_name;
         }, $results);
     }
-    
+
     /**
      * Process the results of a Column Definitions query.
      *
@@ -55,7 +55,7 @@ class SqlServerProcessor extends BaseSqlServerProcessor
             ];
         })->toArray();
     }
-    
+
     /**
      * Process the results of a index listing query.
      *

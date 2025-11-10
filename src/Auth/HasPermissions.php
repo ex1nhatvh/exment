@@ -1,6 +1,8 @@
 <?php
+
 namespace Exceedone\Exment\Auth;
 
+use Exceedone\Exment\Model\RoleGroupPermission;
 use Illuminate\Support\Collection;
 use Illuminate\Auth\Authenticatable;
 use Exceedone\Exment\Auth\Permission as AuthPermission;
@@ -121,7 +123,7 @@ trait HasPermissions
             if (boolval($plugin->getOption('all_user_enabled'))) {
                 return true;
             }
-         
+
             // if not check permission for access, return true
             $plugin_types = array_get($plugin, 'plugin_types');
             if (!array_intersect($plugin_types, PluginType::PLUGIN_TYPE_FILTER_ACCESSIBLE())) {
@@ -176,7 +178,7 @@ trait HasPermissions
      *
      * @return Collection
      */
-    public function allPermissions() : Collection
+    public function allPermissions(): Collection
     {
         // get request session about role
         $roles = System::requestSession(Define::SYSTEM_KEY_SESSION_AUTHORITY, function () {
@@ -212,15 +214,18 @@ trait HasPermissions
             }
         }
 
-        return collect($permissions);
+        /** @var Collection $collection */
+        $collection = collect($permissions);
+        return $collection;
     }
 
     /**
      * Get all has permission tables of user.
      *
+     * @param $role_key
      * @return Collection
      */
-    public function allHasPermissionTables($role_key) : Collection
+    public function allHasPermissionTables($role_key): Collection
     {
         $results = [];
         // get tables
@@ -231,7 +236,9 @@ trait HasPermissions
                 $results[] = $custom_table;
             }
         }
-        return collect($results);
+        /** @var Collection $collection */
+        $collection = collect($results);
+        return $collection;
     }
 
     /**
@@ -243,7 +250,7 @@ trait HasPermissions
      *
      * @return bool
      */
-    public function visible($item, $target_tables = []) : bool
+    public function visible($item, $target_tables = []): bool
     {
         if (is_string($item)) {
             $item = [
@@ -325,7 +332,7 @@ trait HasPermissions
                 $results[] = [SystemTableName::ORGANIZATION, $id];
             });
         }
-        
+
         return $results;
     }
 
@@ -355,8 +362,10 @@ trait HasPermissions
         // get permission_details for all tables. --------------------------------------------------
         $permission_details = [];
         $permissions = [];
-       
+
+        $tables = CustomTable::allRecords();
         foreach ($roles as $role) {
+            /** @var RoleGroupPermission $role_group_permission */
             foreach ($role->role_group_permissions as $role_group_permission) {
                 if (!isset($role_group_permission->permissions)) {
                     continue;
@@ -365,7 +374,9 @@ trait HasPermissions
                     continue;
                 }
 
-                $custom_table = CustomTable::getEloquent($role_group_permission->role_group_target_id);
+                $custom_table = $tables->first(function($item) use ($role_group_permission) {
+                    return $item->id == $role_group_permission->role_group_target_id;
+                });
                 if (!isset($custom_table)) {
                     continue;
                 }
@@ -382,8 +393,6 @@ trait HasPermissions
             }
         }
 
-        // check table all data
-        $tables = CustomTable::allRecords();
         foreach ($tables as $table) {
             $table_name = $table->table_name;
             if (boolval($table->getOption('all_user_editable_flg'))) {
@@ -411,8 +420,10 @@ trait HasPermissions
         // get permission_details for all tables. --------------------------------------------------
         $permission_details = [];
         $permissions = [];
-       
+        $plugins = Plugin::allRecords();
+
         foreach ($roles as $role) {
+            /** @var RoleGroupPermission $role_group_permission */
             foreach ($role->role_group_permissions as $role_group_permission) {
                 if (!isset($role_group_permission->permissions)) {
                     continue;
@@ -421,7 +432,9 @@ trait HasPermissions
                     continue;
                 }
 
-                $plugin = Plugin::getEloquent($role_group_permission->role_group_target_id);
+                $plugin = $plugins->first(function($item) use ($role_group_permission) {
+                    return $item->id == $role_group_permission->role_group_target_id;
+                });
                 if (!isset($plugin)) {
                     continue;
                 }
@@ -448,7 +461,7 @@ trait HasPermissions
     {
         // get all permissons for system. --------------------------------------------------
         $roles = $this->getPermissionItems();
-        
+
         // get roles records
         $permissions = [];
         foreach ($roles as $role) {
@@ -475,7 +488,7 @@ trait HasPermissions
         })) {
             $permissions['system'] = "1";
         }
-        
+
         return $permissions;
     }
 
@@ -483,7 +496,7 @@ trait HasPermissions
     {
         $enum = JoinedOrgFilterType::getEnum(System::org_joined_type_role_group(), JoinedOrgFilterType::ALL);
         $organization_ids = $this->getOrganizationIdsForQuery($enum);
-        
+
         // get all permissons for system. --------------------------------------------------
         return RoleGroup::getHasPermissionRoleGroup($this->getUserId(), $organization_ids);
     }

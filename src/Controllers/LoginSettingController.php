@@ -6,6 +6,7 @@ use Encore\Admin\Form;
 use Encore\Admin\Grid;
 use Encore\Admin\Widgets\Box;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Encore\Admin\Widgets\Form as WidgetForm;
 use Exceedone\Exment\Form\Tools;
@@ -27,16 +28,18 @@ use Exceedone\Exment\Services\Login as LoginServiceBase;
 use Encore\Admin\Layout\Content;
 use Carbon\Carbon;
 use Exceedone\Exment\Exceptions\NoMailTemplateException;
+use Symfony\Component\Mailer\Exception\TransportExceptionInterface;
 
 class LoginSettingController extends AdminControllerBase
 {
-    use HasResourceActions, InitializeFormTrait;
+    use HasResourceActions;
+    use InitializeFormTrait;
 
     public function __construct()
     {
         $this->setPageInfo(exmtrans("login.header"), exmtrans("login.header"), exmtrans("login.description"), 'fa-sign-in');
     }
-    
+
     /**
      * Index interface.
      *
@@ -65,7 +68,7 @@ class LoginSettingController extends AdminControllerBase
      */
     protected function grid()
     {
-        $grid = new Grid(new LoginSetting);
+        $grid = new Grid(new LoginSetting());
         $grid->column('login_type', exmtrans('login.login_type'))->display(function ($v) {
             $enum = LoginType::getEnum($v);
             return $enum ? $enum->transKey('login.login_type_options') : null;
@@ -74,7 +77,7 @@ class LoginSettingController extends AdminControllerBase
         $grid->column('active_flg', exmtrans("plugin.active_flg"))->display(function ($active_flg) {
             return \Exment::getTrueMark($active_flg);
         })->escape(false);
-        
+
         $grid->filter(function ($filter) {
             $filter->disableIdFilter();
 
@@ -100,7 +103,7 @@ class LoginSettingController extends AdminControllerBase
      */
     protected function form($id = null)
     {
-        $form = new Form(new LoginSetting);
+        $form = new Form(new LoginSetting());
         $login_setting = LoginSetting::getEloquent($id);
 
         $errors = $this->checkLibraries();
@@ -117,7 +120,7 @@ class LoginSettingController extends AdminControllerBase
         } else {
             $form->display('login_type_text', exmtrans('login.login_type'));
             $form->hidden('login_type');
-                
+
             $form->display('active_flg', exmtrans("plugin.active_flg"))
             ->customFormat(function ($value) {
                 return getYesNo($value);
@@ -137,7 +140,7 @@ class LoginSettingController extends AdminControllerBase
             if (!isset($login_setting) || $login_setting->login_type == LoginType::LDAP) {
                 LoginServiceBase\Ldap\LdapService::setLdapForm($form, $login_setting, $errors);
             }
-            
+
 
 
             if (!isset($login_setting) || in_array($login_setting->login_type, [LoginType::SAML, LoginType::LDAP])) {
@@ -151,7 +154,7 @@ class LoginSettingController extends AdminControllerBase
                 foreach ($user_custom_columns as $user_custom_column) {
                     $field = $form->text("mapping_column_{$user_custom_column->column_name}", $user_custom_column->column_view_name)
                         ->attribute(['data-filter' => json_encode(['key' => 'login_type', 'parent' => 1, 'value' => [LoginType::SAML, LoginType::LDAP]])]);
-                    
+
                     if ($user_custom_column->required) {
                         $field->required();
                     }
@@ -183,19 +186,19 @@ class LoginSettingController extends AdminControllerBase
                 return RoleGroup::all()->pluck('role_group_view_name', 'id');
             })
             ->attribute(['data-filter' => json_encode(['key' => 'options_sso_jit', 'value' => '1'])]);
-            
+
             $form->switchbool('update_user_info', exmtrans("login.update_user_info"))
             ->help(exmtrans("login.help.update_user_info"))
             ->default(false);
 
-            
+
             $form->exmheader(exmtrans('login.login_button'))->hr();
-        
+
             $form->text('login_button_label', exmtrans('login.login_button_label'))
             ->default(null)
             ->rules('max:30')
             ->help(exmtrans('login.help.login_button_label'));
-            
+
             $form->icon('login_button_icon', exmtrans('login.login_button_icon'))
             ->default(null)
             ->help(exmtrans('login.help.login_button_icon'))
@@ -232,6 +235,7 @@ class LoginSettingController extends AdminControllerBase
                 $provider_name = array_get($request->old(), 'options.oauth_provider_type') == 'other' ? array_get($request->old(), 'options.oauth_provider_name') : array_get($request->old(), 'options.oauth_provider_type');
             }
             if (!is_nullorempty($provider_name)) {
+
                 LoginServiceBase\OAuth\OAuthService::setLoginSettingForm($provider_name, $form);
             }
             // Form options area -- End
@@ -248,7 +252,7 @@ class LoginSettingController extends AdminControllerBase
 
         $form->tools(function (Form\Tools $tools) use ($login_setting) {
             $tools->append(new Tools\SystemChangePageMenu());
-            
+
             if (isset($login_setting) && !is_null($className = $login_setting->getLoginServiceClassName())) {
                 $tools->append(new Tools\ModalMenuButton(
                     route('exment.logintest_modal', ['id' => $login_setting->id]),
@@ -262,7 +266,7 @@ class LoginSettingController extends AdminControllerBase
                 $className::appendActivateSwalButton($tools, $login_setting);
             }
         });
-        
+
         $form->saved(function (Form $form) {
             return redirect($this->getEditUrl($form->model()->id));
         });
@@ -293,33 +297,38 @@ class LoginSettingController extends AdminControllerBase
             $errors[] = LoginType::LDAP();
         }
 
-        return collect($errors)->mapWithKeys(function ($error) {
+        /** @var Collection $collection */
+        $collection =  collect($errors)->mapWithKeys(function ($error) {
             return [$error->getValue() => '<span class="red">' . exmtrans('login.message.not_install_library', [
                 'name' => $error->transKey('login.login_type_options'),
                 'url' => getManualUrl('login_'.$error->getValue()),
             ]) . '</span>'];
         });
+        return $collection;
     }
-    
+
     /**
      * Send data for global setting
+     *
      * @param Request $request
+     * @return Box
      */
     protected function globalSettingBox(Request $request)
     {
         $form = $this->globalSettingForm($request);
+        /** @phpstan-ignore-next-line constructor expects string, Encore\Admin\Widgets\Form given */
         $box = new Box(exmtrans('common.detail_setting'), $form);
         return $box;
     }
 
-    
+
     /**
      * Get form for global setting
      *
      * @param Request $request
      * @return WidgetForm
      */
-    protected function globalSettingForm(Request $request) : WidgetForm
+    protected function globalSettingForm(Request $request): WidgetForm
     {
         $form = new WidgetForm(System::get_system_values(['login']));
         $form->disableReset();
@@ -368,8 +377,8 @@ class LoginSettingController extends AdminControllerBase
             ->options($fileOption)
             ->removable()
             ->attribute(['accept' => "image/*"])
-            ;
-            
+        ;
+
         $form->select('login_page_image_type', exmtrans("system.login_page_image_type"))
             ->help(exmtrans("system.help.login_page_image_type"))
             ->disableClear()
@@ -391,15 +400,18 @@ class LoginSettingController extends AdminControllerBase
             $form->textarea('sso_accept_mail_domain', exmtrans('login.sso_accept_mail_domain'))
                 ->help(exmtrans("login.help.sso_accept_mail_domain"))
                 ->rows(3)
-                ;
+            ;
         }
 
         return $form;
     }
-    
+
     /**
      * Send data for global setting
+     *
      * @param Request $request
+     * @return \Illuminate\Contracts\Foundation\Application|\Illuminate\Http\RedirectResponse|\Illuminate\Routing\Redirector|true
+     * @throws \Throwable
      */
     public function postGlobal(Request $request)
     {
@@ -432,8 +444,8 @@ class LoginSettingController extends AdminControllerBase
      * Showing login test modal
      *
      * @param Request $request
-     * @param string|int|null $id
-     * @return void
+     * @param mixed $id
+     * @return \Symfony\Component\HttpFoundation\Response
      */
     public function loginTestModal(Request $request, $id)
     {
@@ -453,13 +465,13 @@ class LoginSettingController extends AdminControllerBase
      * execute login test for form
      *
      * @param Request $request
-     * @param string|int|null $id
-     * @return void
+     * @param mixed $id
+     * @return mixed
      */
     public function loginTestForm(Request $request, $id)
     {
         $login_setting = LoginSetting::getEloquent($id);
-        
+
         return $login_setting->getLoginServiceClassName()::loginTest($request, $login_setting);
     }
 
@@ -467,14 +479,14 @@ class LoginSettingController extends AdminControllerBase
      * execute login test for SSO
      *
      * @param Request $request
-     * @param string|int|null $id
-     * @return void
+     * @param mixed $id
+     * @return \Illuminate\Contracts\Foundation\Application|\Illuminate\Http\RedirectResponse|\Illuminate\Routing\Redirector
      */
     public function loginTestSso(Request $request, $id)
     {
         try {
             $login_setting = LoginSetting::getEloquent($id);
-        
+
             return $login_setting->getLoginServiceClassName()::loginTest($request, $login_setting);
         } catch (SsoLoginErrorException $ex) {
             \Log::error($ex);
@@ -482,7 +494,7 @@ class LoginSettingController extends AdminControllerBase
             session([Define::SYSTEM_KEY_SESSION_SSO_TEST_MESSAGE => $ex->getSsoAdminErrorMessage()]);
 
             return redirect($this->getEditUrl($id, true));
-            
+
             // if error, redirect edit page
         } catch (\Exception $ex) {
             \Log::error($ex);
@@ -491,7 +503,7 @@ class LoginSettingController extends AdminControllerBase
             session([Define::SYSTEM_KEY_SESSION_SSO_TEST_MESSAGE => $adminMessage]);
 
             return redirect($this->getEditUrl($id, true));
-            
+
             // if error, redirect edit page
         }
     }
@@ -500,17 +512,18 @@ class LoginSettingController extends AdminControllerBase
      * execute login test for callback
      *
      * @param Request $request
-     * @param string|int|null $id
-     * @return void
+     * @param Content $content
+     * @param mixed $id
+     * @return \Illuminate\Contracts\Foundation\Application|\Illuminate\Http\RedirectResponse|\Illuminate\Routing\Redirector
      */
     public function loginTestCallback(Request $request, Content $content, $id)
     {
         try {
             $login_setting = LoginSetting::getEloquent($id);
-            
+
             list($result, $message, $adminMessage, $custom_login_user) = $login_setting->getLoginServiceClassName()::loginCallback($request, $login_setting, true);
             session([Define::SYSTEM_KEY_SESSION_SSO_TEST_MESSAGE => $adminMessage]);
-    
+
             return redirect($this->getEditUrl($id, true));
         } catch (\Exception $ex) {
             \Log::error($ex);
@@ -570,21 +583,19 @@ class LoginSettingController extends AdminControllerBase
         $login_setting = LoginSetting::getEloquent($id);
         $login_setting->active_flg = $active_flg;
         $login_setting->save();
-        
+
         return getAjaxResponse([
             'result'  => true,
             'message' => trans('admin.update_succeeded'),
         ]);
     }
-    
 
-    
     /**
      * get 2factor setting box.
      *
-     * @return Content
+     * @return WidgetForm
      */
-    protected function get2factorSettingForm() : WidgetForm
+    protected function get2factorSettingForm(): WidgetForm
     {
         $form = new WidgetForm(System::get_system_values(['2factor']));
         $form->action(route('exment.post2factor'));
@@ -619,7 +630,7 @@ class LoginSettingController extends AdminControllerBase
     }
 
 
-    
+
     /**
      * Send data
      * @param Request $request
@@ -646,7 +657,7 @@ class LoginSettingController extends AdminControllerBase
         DB::beginTransaction();
         try {
             $inputs = $request->all(System::get_system_keys(['2factor']));
-            
+
             // set system_key and value
             foreach ($inputs as $k => $input) {
                 System::{$k}($input);
@@ -671,7 +682,8 @@ class LoginSettingController extends AdminControllerBase
     /**
      * 2factor verify
      *
-     * @return void
+     * @return \Symfony\Component\HttpFoundation\Response
+     * @throws \Exception
      */
     public function auth_2factor_verify()
     {
@@ -679,8 +691,8 @@ class LoginSettingController extends AdminControllerBase
 
         // set 2factor params
         $verify_code = random_int(100000, 999999);
-        $valid_period_datetime = Carbon::now()->addMinute(60);
-        
+        $valid_period_datetime = Carbon::now()->addMinutes(60);
+
         // send verify
         try {
             if (!Auth2factorService::addAndSendVerify('system', $verify_code, $valid_period_datetime, MailKeyName::VERIFY_2FACTOR_SYSTEM, [
@@ -703,7 +715,7 @@ class LoginSettingController extends AdminControllerBase
             ]);
         }
         // throw mailsend Exception
-        catch (\Swift_TransportException $ex) {
+        catch (TransportExceptionInterface $ex) {
             \Log::error($ex);
             return getAjaxResponse([
                 'result'  => false,
@@ -722,7 +734,7 @@ class LoginSettingController extends AdminControllerBase
         ]);
     }
 
-    
+
     /**
      * Get login option form
      *
@@ -736,7 +748,7 @@ class LoginSettingController extends AdminControllerBase
         $form_uniqueName = $request->get('form_uniqueName');
         $id = $request->route('id');
 
-        $form = new Form(new LoginSetting);
+        $form = new Form(new LoginSetting());
         $form->setUniqueName($form_uniqueName)->embeds('options', exmtrans("login.options"), function ($form) use ($val) {
             // Form options area -- start
             $form->html('<div class="form_dynamic_options_response">')->plain();

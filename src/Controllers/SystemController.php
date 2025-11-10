@@ -28,12 +28,13 @@ use Exceedone\Exment\Enums\SystemRequireCalledType;
 use Exceedone\Exment\Enums\SystemRequireResult;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Symfony\Component\Mailer\Exception\TransportExceptionInterface;
 use Validator;
 
 class SystemController extends AdminControllerBase
 {
     use InitializeFormTrait;
-    
+
     public function __construct()
     {
         $this->setPageInfo(exmtrans("system.header"), exmtrans("system.system_header"), exmtrans("system.system_description"), 'fa-cogs');
@@ -62,7 +63,7 @@ class SystemController extends AdminControllerBase
     {
         $this->AdminContent($content);
         $form = $this->formBasic($request);
-
+        /** @phpstan-ignore-next-line Encore\Admin\Widgets\Box constructor expects string, Encore\Admin\Widgets\Form given */
         $box = new Box(exmtrans('common.basic_setting'), $form);
         $box->tools(new Tools\SystemChangePageMenu());
 
@@ -84,13 +85,14 @@ class SystemController extends AdminControllerBase
     /**
      * Index interface.
      *
-     * @return Content
+     * @param Request $request
+     * @return WidgetForm
      */
-    protected function formBasic(Request $request) : WidgetForm
+    protected function formBasic(Request $request): WidgetForm
     {
         $form = $this->getInitializeForm('system', false);
         $form->action(admin_url('system'));
-  
+
         $admin_users = System::system_admin_users();
         $form->multipleSelect('system_admin_users', exmtrans('system.system_admin_users'))
             ->help(exmtrans('system.help.system_admin_users'))
@@ -125,7 +127,7 @@ class SystemController extends AdminControllerBase
         $this->AdminContent($content);
 
         $form = $this->formAdvanced($request);
-
+        /** @phpstan-ignore-next-line Encore\Admin\Widgets\Box constructor expects string, Encore\Admin\Widgets\Form given */
         $box = new Box(exmtrans('common.detail_setting'), $form);
 
         $box->tools(new Tools\SystemChangePageMenu());
@@ -138,22 +140,20 @@ class SystemController extends AdminControllerBase
         return $content;
     }
 
-
     /**
      * index advanced setting
      *
      * @param Request $request
-     * @param Content $content
-     * @return Content
+     * @return WidgetForm
      */
-    protected function formAdvanced(Request $request) : WidgetForm
+    protected function formAdvanced(Request $request): WidgetForm
     {
         $form = new WidgetForm(System::get_system_values(['advanced', 'notify']));
         $form->disableReset();
         $form->action(admin_url('system'));
 
         $form->progressTracker()->options($this->getProgressInfo(true));
-        
+
         $form->hidden('advanced')->default(1);
         $form->ignore('advanced');
 
@@ -167,13 +167,13 @@ class SystemController extends AdminControllerBase
         ->disableClear()
         ->default(20)
         ->help(exmtrans("system.help.grid_pager_count"));
-            
+
         $form->select('datalist_pager_count', exmtrans("system.datalist_pager_count"))
             ->options(getPagerOptions(false, Define::PAGER_DATALIST_COUNTS))
             ->disableClear()
             ->default(5)
             ->help(exmtrans("system.help.datalist_pager_count"));
-        
+
         $form->select('default_date_format', exmtrans("system.default_date_format"))
             ->options(getTransArray(Define::SYSTEM_DATE_FORMAT, "system.date_format_options"))
             ->disableClear()
@@ -218,7 +218,7 @@ class SystemController extends AdminControllerBase
                 $options[SystemColumn::CREATED_AT] = exmtrans('common.created_at');
                 return $options;
             });
-            
+
         $form->exmheader(exmtrans('system.publicform'))->hr();
         $form->switchbool('publicform_available', exmtrans("system.publicform_available"))
             ->default(0)
@@ -264,21 +264,21 @@ class SystemController extends AdminControllerBase
                 ->options(JoinedOrgFilterType::transKeyArray('system.joined_org_filter_role_group_options'))
                 ->disableClear()
                 ->default(JoinedOrgFilterType::ALL)
-                ;
+            ;
 
             $form->select('org_joined_type_custom_value', exmtrans("system.org_joined_type_custom_value"))
                 ->help(exmtrans("system.help.org_joined_type_custom_value") . exmtrans("common.help.more_help_here", $manualUrl))
                 ->options(JoinedOrgFilterType::transKeyArray('system.joined_org_filter_custom_value_options'))
                 ->disableClear()
                 ->default(JoinedOrgFilterType::ONLY_JOIN)
-                ;
+            ;
 
             $form->select('custom_value_save_autoshare', exmtrans("system.custom_value_save_autoshare"))
                 ->help(exmtrans("system.help.custom_value_save_autoshare") . exmtrans("common.help.more_help_here", $manualUrl))
                 ->options(CustomValueAutoShare::transKeyArray('system.custom_value_save_autoshare_options'))
                 ->disableClear()
                 ->default(CustomValueAutoShare::USER_ONLY)
-                ;
+            ;
         }
 
         $manualUrl = getManualUrl('multiuser');
@@ -289,7 +289,7 @@ class SystemController extends AdminControllerBase
             ->default(JoinedMultiUserFilterType::NOT_FILTER)
         ;
 
-        
+
 
         // View and dashbaord ----------------------------------------------------
         $form->exmheader(exmtrans('system.view_dashboard_header'))->hr();
@@ -315,11 +315,10 @@ class SystemController extends AdminControllerBase
         return $form;
     }
 
-
     /**
      * get exment version infoBox.
      *
-     * @return Content
+     * @return WidgetForm
      */
     protected function getVersionBox()
     {
@@ -327,7 +326,7 @@ class SystemController extends AdminControllerBase
         $version = \Exment::checkLatestVersion();
         $showLink = false;
 
-        $form = new WidgetForm;
+        $form = new WidgetForm();
         $form->disableReset()->disableSubmit();
 
         $form->display('version_current', exmtrans('system.version_current_label'))
@@ -396,7 +395,7 @@ class SystemController extends AdminControllerBase
     //     // if has error, set button and return
     //     if (!is_nullorempty($errorObjs)) {
     //         $form->display(exmtrans('system.call_update_cannot'))->displayText(exmtrans('system.call_update_cannot_description'));
-            
+
     //         $buttons = collect($errorObjs)->map(function ($errorObj) {
     //             return view('exment::tools.button-simple', [
     //                 'href' => $errorObj->getSettingUrl(),
@@ -411,7 +410,7 @@ class SystemController extends AdminControllerBase
     //     }
 
     //     $form->description(exmtrans('system.call_update_description', $latest))->escape(false);;
-        
+
     //     $manualUrl = exmtrans('common.message.label_link', [
     //         'label' => exmtrans('system.release_note'),
     //         'link' => \Exment::getManualUrl('release_note'),
@@ -428,11 +427,10 @@ class SystemController extends AdminControllerBase
     //         ->confirm_error(exmtrans('custom_table.help.delete_confirm_error'));
     // }
 
-
     /**
      * get system require box.
      *
-     * @return Content
+     * @return bool|\Illuminate\Auth\Access\Response|\Illuminate\Contracts\Foundation\Application|\Illuminate\Contracts\View\Factory|\Illuminate\Contracts\View\View|mixed
      */
     protected function getSystemRequireBox()
     {
@@ -443,10 +441,12 @@ class SystemController extends AdminControllerBase
         return $view;
     }
 
-
     /**
      * Send data
+     *
      * @param Request $request
+     * @return \Illuminate\Contracts\Foundation\Application|\Illuminate\Http\RedirectResponse|\Illuminate\Routing\Redirector|true
+     * @throws \Throwable
      */
     public function post(Request $request)
     {
@@ -485,7 +485,8 @@ class SystemController extends AdminControllerBase
     /**
      * send test mail
      *
-     * @return void
+     * @param Request $request
+     * @return \Symfony\Component\HttpFoundation\Response
      */
     public function sendTestMail(Request $request)
     {
@@ -516,7 +517,7 @@ class SystemController extends AdminControllerBase
             ]);
         }
         // throw mailsend Exception
-        catch (\Swift_TransportException $ex) {
+        catch (TransportExceptionInterface $ex) {
             \Log::error($ex);
 
             return getAjaxResponse([
@@ -527,11 +528,11 @@ class SystemController extends AdminControllerBase
         }
     }
 
-    
     /**
      * call update
      *
-     * @return void
+     * @param Request $request
+     * @return \Symfony\Component\HttpFoundation\Response
      */
     public function callUpdate(Request $request)
     {

@@ -1,4 +1,5 @@
 <?php
+
 namespace Exceedone\Exment\Services\Calc\Items;
 
 use Exceedone\Exment\Model\CustomTable;
@@ -16,40 +17,40 @@ abstract class ItemBase implements CalcInterface
      * *For parent is parent table's column.
      * *For summary is child table's column.
      *
-     * @var CustomColumn
+     * @var CustomColumn|null
      */
     protected $custom_column;
-    
+
     /**
      * $target table. *Maybe not match $custom_column->custom_table*
      *
      * @var CustomTable
      */
     protected $custom_table;
-    
+
     /**
-     * @var CustomFormBlock
+     * @var CustomFormBlock|false|null
      */
     public $custom_form_block;
-    
+
     public function __construct(?CustomColumn $custom_column, ?CustomTable $custom_table)
     {
         $this->custom_column = $custom_column;
         $this->custom_table = $custom_table;
     }
-    
+
     public function displayText()
     {
         $text = $this->text();
         return '${' . $text . '}';
     }
-    
+
     /**
      * Get triggered event key names
      *
      * @return array
      */
-    public function getTriggeredKeys() : array
+    public function getTriggeredKeys(): array
     {
         return [
             'trigger_block' => 'default',
@@ -68,13 +69,13 @@ abstract class ItemBase implements CalcInterface
         ], $this->getTriggeredKeys());
     }
 
-    
+
     public function setCustomFormBlock($custom_form_block)
     {
         $this->custom_form_block = $custom_form_block;
         return $this;
     }
-    
+
     public function getCustomFormBlock()
     {
         return $this->custom_form_block;

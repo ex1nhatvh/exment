@@ -1,4 +1,5 @@
 <?php
+
 namespace Exceedone\Exment\Services\Plugin;
 
 use Exceedone\Exment\Model\CustomTable;
@@ -11,7 +12,7 @@ use Exceedone\Exment\Model\Plugin as PluginModel;
 class PluginValidatorBase
 {
     use PluginBase;
-    
+
     /**
      * Tagret custom table
      *
@@ -36,7 +37,7 @@ class PluginValidatorBase
     /**
      * Whether this validation is called.
      *
-     * @var string|ValidateCalledType
+     * @var mixed
      */
     public $called_type;
 
@@ -52,8 +53,7 @@ class PluginValidatorBase
      *
      * @param PluginModel $plugin
      * @param CustomTable|null $custom_table
-     * @param CustomValue|int $original_value
-     * @param array $input_value
+     * @param $original_value
      * @param array $options
      *      'called_type' => Whether this validation is called.
      */
@@ -90,5 +90,9 @@ class PluginValidatorBase
         }
 
         return $messages;
+    }
+    
+    public function validateDestroy($model)
+    {
     }
 }

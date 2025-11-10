@@ -9,7 +9,8 @@ use Exceedone\Exment\Tests\TestTrait;
 
 class DocumentImportTest extends FileImportTestBase
 {
-    use ImportTrait, TestTrait;
+    use ImportTrait;
+    use TestTrait;
 
     protected function getImportPath()
     {
@@ -80,6 +81,7 @@ class DocumentImportTest extends FileImportTestBase
                 // get documents
                 $documents = $custom_value->getDocuments()
                     ->map(function ($document) {
+                        /** @var Model\File $document */
                         return array_get($document->value, 'file_uuid');
                     });
                 $this->assertTrue(!is_nullorempty($documents));

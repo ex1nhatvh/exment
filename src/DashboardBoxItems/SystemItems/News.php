@@ -33,7 +33,7 @@ class News
     {
         return null;
     }
-    
+
     /**
      * get footer
      */
@@ -46,7 +46,7 @@ class News
         $label = trans('admin.list');
         return "<div style='padding:8px;'><a href='{$link}' target='_blank'>{$label}</a></div>";
     }
-    
+
     /**
      * get html body
      */
@@ -64,7 +64,7 @@ class News
             trans('admin.title'),
         ];
         $bodies = [];
-        
+
         foreach ($this->items as $item) {
             $date = \Carbon\Carbon::parse(array_get($item, 'date'))->format(config('admin.date_format'));
             $link = array_get($item, 'link');
@@ -77,13 +77,16 @@ class News
 
         $widgetTable = new WidgetTable($headers, $bodies);
 
+        /** @phpstan-ignore-next-line Expression on left side of ?? is not nullable. */
         return $widgetTable->render() ?? null;
     }
 
     /**
-     * Get wordpress query string
+     * Get WordPress query string
      *
      * @return array query string array
+     * @throws \Psr\Container\ContainerExceptionInterface
+     * @throws \Psr\Container\NotFoundExceptionInterface
      */
     protected function getQuery()
     {
@@ -99,11 +102,13 @@ class News
         return $query;
     }
 
-
     /**
      * Set exment news items
      *
-     * @return void
+     * @return void|null
+     * @throws \GuzzleHttp\Exception\GuzzleException
+     * @throws \Psr\Container\ContainerExceptionInterface
+     * @throws \Psr\Container\NotFoundExceptionInterface
      */
     protected function setItems()
     {
@@ -136,7 +141,7 @@ class News
                     'timeout' => 3, // Response timeout
                     'connect_timeout' => 3, // Connection timeout
                 ]);
-        
+
                 $contents = $response->getBody()->getContents();
                 if ($response->getStatusCode() != 200) {
                     return null;
@@ -146,7 +151,7 @@ class News
                     'contents' => $contents
                 ]));
             }
-    
+
             // get wordpress items
             $this->items = json_decode_ex($contents, true);
         } catch (\Exception $ex) {

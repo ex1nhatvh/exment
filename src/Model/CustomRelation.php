@@ -4,7 +4,17 @@ namespace Exceedone\Exment\Model;
 
 use Exceedone\Exment\Enums\RelationType;
 use Exceedone\Exment\Enums\ConditionType;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * @phpstan-consistent-constructor
+ * @property mixed $relation_type
+ * @property mixed $parent_custom_table_id
+ * @property mixed $child_custom_table_id
+ * @method static int count($columns = '*')
+ * @method static \Illuminate\Database\Query\Builder where($column, $operator = null, $value = null, $boolean = 'and')
+ * @method static \Illuminate\Database\Query\Builder orderBy($column, $direction = 'asc')
+ */
 class CustomRelation extends ModelBase implements Interfaces\TemplateImporterInterface
 {
     use Traits\TemplateTrait;
@@ -69,13 +79,13 @@ class CustomRelation extends ModelBase implements Interfaces\TemplateImporterInt
             ],
         ]
     ];
-    
-    public function parent_custom_table()
+
+    public function parent_custom_table(): BelongsTo
     {
         return $this->belongsTo(CustomTable::class, 'parent_custom_table_id');
     }
 
-    public function child_custom_table()
+    public function child_custom_table(): BelongsTo
     {
         return $this->belongsTo(CustomTable::class, 'child_custom_table_id');
     }
@@ -174,7 +184,7 @@ class CustomRelation extends ModelBase implements Interfaces\TemplateImporterInt
      * Get relation name using parent and child table.
      * @param CustomTable|string|null $parent
      * @param CustomTable|string|null $child
-     * @return string
+     * @return string|null
      */
     public static function getRelationNamebyTables($parent, $child)
     {
@@ -198,7 +208,7 @@ class CustomRelation extends ModelBase implements Interfaces\TemplateImporterInt
         if ($isCallAsParent) {
             $child_custom_table = CustomTable::getEloquent($this->child_custom_table_id);
             $pivot_table_name = $this->getRelationName();
-    
+
             // Get Parent and child table Name.
             // case 1 to many
             if ($this->relation_type == RelationType::ONE_TO_MANY) {
@@ -210,7 +220,7 @@ class CustomRelation extends ModelBase implements Interfaces\TemplateImporterInt
                 if (!hasTable($pivot_table_name)) {
                     \Schema::createRelationValueTable($pivot_table_name);
                 }
-    
+
                 return $custom_value->belongsToMany(getModelName($child_custom_table), $pivot_table_name, "parent_id", "child_id")->withPivot("id");
             }
         } else {
@@ -249,10 +259,10 @@ class CustomRelation extends ModelBase implements Interfaces\TemplateImporterInt
                 return $sheetname;
             }
         }
-        
+
         return $this->child_custom_table->table_name;
     }
-    
+
     /**
      * get eloquent using request settion.
      * now only support only id.
@@ -261,17 +271,17 @@ class CustomRelation extends ModelBase implements Interfaces\TemplateImporterInt
     {
         return static::getEloquentCache($id, $withs);
     }
-    
+
     public function getParentImportColumnAttribute()
     {
         return CustomColumn::getEloquent($this->getOption('parent_import_column_id'));
     }
-    
+
     public function getParentExportColumnAttribute()
     {
         return CustomColumn::getEloquent($this->getOption('parent_export_column_id'));
     }
-    
+
     public static function importReplaceJson(&$json, $options = [])
     {
         static::importReplaceJsonCustomColumn($json, 'options.parent_import_column_id', 'options.parent_import_column_name', 'options.parent_import_table_name', $options);
@@ -281,7 +291,7 @@ class CustomRelation extends ModelBase implements Interfaces\TemplateImporterInt
     protected static function boot()
     {
         parent::boot();
-        
+
         // saved event
         static::saved(function ($model) {
             // Create pivot table
@@ -294,7 +304,7 @@ class CustomRelation extends ModelBase implements Interfaces\TemplateImporterInt
                 \Schema::createRelationValueTable($pivot_table_name);
             }
         });
-        
+
         // update event
         static::updating(function ($model) {
             if ($model->isDirty('child_custom_table_id')) {
@@ -302,14 +312,23 @@ class CustomRelation extends ModelBase implements Interfaces\TemplateImporterInt
                 $model->deletingChildren();
             }
         });
-        
+
         // delete event
         static::deleting(function ($model) {
             // Delete items
             $model->deletingChildren();
+            // Clear child table option (inherit parent permission)
+            if ($model->relation_type == RelationType::ONE_TO_MANY) {
+                $child_table = $model->child_custom_table;
+                if (boolval($child_table->getOption('inherit_parent_permission'))) {
+                    $child_table->setOption('inherit_parent_permission');
+                    $child_table->save();
+                }
+                return;
+            }
         });
     }
-    
+
     /**
      * Delete children items
      */

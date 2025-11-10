@@ -2,6 +2,7 @@
 
 namespace Exceedone\Exment\Notifications\MicrosoftTeams;
 
+use Exceedone\Exment\Jobs\MicrosoftTeamsJob;
 use Illuminate\Notifications\Notification;
 use GuzzleHttp\Client as HttpClient;
 
@@ -28,7 +29,7 @@ class MicrosoftTeamsChannel
      * Notify
      *
      * @param  mixed  $notifiable
-     * @param  \Illuminate\Notifications\Notification  $notification
+     * @param  MicrosoftTeamsJob  $notification
      * @return void
      */
     public function send($notifiable, Notification $notification)
@@ -41,7 +42,7 @@ class MicrosoftTeamsChannel
             $notification->toChat($notifiable)
         ));
     }
-    
+
     /**
      * Build up a JSON payload for the Slack webhook.
      *

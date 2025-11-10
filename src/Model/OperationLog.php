@@ -2,6 +2,11 @@
 
 namespace Exceedone\Exment\Model;
 
+/**
+ * @property mixed $user
+ * @property mixed $user_id
+ * @property mixed $created_at
+ */
 class OperationLog extends \Encore\Admin\Auth\Database\OperationLog
 {
     use Traits\SerializeDateTrait;
@@ -26,7 +31,7 @@ class OperationLog extends \Encore\Admin\Auth\Database\OperationLog
         $user = $this->user;
         return $user ? $user->user_name : null;
     }
-    
+
     /**
      * Prepare a date for array / JSON serialization.
      *

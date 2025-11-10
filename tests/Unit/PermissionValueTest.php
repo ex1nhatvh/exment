@@ -9,6 +9,10 @@ use Exceedone\Exment\Tests\TestDefine;
 
 class PermissionValueTest extends UnitTestBase
 {
+    /**
+     * @param string $loginId
+     * @return void
+     */
     protected function init($loginId)
     {
         System::clearCache();
@@ -16,21 +20,26 @@ class PermissionValueTest extends UnitTestBase
         $this->be(LoginUser::find($loginId));
     }
 
-
+    /**
+     * @return void
+     */
     public function testCustomValueAllTableAdmin()
     {
         $this->init(TestDefine::TESTDATA_USER_LOGINID_ADMIN);
-        
+
         $custom_table = CustomTable::getEloquent(TestDefine::TESTDATA_TABLE_NAME_VIEW_ALL);
         $ids = $custom_table->getValueModel()->all()->pluck('id')->toArray();
 
         $this->checkCustomValuePermission($custom_table, $ids);
     }
 
+    /**
+     * @return void
+     */
     public function testCustomValueFilterAdmin()
     {
         $this->init(TestDefine::TESTDATA_USER_LOGINID_ADMIN);
-        
+
         $custom_table = CustomTable::getEloquent(TestDefine::TESTDATA_TABLE_NAME_VIEW);
         $ids = $custom_table->getValueModel()->all()->pluck('id')->toArray();
 
@@ -38,20 +47,26 @@ class PermissionValueTest extends UnitTestBase
     }
 
 
+    /**
+     * @return void
+     */
     public function testCustomValueAllTable()
     {
         $this->init(TestDefine::TESTDATA_USER_LOGINID_USER2);
-        
+
         $custom_table = CustomTable::getEloquent(TestDefine::TESTDATA_TABLE_NAME_VIEW_ALL);
         $ids = $custom_table->getValueModel()->all()->pluck('id')->toArray();
 
         $this->checkCustomValuePermission($custom_table, $ids);
     }
 
+    /**
+     * @return void
+     */
     public function testCustomValueFilter()
     {
         $this->init(TestDefine::TESTDATA_USER_LOGINID_USER2);
-        
+
         $custom_table = CustomTable::getEloquent(TestDefine::TESTDATA_TABLE_NAME_VIEW);
         $ids = $custom_table->getValueModel()->all()->pluck('id')->toArray();
 

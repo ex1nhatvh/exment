@@ -41,16 +41,13 @@ class BatchCommand extends Command
      *
      * @return int
      */
-    public function handle()
+    public function handle(): int
     {
-        $this->pluginBatch();
-        return 0;
+        return $this->pluginBatch();
     }
 
     /**
      * Execute Plugin Batch
-     *
-     * @return void
      */
     protected function pluginBatch()
     {
@@ -58,18 +55,26 @@ class BatchCommand extends Command
 
         if (!isset($plugin)) {
             $this->error('Plugin not found. Please select plugin.');
-            return;
+            return 1;
         }
-        
+
         if (!$plugin->matchPluginType(PluginType::BATCH)) {
             $this->error('Plugin not not batch. Please select batch plugin.');
-            return;
+            return 1;
         }
 
         $batch = $plugin->getClass(PluginType::BATCH, [
             'command_options' => $this->options()
         ]);
-        $batch->execute();
+        $result = $batch->execute();
+
+        if ($result === false) {
+            return 1;
+        }
+        if (is_null($result)) {
+            return 0;
+        }
+        return $result;
     }
 
     protected function findPlugin()

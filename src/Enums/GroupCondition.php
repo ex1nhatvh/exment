@@ -5,17 +5,22 @@ namespace Exceedone\Exment\Enums;
 class GroupCondition extends EnumBase
 {
     use EnumOptionTrait;
-    
-    const Y = "y";
-    const YM = "ym";
-    const YMD = "ymd";
-    const M = "m";
-    const D = "d";
-    const W = "w";
-    
-    // for sqk sercer
-    const YMDHIS = "ymdhis";
 
+    public const Y = "y";
+    public const YM = "ym";
+    public const YMD = "ymd";
+    public const M = "m";
+    public const D = "d";
+    public const W = "w";
+
+    // for sqk sercer
+    public const YMDHIS = "ymdhis";
+
+    /**
+     * We should use `const OPTIONS` instead of `protected static $options`.
+     *
+     * @var array[]
+     */
     protected static $options = [
         ['id' => 'y', 'name' => 'y'],
         ['id' => 'ym', 'name' => 'ym'],

@@ -20,8 +20,13 @@ use Encore\Admin\Grid;
  */
 class ViewWithParentTest extends TestCase
 {
-    use TestTrait, CustomViewTrait, DatabaseTransactions;
+    use TestTrait;
+    use CustomViewTrait;
+    use DatabaseTransactions;
 
+    /**
+     * @return void
+     */
     protected function init()
     {
         $this->initAllTest();
@@ -32,6 +37,8 @@ class ViewWithParentTest extends TestCase
      * 1-1.
      * CustomViewColumn = parent : YES
      * CustomViewFilter = parent : YES
+     *
+     * @return void
      */
     public function testFuncFilterParent()
     {
@@ -47,9 +54,12 @@ class ViewWithParentTest extends TestCase
         $options['filter_settings'][0]['filter_condition'] = FilterOption::EQ;
         $options['filter_settings'][0]['filter_value_text'] = $filter_value;
 
+        /** @phpstan-ignore-next-line  Result of method
+         * Exceedone\Exment\Tests\Unit\ViewWithParentTest::getColumnFilterData()
+         * (void) is used.     */
         $array = $this->getColumnFilterData(function ($data, $custom_view) use ($filter_column, $filter_value) {
             if ($data instanceof CustomValue) {
-                $parent = $data?->getParentValue();
+                $parent = $data->getParentValue();
                 return $parent?->getValue($filter_column) == $filter_value;
             } else {
                 $column_item = $custom_view->custom_view_columns[0]->column_item;
@@ -63,6 +73,8 @@ class ViewWithParentTest extends TestCase
      * 1-2.
      * CustomViewColumn = parent : NO
      * CustomViewFilter = parent : YES
+     *
+     * @return void
      */
     public function testFuncFilterParentNoColumn()
     {
@@ -77,6 +89,9 @@ class ViewWithParentTest extends TestCase
         $options['filter_settings'][0]['filter_condition'] = FilterOption::EQ;
         $options['filter_settings'][0]['filter_value_text'] = $filter_value;
 
+        /** @phpstan-ignore-next-line  Result of method
+         * Exceedone\Exment\Tests\Unit\ViewWithParentTest::getColumnFilterData()
+         * (void) is used.     */
         $array = $this->getColumnFilterData(function ($data, $custom_view) use ($filter_column, $filter_value) {
             if (!($data instanceof CustomValue)) {
                 $id = array_get($data, 'id');
@@ -91,6 +106,8 @@ class ViewWithParentTest extends TestCase
      * 1-3.
      * CustomViewColumn = parent : YES
      * CustomViewFilter = parent : YES (id)
+     *
+     * @return void
      */
     public function testFuncFilterParentId()
     {
@@ -106,9 +123,12 @@ class ViewWithParentTest extends TestCase
         $options['filter_settings'][0]['filter_condition'] = FilterOption::EQ;
         $options['filter_settings'][0]['filter_value_text'] = $filter_value;
 
+        /** @phpstan-ignore-next-line  Result of method
+         * Exceedone\Exment\Tests\Unit\ViewWithParentTest::getColumnFilterData()
+         * (void) is used.     */
         $array = $this->getColumnFilterData(function ($data, $custom_view) use ($filter_column, $filter_value) {
             if ($data instanceof CustomValue) {
-                $parent = $data?->getParentValue();
+                $parent = $data->getParentValue();
                 return $parent?->getValue($filter_column) == $filter_value;
             } else {
                 $column_item = $custom_view->custom_view_columns[0]->column_item;
@@ -122,6 +142,8 @@ class ViewWithParentTest extends TestCase
      * 1-4.
      * CustomViewColumn = parent : YES
      * CustomViewFilter = parent : NO (id)
+     *
+     * @return void
      */
     public function testFuncFilterParentIdNoColumn()
     {
@@ -137,6 +159,9 @@ class ViewWithParentTest extends TestCase
         $options['filter_settings'][0]['filter_condition'] = FilterOption::EQ;
         $options['filter_settings'][0]['filter_value_text'] = $filter_value;
 
+        /** @phpstan-ignore-next-line  Result of method
+         * Exceedone\Exment\Tests\Unit\ViewWithParentTest::getColumnFilterData()
+         * (void) is used.     */
         $array = $this->getColumnFilterData(function ($data, $custom_view) use ($filter_column, $filter_value) {
             if (!($data instanceof CustomValue)) {
                 $id = array_get($data, 'id');
@@ -151,6 +176,8 @@ class ViewWithParentTest extends TestCase
      * 1-5.
      * CustomViewColumn = parent : YES
      * CustomViewSort = parent : YES
+     *
+     * @return void
      */
     public function testFuncSortByParent()
     {
@@ -165,6 +192,9 @@ class ViewWithParentTest extends TestCase
         $options['sort_settings'][0]['sort'] = ViewColumnSort::DESC;
         $options['sort_settings'][0]['priority'] = 1;
 
+        /** @phpstan-ignore-next-line  Result of method
+         * Exceedone\Exment\Tests\Unit\ViewWithParentTest::getColumnFilterData()
+         * (void) is used.     */
         $array = $this->getColumnFilterData(function ($prev_data, $data, $custom_view) {
             $column_item = $custom_view->custom_view_columns[0]->column_item;
             $unique_name = $column_item?->uniqueName();
@@ -176,6 +206,8 @@ class ViewWithParentTest extends TestCase
      * 1-6.
      * CustomViewColumn = parent : NO
      * CustomViewSort = parent : YES
+     *
+     * @return void
      */
     public function testFuncSortByParentNoColumn()
     {
@@ -193,6 +225,9 @@ class ViewWithParentTest extends TestCase
 
         $parent_table = getModelName(TestDefine::TESTDATA_TABLE_NAME_PARENT_TABLE);
 
+        /** @phpstan-ignore-next-line  Result of method
+         * Exceedone\Exment\Tests\Unit\ViewWithParentTest::getColumnFilterData()
+         * (void) is used.     */
         $array = $this->getColumnFilterData(function ($prev_data, $data, $custom_view) use ($sort_column, $parent_table) {
             $prev_parent = $parent_table::find(array_get($prev_data, 'parent_id'));
             $parent = $parent_table::find(array_get($data, 'parent_id'));
@@ -204,6 +239,8 @@ class ViewWithParentTest extends TestCase
      * 1-7.
      * CustomViewColumn = parent : YES
      * CustomViewSort = parent : YES(id)
+     *
+     * @return void
      */
     public function testFuncSortByParentId()
     {
@@ -218,6 +255,9 @@ class ViewWithParentTest extends TestCase
         $options['sort_settings'][0]['sort'] = ViewColumnSort::ASC;
         $options['sort_settings'][0]['priority'] = 1;
 
+        /** @phpstan-ignore-next-line  Result of method
+         * Exceedone\Exment\Tests\Unit\ViewWithParentTest::getColumnFilterData()
+         * (void) is used.     */
         $array = $this->getColumnFilterData(function ($prev_data, $data, $custom_view) {
             $column_item = $custom_view->custom_view_columns[0]->column_item;
             $unique_name = $column_item?->uniqueName();
@@ -229,6 +269,8 @@ class ViewWithParentTest extends TestCase
      * 1-8.
      * CustomViewColumn = parent : NO
      * CustomViewSort = parent : YES(id)
+     *
+     * @return void
      */
     public function testFuncSortByParentIdNoColumn()
     {
@@ -245,6 +287,9 @@ class ViewWithParentTest extends TestCase
 
         $parent_table = getModelName(TestDefine::TESTDATA_TABLE_NAME_PARENT_TABLE);
 
+        /** @phpstan-ignore-next-line  Result of method
+         * Exceedone\Exment\Tests\Unit\ViewWithParentTest::getColumnFilterData()
+         * (void) is used.     */
         $array = $this->getColumnFilterData(function ($prev_data, $data, $custom_view) use ($parent_table) {
             $prev_parent = $parent_table::find(array_get($prev_data, 'parent_id'));
             $parent = $parent_table::find(array_get($data, 'parent_id'));
@@ -256,6 +301,8 @@ class ViewWithParentTest extends TestCase
      * 2-1.
      * CustomViewColumn = select_table : YES
      * CustomViewFilter = select_table : YES
+     *
+     * @return void
      */
     public function testFuncFilterSelect()
     {
@@ -272,9 +319,12 @@ class ViewWithParentTest extends TestCase
         $options['filter_settings'][0]['filter_condition'] = FilterOption::EQ;
         $options['filter_settings'][0]['filter_value_text'] = $filter_value;
 
+        /** @phpstan-ignore-next-line  Result of method
+         * Exceedone\Exment\Tests\Unit\ViewWithParentTest::getColumnFilterData()
+         * (void) is used.     */
         $array = $this->getColumnFilterData(function ($data, $custom_view) use ($filter_column, $filter_value) {
             if ($data instanceof CustomValue) {
-                $select_table = $data?->getValue('select_table');
+                $select_table = $data->getValue('select_table');
                 return $select_table?->getValue($filter_column) == $filter_value;
             } else {
                 $column_item = $custom_view->custom_view_columns[0]->column_item;
@@ -288,6 +338,8 @@ class ViewWithParentTest extends TestCase
      * 2-2.
      * CustomViewColumn = select_table : NO
      * CustomViewFilter = select_table : YES
+     *
+     * @return void
      */
     public function testFuncFilterSelectNoColumn()
     {
@@ -304,6 +356,9 @@ class ViewWithParentTest extends TestCase
         $options['filter_settings'][0]['filter_condition'] = FilterOption::EQ;
         $options['filter_settings'][0]['filter_value_text'] = $filter_value;
 
+        /** @phpstan-ignore-next-line  Result of method
+         * Exceedone\Exment\Tests\Unit\ViewWithParentTest::getColumnFilterData()
+         * (void) is used.     */
         $array = $this->getColumnFilterData(function ($data, $custom_view) use ($filter_column, $filter_value) {
             if (!($data instanceof CustomValue)) {
                 $id = array_get($data, 'id');
@@ -318,6 +373,8 @@ class ViewWithParentTest extends TestCase
      * 2-3.
      * CustomViewColumn = select_table : YES
      * CustomViewFilter = select_table : YES(id)
+     *
+     * @return void
      */
     public function testFuncFilterSelectId()
     {
@@ -333,9 +390,12 @@ class ViewWithParentTest extends TestCase
         $options['filter_settings'][0]['filter_condition'] = FilterOption::EQ;
         $options['filter_settings'][0]['filter_value_text'] = $filter_value;
 
+        /** @phpstan-ignore-next-line  Result of method
+         * Exceedone\Exment\Tests\Unit\ViewWithParentTest::getColumnFilterData()
+         * (void) is used.     */
         $array = $this->getColumnFilterData(function ($data, $custom_view) use ($filter_value) {
             if ($data instanceof CustomValue) {
-                $select_table = $data?->getValue('select_table');
+                $select_table = $data->getValue('select_table');
                 return array_get($select_table, 'id') == $filter_value;
             } else {
                 $column_item = $custom_view->custom_view_columns[0]->column_item;
@@ -349,6 +409,8 @@ class ViewWithParentTest extends TestCase
      * 2-4.
      * CustomViewColumn = select_table : NO
      * CustomViewFilter = select_table : YES(id)
+     *
+     * @return void
      */
     public function testFuncFilterSelectIdNoColumn()
     {
@@ -365,6 +427,9 @@ class ViewWithParentTest extends TestCase
         $options['filter_settings'][0]['filter_condition'] = FilterOption::EQ;
         $options['filter_settings'][0]['filter_value_text'] = $filter_value;
 
+        /** @phpstan-ignore-next-line  Result of method
+         * Exceedone\Exment\Tests\Unit\ViewWithParentTest::getColumnFilterData()
+         * (void) is used.     */
         $array = $this->getColumnFilterData(function ($data, $custom_view) use ($filter_column, $filter_value) {
             if (!($data instanceof CustomValue)) {
                 $id = array_get($data, 'id');
@@ -379,6 +444,8 @@ class ViewWithParentTest extends TestCase
      * 2-5.
      * CustomViewColumn = select_table : YES
      * CustomViewSort = select_table : YES
+     *
+     * @return void
      */
     public function testFuncSortBySelect()
     {
@@ -394,6 +461,9 @@ class ViewWithParentTest extends TestCase
         $options['sort_settings'][0]['sort'] = ViewColumnSort::DESC;
         $options['sort_settings'][0]['priority'] = 1;
 
+        /** @phpstan-ignore-next-line  Result of method
+         * Exceedone\Exment\Tests\Unit\ViewWithParentTest::getColumnFilterData()
+         * (void) is used.     */
         $array = $this->getColumnFilterData(function ($prev_data, $data, $custom_view) {
             $column_item = $custom_view->custom_view_columns[0]->column_item;
             $unique_name = $column_item?->uniqueName();
@@ -405,6 +475,8 @@ class ViewWithParentTest extends TestCase
      * 2-6.
      * CustomViewColumn = select_table : NO
      * CustomViewSort = select_table : YES
+     *
+     * @return void
      */
     public function testFuncSortBySelectNoColumn()
     {
@@ -423,6 +495,9 @@ class ViewWithParentTest extends TestCase
 
         $select_table = getModelName(TestDefine::TESTDATA_TABLE_NAME_VIEW_ALL);
 
+        /** @phpstan-ignore-next-line  Result of method
+         * Exceedone\Exment\Tests\Unit\ViewWithParentTest::getColumnFilterData()
+         * (void) is used.     */
         $array = $this->getColumnFilterData(function ($prev_data, $data, $custom_view) use ($select_table, $sort_column) {
             $prev_select = $select_table::find(array_get($prev_data, 'value.select_table'));
             $select = $select_table::find(array_get($data, 'value.select_table'));
@@ -434,6 +509,8 @@ class ViewWithParentTest extends TestCase
      * 2-7.
      * CustomViewColumn = select_table : YES
      * CustomViewSort = select_table : YES(id)
+     *
+     * @return void
      */
     public function testFuncSortBySelectId()
     {
@@ -449,6 +526,9 @@ class ViewWithParentTest extends TestCase
         $options['sort_settings'][0]['sort'] = ViewColumnSort::ASC;
         $options['sort_settings'][0]['priority'] = 1;
 
+        /** @phpstan-ignore-next-line  Result of method
+         * Exceedone\Exment\Tests\Unit\ViewWithParentTest::getColumnFilterData()
+         * (void) is used.     */
         $array = $this->getColumnFilterData(function ($prev_data, $data, $custom_view) {
             $column_item = $custom_view->custom_view_columns[0]->column_item;
             $unique_name = $column_item?->uniqueName();
@@ -460,6 +540,8 @@ class ViewWithParentTest extends TestCase
      * 2-8.
      * CustomViewColumn = select_table : NO
      * CustomViewSort = select_table : YES(id)
+     *
+     * @return void
      */
     public function testFuncSortBySelectIdNoColumn()
     {
@@ -478,6 +560,9 @@ class ViewWithParentTest extends TestCase
 
         $select_table = getModelName(TestDefine::TESTDATA_TABLE_NAME_VIEW_ALL);
 
+        /** @phpstan-ignore-next-line  Result of method
+         * Exceedone\Exment\Tests\Unit\ViewWithParentTest::getColumnFilterData()
+         * (void) is used.     */
         $array = $this->getColumnFilterData(function ($prev_data, $data, $custom_view) use ($select_table, $sort_column) {
             $prev_select = $select_table::find(array_get($prev_data, 'value.select_table'));
             $select = $select_table::find(array_get($data, 'value.select_table'));
@@ -489,6 +574,8 @@ class ViewWithParentTest extends TestCase
      * 3-1.
      * CustomViewColumn = parent : YES, user : YES
      * CustomViewFilter = parent : YES, user : YES
+     *
+     * @return void
      */
     public function testFuncFilterParentUser()
     {
@@ -504,13 +591,16 @@ class ViewWithParentTest extends TestCase
         $options['filter_settings'][1]['filter_condition'] = FilterOption::LIKE;
         $options['filter_settings'][1]['filter_value_text'] = 'user';
 
+        /** @phpstan-ignore-next-line  Result of method
+         * Exceedone\Exment\Tests\Unit\ViewWithParentTest::getColumnFilterData()
+         * (void) is used.     */
         $array = $this->getColumnFilterData(function ($data, $custom_view) {
             if ($data instanceof CustomValue) {
-                $parent = $data?->getParentValue();
+                $parent = $data->getParentValue();
                 if ($parent?->getValue('text') != 'test_2') {
                     return false;
                 }
-                $select = $data?->getValue('user');
+                $select = $data->getValue('user');
                 return strpos($select?->getValue('user_name'), 'user') === 0;
             } else {
                 $column_item = $custom_view->custom_view_columns[0]->column_item;
@@ -527,6 +617,8 @@ class ViewWithParentTest extends TestCase
      * 3-2.
      * CustomViewColumn = parent : NO, user : NO
      * CustomViewFilter = parent : YES, user : YES
+     *
+     * @return void
      */
     public function testFuncFilterParentUserNoColumn()
     {
@@ -542,6 +634,9 @@ class ViewWithParentTest extends TestCase
         $options['filter_settings'][1]['filter_condition'] = FilterOption::NOT_LIKE;
         $options['filter_settings'][1]['filter_value_text'] = 'user';
 
+        /** @phpstan-ignore-next-line  Result of method
+         * Exceedone\Exment\Tests\Unit\ViewWithParentTest::getColumnFilterData()
+         * (void) is used.     */
         $array = $this->getColumnFilterData(function ($data, $custom_view) {
             if (!($data instanceof CustomValue)) {
                 $id = array_get($data, 'id');
@@ -549,8 +644,10 @@ class ViewWithParentTest extends TestCase
             }
             $parent = $data?->getParentValue();
             $user = $data?->getValue('user');
-            if (is_null($user)) return false;
-            return strpos($user?->getValue('user_name'), 'user') !== 0 &&
+            if (is_null($user)) {
+                return false;
+            }
+            return strpos($user->getValue('user_name'), 'user') !== 0 &&
                 $parent?->getValue('text') != 'test_2';
         }, $options);
     }
@@ -559,6 +656,8 @@ class ViewWithParentTest extends TestCase
      * 3-3.
      * CustomViewColumn = parent : YES, user : YES
      * CustomViewFilter = parent : YES(id), user : YES(id)
+     *
+     * @return void
      */
     public function testFuncFilterParentUserId()
     {
@@ -574,10 +673,13 @@ class ViewWithParentTest extends TestCase
         $options['filter_settings'][1]['filter_condition'] = FilterOption::EQ;
         $options['filter_settings'][1]['filter_value_text'] = 1;
 
+        /** @phpstan-ignore-next-line  Result of method
+         * Exceedone\Exment\Tests\Unit\ViewWithParentTest::getColumnFilterData()
+         * (void) is used.     */
         $array = $this->getColumnFilterData(function ($data, $custom_view) {
             if ($data instanceof CustomValue) {
-                $parent = $data?->getParentValue();
-                $select = $data?->getValue('user');
+                $parent = $data->getParentValue();
+                $select = $data->getValue('user');
                 return array_get($parent, 'id') == 2 && array_get($select, 'id') == 1;
             } else {
                 $column_item = $custom_view->custom_view_columns[0]->column_item;
@@ -594,6 +696,8 @@ class ViewWithParentTest extends TestCase
      * 3-4.
      * CustomViewColumn = parent : NO, user : NO
      * CustomViewFilter = parent : YES(id), user : YES(id)
+     *
+     * @return void
      */
     public function testFuncFilterParentUserIdNoColumn()
     {
@@ -609,6 +713,9 @@ class ViewWithParentTest extends TestCase
         $options['filter_settings'][1]['filter_condition'] = FilterOption::EQ;
         $options['filter_settings'][1]['filter_value_text'] = 2;
 
+        /** @phpstan-ignore-next-line  Result of method
+         * Exceedone\Exment\Tests\Unit\ViewWithParentTest::getColumnFilterData()
+         * (void) is used.     */
         $array = $this->getColumnFilterData(function ($data, $custom_view) {
             if (!($data instanceof CustomValue)) {
                 $id = array_get($data, 'id');
@@ -624,6 +731,8 @@ class ViewWithParentTest extends TestCase
      * 3-5.
      * CustomViewColumn = parent : YES, user : YES
      * CustomViewSort = parent : YES, user : YES
+     *
+     * @return void
      */
     public function testFuncSortByParentUser()
     {
@@ -640,6 +749,9 @@ class ViewWithParentTest extends TestCase
         $options['sort_settings'][1]['sort'] = ViewColumnSort::DESC;
         $options['sort_settings'][1]['priority'] = 2;
 
+        /** @phpstan-ignore-next-line  Result of method
+         * Exceedone\Exment\Tests\Unit\ViewWithParentTest::getColumnFilterData()
+         * (void) is used.     */
         $array = $this->getColumnFilterData(function ($prev_data, $data, $custom_view) {
             $column_item = $custom_view->custom_view_columns[0]->column_item;
             $unique_name = $column_item?->uniqueName();
@@ -657,6 +769,8 @@ class ViewWithParentTest extends TestCase
      * 3-6.
      * CustomViewColumn = parent : NO, user : NO
      * CustomViewSort = parent : YES, user : YES
+     *
+     * @return void
      */
     public function testFuncSortByParentUserNoColumn()
     {
@@ -675,6 +789,9 @@ class ViewWithParentTest extends TestCase
 
         $child_table = getModelName(TestDefine::TESTDATA_TABLE_NAME_CHILD_TABLE);
 
+        /** @phpstan-ignore-next-line  Result of method
+         * Exceedone\Exment\Tests\Unit\ViewWithParentTest::getColumnFilterData()
+         * (void) is used.     */
         $array = $this->getColumnFilterData(function ($prev_data, $data, $custom_view) use ($child_table) {
             if (!($data instanceof CustomValue)) {
                 $data = $child_table::find(array_get($data, 'id'));
@@ -697,6 +814,8 @@ class ViewWithParentTest extends TestCase
      * 3-7.
      * CustomViewColumn = parent : YES, user : YES
      * CustomViewSort = parent : YES(id), user : YES(id)
+     *
+     * @return void
      */
     public function testFuncSortByParentUserId()
     {
@@ -713,6 +832,9 @@ class ViewWithParentTest extends TestCase
         $options['sort_settings'][1]['sort'] = ViewColumnSort::DESC;
         $options['sort_settings'][1]['priority'] = 2;
 
+        /** @phpstan-ignore-next-line  Result of method
+         * Exceedone\Exment\Tests\Unit\ViewWithParentTest::getColumnFilterData()
+         * (void) is used.     */
         $array = $this->getColumnFilterData(function ($prev_data, $data, $custom_view) {
             $column_item = $custom_view->custom_view_columns[0]->column_item;
             $unique_name = $column_item?->uniqueName();
@@ -730,6 +852,8 @@ class ViewWithParentTest extends TestCase
      * 3-8.
      * CustomViewColumn = parent : YES, user : YES
      * CustomViewSort = parent : YES(id), user : YES(id)
+     *
+     * @return void
      */
     public function testFuncSortByParentUserIdColumn()
     {
@@ -748,6 +872,9 @@ class ViewWithParentTest extends TestCase
 
         $child_table = getModelName(TestDefine::TESTDATA_TABLE_NAME_CHILD_TABLE);
 
+        /** @phpstan-ignore-next-line  Result of method
+         * Exceedone\Exment\Tests\Unit\ViewWithParentTest::getColumnFilterData()
+         * (void) is used.     */
         $array = $this->getColumnFilterData(function ($prev_data, $data, $custom_view) use ($child_table) {
             if (!($data instanceof CustomValue)) {
                 $data = $child_table::find(array_get($data, 'id'));
@@ -771,6 +898,8 @@ class ViewWithParentTest extends TestCase
      * CustomViewColumn = select_table : YES
      * CustomViewFilter = select_table : YES
      * (This table has multiple columns that reference the same table)
+     *
+     * @return void
      */
     public function testFuncFilterSelectSameTable()
     {
@@ -789,11 +918,14 @@ class ViewWithParentTest extends TestCase
         $options['filter_settings'][2]['filter_condition'] = FilterOption::EQ;
         $options['filter_settings'][2]['filter_value_text'] = 'odd';
 
+        /** @phpstan-ignore-next-line  Result of method
+         * Exceedone\Exment\Tests\Unit\ViewWithParentTest::getColumnFilterData()
+         * (void) is used.     */
         $array = $this->getColumnFilterData(function ($data, $custom_view) {
             if ($data instanceof CustomValue) {
-                $child = $data?->getValue('child');
-                $child_view = $data?->getValue('child_view');
-                $child_ajax = $data?->getValue('child_ajax');
+                $child = $data->getValue('child');
+                $child_view = $data->getValue('child_view');
+                $child_ajax = $data->getValue('child_ajax');
                 return $child?->getValue('odd_even') == 'odd'
                     && $child_view?->getValue('odd_even') == 'even'
                     && $child_ajax?->getValue('odd_even') == 'odd';
@@ -816,6 +948,8 @@ class ViewWithParentTest extends TestCase
      * CustomViewColumn = select_table : NO
      * CustomViewFilter = select_table : YES
      * (This table has multiple columns that reference the same table)
+     *
+     * @return void
      */
     public function testFuncFilterSelectSameTableNoColumn()
     {
@@ -834,6 +968,9 @@ class ViewWithParentTest extends TestCase
         $options['filter_settings'][2]['filter_condition'] = FilterOption::EQ;
         $options['filter_settings'][2]['filter_value_text'] = 'even';
 
+        /** @phpstan-ignore-next-line  Result of method
+         * Exceedone\Exment\Tests\Unit\ViewWithParentTest::getColumnFilterData()
+         * (void) is used.     */
         $array = $this->getColumnFilterData(function ($data, $custom_view) {
             if (!($data instanceof CustomValue)) {
                 $id = array_get($data, 'id');
@@ -853,6 +990,8 @@ class ViewWithParentTest extends TestCase
      * CustomViewColumn = select_table : YES(id)
      * CustomViewFilter = select_table : YES(id)
      * (This table has multiple columns that reference the same table)
+     *
+     * @return void
      */
     public function testFuncFilterSelectSameTableId()
     {
@@ -876,11 +1015,14 @@ class ViewWithParentTest extends TestCase
         $options['filter_settings'][2]['filter_condition'] = FilterOption::EQ;
         $options['filter_settings'][2]['filter_value_text'] = $target_id_3;
 
+        /** @phpstan-ignore-next-line  Result of method
+         * Exceedone\Exment\Tests\Unit\ViewWithParentTest::getColumnFilterData()
+         * (void) is used.     */
         $array = $this->getColumnFilterData(function ($data, $custom_view) use ($target_id_1, $target_id_2, $target_id_3) {
             if ($data instanceof CustomValue) {
-                $child = $data?->getValue('child');
-                $child_view = $data?->getValue('child_view');
-                $child_ajax = $data?->getValue('child_ajax');
+                $child = $data->getValue('child');
+                $child_view = $data->getValue('child_view');
+                $child_ajax = $data->getValue('child_ajax');
                 return array_get($child, 'id') == $target_id_1
                     && array_get($child_view, 'id') == $target_id_2
                     && array_get($child_ajax, 'id') == $target_id_3;
@@ -903,6 +1045,8 @@ class ViewWithParentTest extends TestCase
      * CustomViewColumn = select_table : NO
      * CustomViewFilter = select_table : YES(created_user)
      * (This table has multiple columns that reference the same table)
+     *
+     * @return void
      */
     public function testFuncFilterSelectSameTableIdNoColumn()
     {
@@ -926,6 +1070,9 @@ class ViewWithParentTest extends TestCase
         $options['filter_settings'][2]['filter_condition'] = FilterOption::USER_EQ;
         $options['filter_settings'][2]['filter_value_text'] = $target_id_3;
 
+        /** @phpstan-ignore-next-line  Result of method
+         * Exceedone\Exment\Tests\Unit\ViewWithParentTest::getColumnFilterData()
+         * (void) is used.     */
         $array = $this->getColumnFilterData(function ($data, $custom_view) use ($target_id_1, $target_id_2, $target_id_3) {
             if (!($data instanceof CustomValue)) {
                 $id = array_get($data, 'id');
@@ -945,6 +1092,8 @@ class ViewWithParentTest extends TestCase
      * CustomViewColumn = select_table : YES
      * CustomViewSort = select_table : YES
      * (This table has multiple columns that reference the same table)
+     *
+     * @return void
      */
     public function testFuncSortBySelectSameTable()
     {
@@ -964,6 +1113,9 @@ class ViewWithParentTest extends TestCase
         $options['sort_settings'][2]['sort'] = ViewColumnSort::ASC;
         $options['sort_settings'][2]['priority'] = 3;
 
+        /** @phpstan-ignore-next-line  Result of method
+         * Exceedone\Exment\Tests\Unit\ViewWithParentTest::getColumnFilterData()
+         * (void) is used.     */
         $array = $this->getColumnFilterData(function ($prev_data, $data, $custom_view) {
             $column_item = $custom_view->custom_view_columns[0]->column_item;
             $unique_name = $column_item?->uniqueName();
@@ -989,6 +1141,8 @@ class ViewWithParentTest extends TestCase
      * CustomViewColumn = select_table : NO
      * CustomViewSort = select_table : YES
      * (This table has multiple columns that reference the same table)
+     *
+     * @return void
      */
     public function testFuncSortBySelectSameTableNoColumn()
     {
@@ -1010,6 +1164,9 @@ class ViewWithParentTest extends TestCase
 
         $pivot_table = getModelName(TestDefine::TESTDATA_TABLE_NAME_PIVOT_TABLE);
 
+        /** @phpstan-ignore-next-line  Result of method
+         * Exceedone\Exment\Tests\Unit\ViewWithParentTest::getColumnFilterData()
+         * (void) is used.     */
         $array = $this->getColumnFilterData(function ($prev_data, $data, $custom_view) use ($pivot_table) {
             if (!($data instanceof CustomValue)) {
                 $data = $pivot_table::find(array_get($data, 'id'));
@@ -1042,6 +1199,8 @@ class ViewWithParentTest extends TestCase
      * CustomViewColumn = select_table : YES
      * CustomViewSort = select_table : YES(id)
      * (This table has multiple columns that reference the same table)
+     *
+     * @return void
      */
     public function testFuncSortBySelectSameTableId()
     {
@@ -1061,6 +1220,9 @@ class ViewWithParentTest extends TestCase
         $options['sort_settings'][2]['sort'] = ViewColumnSort::ASC;
         $options['sort_settings'][2]['priority'] = 3;
 
+        /** @phpstan-ignore-next-line  Result of method
+         * Exceedone\Exment\Tests\Unit\ViewWithParentTest::getColumnFilterData()
+         * (void) is used.     */
         $array = $this->getColumnFilterData(function ($prev_data, $data, $custom_view) {
             $column_item = $custom_view->custom_view_columns[0]->column_item;
             $unique_name = $column_item?->uniqueName();
@@ -1086,6 +1248,8 @@ class ViewWithParentTest extends TestCase
      * CustomViewColumn = select_table : NO
      * CustomViewSort = select_table : YES(created_user)
      * (This table has multiple columns that reference the same table)
+     *
+     * @return void
      */
     public function testFuncSortBySelectSameTableIdNoColumn()
     {
@@ -1107,6 +1271,9 @@ class ViewWithParentTest extends TestCase
 
         $pivot_table = getModelName(TestDefine::TESTDATA_TABLE_NAME_PIVOT_TABLE);
 
+        /** @phpstan-ignore-next-line  Result of method
+         * Exceedone\Exment\Tests\Unit\ViewWithParentTest::getColumnFilterData()
+         * (void) is used.     */
         $array = $this->getColumnFilterData(function ($prev_data, $data, $custom_view) use ($pivot_table) {
             if (!($data instanceof CustomValue)) {
                 $data = $pivot_table::find(array_get($data, 'id'));
@@ -1131,6 +1298,12 @@ class ViewWithParentTest extends TestCase
         }, $options);
     }
 
+    /**
+     * @param array<string> $columns
+     * @param array<string> $filters
+     * @param array<string> $sorts
+     * @return array<string, mixed>
+     */
     protected function getOptions(array $columns, array $filters = [], array $sorts = [])
     {
         $options = [
@@ -1155,6 +1328,10 @@ class ViewWithParentTest extends TestCase
         return $options;
     }
 
+    /**
+     * @param string $column
+     * @return string[]
+     */
     protected function getColumnSetting(string $column)
     {
         $parts = \explode('.', $column);
@@ -1165,7 +1342,7 @@ class ViewWithParentTest extends TestCase
                 $refer_column = $parts[2];
             }
         }
-        
+
         $column_setting = [
             'column_name' => $column,
         ];
@@ -1188,13 +1365,18 @@ class ViewWithParentTest extends TestCase
     }
 
 
+    /**
+     * @param \Closure $testCallback
+     * @param array<mixed> $options
+     * @return void
+     */
     protected function getColumnFilterData(\Closure $testCallback, array $options = [])
     {
         // create custom view
         list($custom_table, $custom_view) = $this->createCustomViewAll($options);
 
         $classname = getModelName($custom_table->table_name);
-        $grid = new Grid(new $classname);
+        $grid = new Grid(new $classname());
         $grid->paginate(100);
 
         $custom_view->filterSortModel($grid->model());
@@ -1206,6 +1388,14 @@ class ViewWithParentTest extends TestCase
         $this->__testFilter($data, $custom_view, $testCallback, $options);
     }
 
+
+    /**
+     * @param \Illuminate\Support\Collection<int|string,mixed> $collection
+     * @param mixed $custom_view
+     * @param \Closure $testCallback
+     * @param array<mixed> $options
+     * @return void
+     */
     protected function __testFilter(\Illuminate\Support\Collection $collection, $custom_view, \Closure $testCallback, array $options = [])
     {
         $options = array_merge(
@@ -1230,7 +1420,7 @@ class ViewWithParentTest extends TestCase
             // get filter matched count.
             foreach ($collection as $data) {
                 $matchResult = $testCallback($data?->model(), $custom_view);
-                
+
                 $this->assertTrue($matchResult, 'matchResult is false. Target id is ' . $data?->id);
             }
 
@@ -1240,10 +1430,11 @@ class ViewWithParentTest extends TestCase
                 return array_get($data?->model(), 'id');
             })->toArray();
             $notMatchedValues = $custom_table->getValueQuery()->whereNotIn('id', $ids)->get();
-            
+
+            /** @var CustomTable|null $data */
             foreach ($notMatchedValues as $data) {
                 $matchResult = $testCallback($data, $custom_view);
-                
+
                 $this->assertTrue(!$matchResult, 'Expect matchResult is false, but matched. Target id is ' . $data?->id);
             }
         }

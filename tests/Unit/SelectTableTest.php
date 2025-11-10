@@ -10,55 +10,73 @@ use Exceedone\Exment\Model\Linkage;
 use Exceedone\Exment\Enums\SearchType;
 use Exceedone\Exment\Enums\ColumnType;
 use Exceedone\Exment\Enums\FormColumnType;
+use Exceedone\Exment\Services\FormSetting\FormColumn\ColumnBase;
 use Exceedone\Exment\Tests\TestDefine;
 use Exceedone\Exment\Services\AuthUserOrgHelper;
 use Illuminate\Support\Collection;
 
 class SelectTableTest extends UnitTestBase
 {
-
     // Default Select Table ----------------------------------------------------
+    /**
+     * @return void
+     */
     public function testSelectTableUser()
     {
         $this->executeSelectTableTest(ColumnType::SELECT_TABLE, []);
     }
 
+    /**
+     * @return void
+     */
     public function testSelectTableAdmin()
     {
         $this->executeSelectTableTest(ColumnType::SELECT_TABLE, ['login_user_admin' => true]);
     }
 
-
-
+    /**
+     * @return void
+     */
     public function testSelectTableAjaxUser()
     {
         $this->executeSelectTableTest(ColumnType::SELECT_TABLE, ['select_load_ajax' => true]);
     }
 
+    /**
+     * @return void
+     */
     public function testSelectTableAjaxAdmin()
     {
         $this->executeSelectTableTest(ColumnType::SELECT_TABLE, ['login_user_admin' => true, 'select_load_ajax' => true]);
     }
 
-
-
+    /**
+     * @return void
+     */
     public function testSelectTableViewUser()
     {
         $this->executeSelectTableTest(ColumnType::SELECT_TABLE, ['target_view' => true]);
     }
 
+    /**
+     * @return void
+     */
     public function testSelectTableViewAdmin()
     {
         $this->executeSelectTableTest(ColumnType::SELECT_TABLE, ['login_user_admin' => true, 'target_view' => true]);
     }
 
-
-
+    /**
+     * @return void
+     */
     public function testSelectTableViewAjaxUser()
     {
         $this->executeSelectTableTest(ColumnType::SELECT_TABLE, ['target_view' => true, 'select_load_ajax' => true]);
     }
 
+    /**
+     * @return void
+     */
     public function testSelectTableViewAjaxAdmin()
     {
         $this->executeSelectTableTest(ColumnType::SELECT_TABLE, ['login_user_admin' => true, 'select_load_ajax' => true, 'target_view' => true]);
@@ -67,24 +85,34 @@ class SelectTableTest extends UnitTestBase
 
     // relation filter ----------------------------------------------------
     // One : Many ----------------------------------------------------
+    /**
+     * @return void
+     */
     public function testSelectTableRelationOneMany()
     {
         $this->executeSelectTableTest(ColumnType::SELECT_TABLE, ['relation_filter' => SearchType::ONE_TO_MANY]);
     }
-    
 
+    /**
+     * @return void
+     */
     public function testSelectTableRelationOneManyAjax()
     {
         $this->executeSelectTableTest(ColumnType::SELECT_TABLE, ['relation_filter' => SearchType::ONE_TO_MANY, 'select_load_ajax' => true]);
     }
 
-
+    /**
+     * @return void
+     */
     public function testSelectTableRelationOneManyView()
     {
         $this->executeSelectTableTest(ColumnType::SELECT_TABLE, ['relation_filter' => SearchType::ONE_TO_MANY, 'target_view' => true]);
     }
 
 
+    /**
+     * @return void
+     */
     public function testSelectTableRelationOneManyViewAjax()
     {
         $this->executeSelectTableTest(ColumnType::SELECT_TABLE, ['relation_filter' => SearchType::ONE_TO_MANY, 'target_view' => true, 'select_load_ajax' => true]);
@@ -92,24 +120,33 @@ class SelectTableTest extends UnitTestBase
 
 
     // Many : Many ----------------------------------------------------
+    /**
+     * @return void
+     */
     public function testSelectTableRelationManyMany()
     {
         $this->executeSelectTableTest(ColumnType::SELECT_TABLE, ['relation_filter' => SearchType::MANY_TO_MANY]);
     }
-    
 
+    /**
+     * @return void
+     */
     public function testSelectTableRelationManyManyAjax()
     {
         $this->executeSelectTableTest(ColumnType::SELECT_TABLE, ['relation_filter' => SearchType::MANY_TO_MANY, 'select_load_ajax' => true]);
     }
 
-
+    /**
+     * @return void
+     */
     public function testSelectTableRelationManyManyView()
     {
         $this->executeSelectTableTest(ColumnType::SELECT_TABLE, ['relation_filter' => SearchType::MANY_TO_MANY, 'target_view' => true]);
     }
 
-
+    /**
+     * @return void
+     */
     public function testSelectTableRelationManyManyViewAjax()
     {
         $this->executeSelectTableTest(ColumnType::SELECT_TABLE, ['relation_filter' => SearchType::MANY_TO_MANY, 'target_view' => true, 'select_load_ajax' => true]);
@@ -118,24 +155,35 @@ class SelectTableTest extends UnitTestBase
 
 
     // Select Table ----------------------------------------------------
+    /**
+     * @return void
+     */
     public function testSelectTableRelationSelectTable()
     {
         $this->executeSelectTableTest(ColumnType::SELECT_TABLE, ['relation_filter' => SearchType::SELECT_TABLE]);
     }
-    
 
+
+    /**
+     * @return void
+     */
     public function testSelectTableRelationSelectTableAjax()
     {
         $this->executeSelectTableTest(ColumnType::SELECT_TABLE, ['relation_filter' => SearchType::SELECT_TABLE, 'select_load_ajax' => true]);
     }
 
 
+    /**
+     * @return void
+     */
     public function testSelectTableRelationSelectTableView()
     {
         $this->executeSelectTableTest(ColumnType::SELECT_TABLE, ['relation_filter' => SearchType::SELECT_TABLE, 'target_view' => true]);
     }
 
-
+    /**
+     * @return void
+     */
     public function testSelectTableRelationSelectTableViewAjax()
     {
         $this->executeSelectTableTest(ColumnType::SELECT_TABLE, ['relation_filter' => SearchType::SELECT_TABLE, 'target_view' => true, 'select_load_ajax' => true]);
@@ -144,47 +192,68 @@ class SelectTableTest extends UnitTestBase
 
 
     // Default User ----------------------------------------------------
+    /**
+     * @return void
+     */
     public function testUserUser()
     {
         $this->executeSelectTableTest(ColumnType::USER, []);
     }
 
+    /**
+     * @return void
+     */
     public function testUserAdmin()
     {
         $this->executeSelectTableTest(ColumnType::USER, ['login_user_admin' => true]);
     }
 
 
-
+    /**
+     * @return void
+     */
     public function testUserAjaxUser()
     {
         $this->executeSelectTableTest(ColumnType::USER, ['select_load_ajax' => true]);
     }
 
+    /**
+     * @return void
+     */
     public function testUserAjaxAdmin()
     {
         $this->executeSelectTableTest(ColumnType::USER, ['login_user_admin' => true, 'select_load_ajax' => true]);
     }
 
 
-
+    /**
+     * @return void
+     */
     public function testUserViewUser()
     {
         $this->executeSelectTableTest(ColumnType::USER, ['target_view' => true]);
     }
 
+    /**
+     * @return void
+     */
     public function testUserViewAdmin()
     {
         $this->executeSelectTableTest(ColumnType::USER, ['login_user_admin' => true, 'target_view' => true]);
     }
 
 
-
+    /**
+     * @return void
+     */
     public function testUserViewAjaxUser()
     {
         $this->executeSelectTableTest(ColumnType::USER, ['target_view' => true, 'select_load_ajax' => true]);
     }
 
+    /**
+     * @return void
+     */
     public function testUserViewAjaxAdmin()
     {
         $this->executeSelectTableTest(ColumnType::USER, ['login_user_admin' => true, 'select_load_ajax' => true, 'target_view' => true]);
@@ -192,24 +261,36 @@ class SelectTableTest extends UnitTestBase
 
 
     // Relation filter ----------------------------------------------------
+    /**
+     * @return void
+     */
     public function testUserRelation()
     {
         $this->executeSelectTableTest(ColumnType::USER, ['relation_filter' => SearchType::MANY_TO_MANY]);
     }
-    
 
+
+    /**
+     * @return void
+     */
     public function testUserRelationAjax()
     {
         $this->executeSelectTableTest(ColumnType::USER, ['relation_filter' => SearchType::MANY_TO_MANY, 'select_load_ajax' => true]);
     }
 
 
+    /**
+     * @return void
+     */
     public function testUserRelationView()
     {
         $this->executeSelectTableTest(ColumnType::USER, ['relation_filter' => SearchType::MANY_TO_MANY, 'target_view' => true]);
     }
 
 
+    /**
+     * @return void
+     */
     public function testUserRelationViewAjax()
     {
         $this->executeSelectTableTest(ColumnType::USER, ['relation_filter' => SearchType::MANY_TO_MANY, 'target_view' => true, 'select_load_ajax' => true]);
@@ -220,7 +301,7 @@ class SelectTableTest extends UnitTestBase
 
 
     // common ----------------------------------------------------
-    
+
     /**
      * Execute select table test.
      * (1)Get options using select table's method.
@@ -228,7 +309,7 @@ class SelectTableTest extends UnitTestBase
      * Check matching (1) and (2)
      *
      * @param string $column_type
-     * @param array $options
+     * @param array<mixed> $options
      * @return void
      */
     protected function executeSelectTableTest($column_type, array $options)
@@ -259,7 +340,7 @@ class SelectTableTest extends UnitTestBase
 
         // get column item
         $custom_item = $custom_column->column_item;
-        
+
         $field = $custom_item->getAdminField();
         list($parentValue, $linkage) = $this->getParentValueAndLinkage($custom_column, $options);
         $fieldOptions = $this->getSelectFieldOptions($custom_column, $linkage, $parentValue, $options);
@@ -274,8 +355,8 @@ class SelectTableTest extends UnitTestBase
 
     /**
      * Get test target column.
-     *
-     * @param array $options
+     * @param ColumnType|string $column_type
+     * @param array<mixed> $options
      * @return CustomColumn
      */
     protected function getTargetColumn($column_type, array $options)
@@ -284,10 +365,10 @@ class SelectTableTest extends UnitTestBase
             if (isset($options['relation_filter'])) {
                 return $this->getTargetColumnTable(TestDefine::TESTDATA_TABLE_NAME_PIVOT_TABLE_USER_ORG, TestDefine::TESTDATA_COLUMN_NAMES['user_relation_filter'], $options);
             }
-    
+
             return $this->getTargetColumnTable(TestDefine::TESTDATA_TABLE_NAME_PIVOT_TABLE_USER_ORG, TestDefine::TESTDATA_COLUMN_NAMES['user'], $options);
         }
-        
+
         if ($column_type == ColumnType::ORGANIZATION) {
             return $this->getTargetColumnTable(TestDefine::TESTDATA_TABLE_NAME_PIVOT_TABLE_USER_ORG, TestDefine::TESTDATA_COLUMN_NAMES['organization'], $options);
         }
@@ -312,7 +393,12 @@ class SelectTableTest extends UnitTestBase
         return $this->getTargetColumnTable(TestDefine::TESTDATA_TABLE_NAME_PIVOT_TABLE, TestDefine::TESTDATA_COLUMN_NAMES['default'], $options);
     }
 
-
+    /**
+     * @param string $custom_table_name
+     * @param array<string, mixed> $columns
+     * @param array<string, mixed> $options
+     * @return CustomColumn|null
+     */
     protected function getTargetColumnTable(string $custom_table_name, array $columns, array $options)
     {
         if (boolval($options['select_load_ajax'])) {
@@ -334,8 +420,8 @@ class SelectTableTest extends UnitTestBase
      * @param CustomColumn $custom_column
      * @param Linkage|null $linkage
      * @param string|null $parentValue
-     * @param array $options
-     * @return array
+     * @param array<string, mixed> $options
+     * @return array<mixed>
      */
     protected function getSelectFieldOptions($custom_column, $linkage, $parentValue, array $options)
     {
@@ -349,7 +435,7 @@ class SelectTableTest extends UnitTestBase
             if (!$linkage) {
                 return;
             }
-            
+
             $linkage->setQueryFilter($query, $parentValue);
         };
         $selectOption = $this->callProtectedMethod($column_item, 'getSelectFieldOptions', $callback);
@@ -362,8 +448,8 @@ class SelectTableTest extends UnitTestBase
      * Get parent value and linakge for relation filter
      *
      * @param CustomColumn $custom_column
-     * @param array $options
-     * @return array
+     * @param array<string, mixed> $options
+     * @return array<mixed>
      */
     protected function getParentValueAndLinkage($custom_column, array &$options)
     {
@@ -395,8 +481,10 @@ class SelectTableTest extends UnitTestBase
 
     /**
      * search custom value directly
-     *
-     * @return Collection
+     * @param mixed $custom_column
+     * @param mixed $value
+     * @param array<string, mixed> $options
+     * @return Collection<int|string, mixed>
      */
     protected function searchCustomValueDirectly($custom_column, $value, array $options)
     {
@@ -451,8 +539,8 @@ class SelectTableTest extends UnitTestBase
     /**
      * Is match collect1 and 2
      *
-     * @param Collection $correct1
-     * @param Collection $correct2
+     * @param Collection<int, (int|string)>  $correct1
+     * @param Collection<int|string, mixed> $correct2
      * @return boolean
      */
     protected function isMatchIds($correct1, $correct2)

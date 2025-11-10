@@ -2,6 +2,7 @@
 
 namespace Exceedone\Exment\ConditionItems;
 
+use Exceedone\Exment\Database\Eloquent\ExtendedBuilder;
 use Exceedone\Exment\Model\CustomColumn;
 use Exceedone\Exment\Model\CustomTable;
 use Exceedone\Exment\Model\CustomValue;
@@ -29,6 +30,7 @@ class LoginUserColumnItem extends ColumnItem
         // get workflow
         $workflow = Workflow::getWorkflowByTable($custom_table);
         if (!$workflow) {
+            /** @var ExtendedBuilder $query */
             $query->whereNotMatch();
             return;
         }
@@ -58,7 +60,7 @@ class LoginUserColumnItem extends ColumnItem
                         if (!$custom_column) {
                             continue;
                         }
-        
+
                         // get key
                         $queryKey = null;
                         switch ($workflow->getOption('get_by_userinfo_base')) {
@@ -72,7 +74,7 @@ class LoginUserColumnItem extends ColumnItem
                                 $queryKey = 'last_executed_user.value->';
                                 break;
                         }
-        
+
                         $query->orWhere(function ($query) use ($orgids, $custom_column, $workflow_action, $queryKey) {
                             $query->where('authority_related_id', $custom_column->id)
                                 ->where('authority_related_type', ConditionTypeDetail::LOGIN_USER_COLUMN()->lowerkey())
@@ -94,7 +96,7 @@ class LoginUserColumnItem extends ColumnItem
         });
     }
 
-    
+
     /**
      * Check has workflow authority with this item.
      *
@@ -128,13 +130,19 @@ class LoginUserColumnItem extends ColumnItem
         }
         return false;
     }
-    
 
-    public function hasAuthority(WorkflowAuthorityInterface $workflow_authority, ?CustomValue $custom_value, $targetUser)
+
+    /**
+     * @param WorkflowAuthorityInterface $workflow_authority
+     * @param CustomValue|null $custom_value
+     * @param $targetUser
+     * @return bool
+     */
+    public function hasAuthority(WorkflowAuthorityInterface $workflow_authority, ?CustomValue $custom_value, $targetUser): bool
     {
         $custom_column = CustomColumn::getEloquent($workflow_authority->related_id);
         $workflow_action = WorkflowAction::getEloquent($workflow_authority->workflow_action_id);
-        
+
         $userAndOrgs = static::getTargetUserAndOrg($custom_value, $workflow_action, $workflow_authority->related_id);
 
         switch ($custom_column->column_type) {
@@ -148,19 +156,19 @@ class LoginUserColumnItem extends ColumnItem
                     return collect($ids)->contains($auth_value);
                 });
         }
+        return false;
     }
-
 
     /**
      * Get Action target user and orgs
      *
      * @param CustomValue $custom_value
-     * @param Workflow $workflow
-     * @param mixed $custom_column_id
-     * @param boolean $asNextAction This action calls as next action. Actually, this is showing dialog.
+     * @param WorkflowAction $workflow_action
+     * @param $custom_column_id
+     * @param bool $asNextAction This action calls as next action. Actually, this is showing dialog.
      * @return array
      */
-    public static function getTargetUserAndOrg(CustomValue $custom_value, WorkflowAction $workflow_action, $custom_column_id, bool $asNextAction = false) : array
+    public static function getTargetUserAndOrg(CustomValue $custom_value, WorkflowAction $workflow_action, $custom_column_id, bool $asNextAction = false): array
     {
         $workflow = $workflow_action->workflow_cache;
         $column = CustomColumn::getEloquent($custom_column_id);
@@ -179,11 +187,11 @@ class LoginUserColumnItem extends ColumnItem
                     }
                 }
                 break;
-            // If 'created user', get as custom_value's created_user_id
+                // If 'created user', get as custom_value's created_user_id
             case 'created_user':
                 $created_user_id = $custom_value->created_user_id;
                 break;
-            // else, get setted last workflow value
+                // else, get setted last workflow value
             default:
                 // If as next action, call login user id as next user.
                 if ($asNextAction) {

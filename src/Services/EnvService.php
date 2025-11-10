@@ -1,4 +1,5 @@
 <?php
+
 namespace Exceedone\Exment\Services;
 
 /**
@@ -17,7 +18,7 @@ class EnvService
 
         $newEnvs = [];
 
-        
+
         // Loop through .env-data
         foreach ($env as $env_value) {
 
@@ -25,6 +26,7 @@ class EnvService
             // So it's not possible to split e.g. the App-Key by accident
             $entry = explode("=", $env_value, 2);
 
+            /** @phpstan-ignore-next-line If condition is always false. */
             if (count($entry) == 0) {
                 $newEnvs[] = $entry;
                 continue;
@@ -51,7 +53,7 @@ class EnvService
             }
         }
 
-        
+
         // Loop through given data
         foreach ((array)$data as $key => $value) {
             if (array_has($newEnvs, $key)) {
@@ -83,7 +85,7 @@ class EnvService
         }
         return $value;
     }
-    
+
     public static function removeEnv($data = [])
     {
         if (empty($data)) {
@@ -119,14 +121,15 @@ class EnvService
 
             // Turn the value into an array and stop after the first split
             // So it's not possible to split e.g. the App-Key by accident
-            $entry = explode("=", $env_value, 2);
+            $entry = array_map('trim', explode("=", $env_value, 2));
 
+            /** @phpstan-ignore-next-line If condition is always false. */
             if (count($entry) == 0) {
                 continue;
             }
 
             if ($matchPrefix) {
-                if (strpos($entry[0], $key) === false) {
+                if (strpos($entry[0], $key) !== 0) {
                     continue;
                 }
             } else {

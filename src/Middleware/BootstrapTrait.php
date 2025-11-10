@@ -14,7 +14,7 @@ trait BootstrapTrait
         if (!isset($ver)) {
             $ver = date('YmdHis');
         }
-        
+
         $func = ($isCss ? 'css' : 'js');
         if ($isLast) {
             $func .= 'last';
@@ -23,7 +23,7 @@ trait BootstrapTrait
             Ad::{$func}(asset($l . '?ver='.$ver));
         }
     }
-    
+
 
     protected function isStaticRequest($request)
     {
@@ -32,12 +32,13 @@ trait BootstrapTrait
         return in_array($extension, ['js', 'css', 'png', 'jpg', 'jpeg', 'gif']);
     }
 
-
     /**
      * append Style and sript to page
      *
-     * @param mixed $pluginBase Exceedone\Exment\Services\Plugin\PluginBase
+     * @param $pl
+     * @param bool $asPublicForm
      * @return void
+     * @throws \Exception
      */
     protected static function appendStyleScript($pl, bool $asPublicForm = false)
     {
@@ -72,7 +73,7 @@ trait BootstrapTrait
             $items = collect($pluginClass->{$p}(true))->map(function ($item) use ($pluginClass, $asPublicForm) {
                 return $pluginClass->getCssJsUrl($item, $asPublicForm);
             });
-            if (!empty($items)) {
+            if (!$items->isEmpty()) {
                 foreach ($items as $item) {
                     Ad::{$p.'last'}($item);
                 }

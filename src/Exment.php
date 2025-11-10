@@ -2,6 +2,7 @@
 
 namespace Exceedone\Exment;
 
+use Exceedone\Exment\Services\DataImportExport\Formats\PhpSpreadSheet\PhpSpreadSheet;
 use Exceedone\Exment\Validator as ExmentValidator;
 use Exceedone\Exment\Enums\UrlTagType;
 use Exceedone\Exment\Enums\FilterSearchType;
@@ -52,7 +53,7 @@ class Exment
 
     public function __construct()
     {
-        $this->classLoader = new ClassLoader;
+        $this->classLoader = new ClassLoader();
         $this->classLoader->register();
     }
 
@@ -97,9 +98,10 @@ class Exment
                 return $callback($request, $exception);
             }
 
+            /** @phpstan-ignore-next-line not implement MaintenanceModeException in laravel 10 */
             if ($exception instanceof \Illuminate\Foundation\Http\Exceptions\MaintenanceModeException) {
                 $errorController = app(\Exceedone\Exment\Controllers\ErrorController::class);
-                return $errorController->maintenance($request, $exception);
+                return $errorController->maintenance();
             }
 
             if ($exception instanceof \Illuminate\Session\TokenMismatchException) {
@@ -128,7 +130,7 @@ class Exment
 
                 return $callback($request, $exception);
             }
-        
+
             // whether has User
             $user = \Exment::user();
             if (!$user) {
@@ -162,12 +164,10 @@ class Exment
         \Auth::shouldUse($guard);
     }
 
-
     /**
      * Get User Model's ID
-     * "This function name defines Custom value's user and login user. But this function always return Custom value's user
-     *
-     * @return string|int
+     * This function name defines Custom value's user and login user. But this function always return Custom value's user
+     * @return string|int|null
      */
     public function getUserId()
     {
@@ -181,7 +181,7 @@ class Exment
     }
 
 
-    public function getRender($grid) : ?string
+    public function getRender($grid): ?string
     {
         if ($grid instanceof Renderable) {
             return $grid->render();
@@ -193,7 +193,7 @@ class Exment
 
         return $grid;
     }
-    
+
 
     /**
      * get exment version
@@ -217,7 +217,7 @@ class Exment
                 $version_json = Cache::get(Define::SYSTEM_KEY_SESSION_SYSTEM_VERSION);
             } catch (\Exception $e) {
             }
-    
+
             $latest = null;
             $current = null;
             if (isset($version_json)) {
@@ -225,7 +225,7 @@ class Exment
                 $latest = array_get($version, 'latest');
                 $current = array_get($version, 'current');
             }
-            
+
             if ((empty($latest) || empty($current))) {
                 // get current version from composer.lock
                 $composer_lock = base_path('composer.lock');
@@ -238,7 +238,7 @@ class Exment
                 if (!$json) {
                     return [null, null];
                 }
-                
+
                 // get exment info
                 $packages = array_get($json, 'packages');
                 $exment = collect($packages)->filter(function ($package) {
@@ -248,7 +248,7 @@ class Exment
                     return [null, null];
                 }
                 $current = array_get($exment, 'version');
-                
+
                 // if outside api is not permitted, return only current
                 if (!System::outside_api() || !$getFromComposer) {
                     return [null, $current];
@@ -278,13 +278,13 @@ class Exment
                 if (!$json) {
                     return [null, null];
                 }
-                $packages = array_get($json, 'packages.'.Define::COMPOSER_PACKAGE_NAME);
+                $packages = array_get($json, 'package.versions');
                 if (!$packages) {
                     return [null, null];
                 }
 
                 // sort by timestamp
-                $sortedPackages = collect($packages)->sortByDesc('time');
+                $sortedPackages = collect($packages)->sortByDesc('version_normalized');
                 foreach ($sortedPackages as $key => $package) {
                     // if version is "dev-", continue
                     if (substr($key, 0, 4) == 'dev-') {
@@ -293,7 +293,7 @@ class Exment
                     $latest = $key;
                     break;
                 }
-                
+
                 try {
                     Cache::put(Define::SYSTEM_KEY_SESSION_SYSTEM_VERSION, json_encode([
                         'latest' => $latest, 'current' => $current
@@ -304,11 +304,11 @@ class Exment
         } catch (\Exception $e) {
             Cache::put(Define::SYSTEM_KEY_SESSION_SYSTEM_VERSION_EXECUTE, true, Define::CACHE_CLEAR_MINUTE);
         }
-        
+
         return [$latest ?? null, $current ?? null];
     }
-    
-    
+
+
     /**
      * getExmentCurrentVersion
      *
@@ -323,28 +323,29 @@ class Exment
     /**
      * check exment's next version
      *
-     * @return array $latest: new version in package, $current: this version in server
+     * @return int $latest: new version in package, $current: this version in server
      */
     public function checkLatestVersion()
     {
         list($latest, $current) = $this->getExmentVersion();
         $latest = trim($latest, 'v');
         $current = trim($current, 'v');
-        
+
         if (empty($latest) || empty($current)) {
             return SystemVersion::ERROR;
         } elseif (strpos($current, 'dev-') === 0) {
             return SystemVersion::DEV;
         } elseif ($latest === $current) {
             return SystemVersion::LATEST;
-            $message = exmtrans("system.version_latest");
-            $icon = 'check-square';
-            $bgColor = 'blue';
+// Unreachable statement - code above always terminates.
+//            $message = exmtrans("system.version_latest");
+//            $icon = 'check-square';
+//            $bgColor = 'blue';
         } else {
             return SystemVersion::HAS_NEXT;
         }
     }
-    
+
 
 
 
@@ -398,10 +399,13 @@ class Exment
         ])->render();
     }
 
-    
     /**
      * get_password_rule(for validation)
-     * @return string
+     *
+     * @param $required
+     * @param LoginUser|null $login_user
+     * @param array $options
+     * @return array
      */
     public function get_password_rule($required = true, ?LoginUser $login_user = null, array $options = [])
     {
@@ -421,13 +425,13 @@ class Exment
         }
 
         $validates[] = 'max:'.(!is_null(config('exment.password_rule.max')) ? config('exment.password_rule.max') : '32');
-        
+
         // check password policy
         $complex = false;
         $validates[] = new ExmentValidator\PasswordHistoryRule($login_user);
 
         if (!is_null($is_complex = System::complex_password()) && boolval($is_complex)) {
-            $validates[] = new ExmentValidator\ComplexPasswordRule;
+            $validates[] = new ExmentValidator\ComplexPasswordRule();
             $complex = true;
         }
 
@@ -439,7 +443,7 @@ class Exment
         if (!$complex && !is_null(config('exment.password_rule.rule'))) {
             $validates[] = 'regex:/'.config('exment.password_rule.rule').'/';
         }
-        
+
         return $validates;
     }
 
@@ -456,12 +460,13 @@ class Exment
         return exmtrans('user.help.password');
     }
 
-    
+
     /**
      * get Data from excel sheet
      */
     public function getDataFromSheet($sheet, $keyvalue = false, $isGetMerge = false)
     {
+        /** @var PhpSpreadSheet $format */
         $format = FormatBase::getFormatClass('xlsx', ExportImportLibrary::PHP_SPREAD_SHEET, false);
         return $format->getDataFromSheet($sheet, $keyvalue, $isGetMerge);
     }
@@ -472,6 +477,7 @@ class Exment
      */
     public function getCellValue($cell, $sheet, $isGetMerge = false)
     {
+        /** @var PhpSpreadSheet $format */
         $format = FormatBase::getFormatClass('xlsx', ExportImportLibrary::PHP_SPREAD_SHEET, false);
         return $format->getCellValue($cell, $sheet, $isGetMerge);
     }
@@ -497,7 +503,7 @@ class Exment
         return [$mark, $value];
     }
 
-    
+
     /**
      * search document
      */
@@ -543,10 +549,10 @@ class Exment
      * Push collection. if $item is Collection, loop
      *
      * @param Collection $collect
-     * @param Collection|mixed $item
-     * @return void
+     * @param $item
+     * @return Collection
      */
-    public function pushCollection(Collection $collect, $item) : Collection
+    public function pushCollection(Collection $collect, $item): Collection
     {
         if ($item instanceof Collection) {
             foreach ($item as $i) {
@@ -560,14 +566,14 @@ class Exment
     }
 
 
-    
+
     /**
      * Get manual url
      *
      * @param string|null $uri
      * @return string
      */
-    public function getManualUrl(?string $uri = null) : string
+    public function getManualUrl(?string $uri = null): string
     {
         $manual_url_base = config('exment.manual_url');
         // if ja, set
@@ -586,7 +592,7 @@ class Exment
      * @param string|null $id_transkey
      * @return string
      */
-    public function getMoreTag(?string $uri = null, ?string $id_transkey = null) : string
+    public function getMoreTag(?string $uri = null, ?string $id_transkey = null): string
     {
         $url = $this->getManualUrl($uri);
 
@@ -609,14 +615,14 @@ class Exment
 
         return config('exment.true_mark', '<i class="fa fa-check"></i>');
     }
-    
+
 
     /**
      * Get Yes No All array for option.
      *
      * @return array
      */
-    public function getYesNoAllOption() : array
+    public function getYesNoAllOption(): array
     {
         return [
             '' => 'All',
@@ -624,7 +630,7 @@ class Exment
             '1' => 'YES',
         ];
     }
-    
+
     public function wrapValue($string)
     {
         return app('db')->getPdo()->quote($string);
@@ -656,7 +662,7 @@ class Exment
         return implode(' ', $html);
     }
 
-    
+
     /**
      * this url is ApiEndpoint
      */
@@ -676,7 +682,7 @@ class Exment
         return request()->is("{$route}/*");
     }
 
-    
+
     /**
      * get tmp folder path. Uses for
      * @param string $type "plugin", "template", "backup", "data".
@@ -713,7 +719,7 @@ class Exment
      * @param string $path
      * @return string
      */
-    public function replaceOsSeparator($path) : string
+    public function replaceOsSeparator($path): string
     {
         if ($this->isWindows()) {
             return str_replace('/', '\\', $path);
@@ -754,11 +760,10 @@ class Exment
         return $minsize * 1024 * 1024;
     }
 
-
     /**
      * Get file size
      *
-     * @param string $val
+     * @param $val
      * @return int
      */
     public function getFileMegaSizeValue($val)
@@ -767,6 +772,7 @@ class Exment
         $val = str_replace('m', '', $val);
 
         if (strpos($val, 'g') !== false) {
+            /** @phpstan-ignore-next-line Maybe error? */
             $val = str_replace('g', '', $val) * 1024;
         }
         return intval($val);
@@ -785,7 +791,7 @@ class Exment
         }
         \File::makeDirectory($path, $mode, true);
     }
-    
+
     /**
      * make directory for disk(0775)
      *
@@ -802,7 +808,7 @@ class Exment
         }
         $disk->makeDirectory($path, $mode, true);
     }
-    
+
 
     /**
      * Get all of the directories within a given directory.
@@ -826,7 +832,7 @@ class Exment
      *
      * @return boolean
      */
-    public function isSqlServer() : bool
+    public function isSqlServer(): bool
     {
         return \DB::getSchemaBuilder() instanceof \Illuminate\Database\Schema\SqlServerBuilder;
     }
@@ -837,7 +843,7 @@ class Exment
      *
      * @return boolean
      */
-    public function isWindows() : bool
+    public function isWindows(): bool
     {
         return 0 === strpos(PHP_OS, 'WIN');
     }
@@ -848,7 +854,7 @@ class Exment
      *
      * @return string
      */
-    public function getComposerPath() : string
+    public function getComposerPath(): string
     {
         $path = config('exment.composer_path');
         if (!\is_nullorempty($path)) {
@@ -865,7 +871,7 @@ class Exment
      * @param \Carbon\Carbon $carbon
      * @return array
      */
-    public function carbonToArray(\Carbon\Carbon $carbon) : array
+    public function carbonToArray(\Carbon\Carbon $carbon): array
     {
         return [
             'date' => $carbon->format("Y-m-d H:i:s.u"),
@@ -880,7 +886,7 @@ class Exment
      * @param Carbon|string|null $value
      * @return Carbon|null
      */
-    public function getCarbonOnlyDay($value) : ?Carbon
+    public function getCarbonOnlyDay($value): ?Carbon
     {
         if (is_nullorempty($value)) {
             return null;
@@ -897,7 +903,7 @@ class Exment
      * @param array|Collection $targetArr
      * @return boolean
      */
-    public function isContains2Array($testArr, $targetArr) : bool
+    public function isContains2Array($testArr, $targetArr): bool
     {
         foreach ($testArr as $arrKey => $arrValue) {
             if (!collect($targetArr)->contains(function ($v, $k) use ($arrKey, $arrValue) {
@@ -920,7 +926,7 @@ class Exment
         return class_exists(\Arcanedev\NoCaptcha\NoCaptchaManager::class);
     }
 
-    
+
     /**
      * save file info to database
      *
@@ -947,20 +953,19 @@ class Exment
         ]);
 
         $this->setFileRequestSession($exmentfile, $field->column(), $custom_table, $replace);
-        
+
         // return filename
         return $exmentfile->local_filename;
     }
-    
+
     /**
      * save file request session. for after saved custom value, set custom value's id.
      *
-     * @param UploadField $field
-     * @param string|UploadedFile $file
-     * @param string $file_type
+     * @param ExmentFile $exmentfile
+     * @param string $column_name
      * @param CustomTable $custom_table
-     * @param boolean $replace
-     * @return string
+     * @param bool $replace
+     * @return mixed
      */
     public function setFileRequestSession(ExmentFile $exmentfile, string $column_name, CustomTable $custom_table, bool $replace = true)
     {
@@ -974,12 +979,12 @@ class Exment
             'replace' => $replace,
         ];
         System::requestSession(Define::SYSTEM_KEY_SESSION_FILE_UPLOADED_UUID, $file_uuids);
-        
+
         // return filename
         return $exmentfile->local_filename;
     }
 
-    
+
     /**
      * Get select option key (as query string)
      *
@@ -1003,9 +1008,9 @@ class Exment
         $view_pivot_column = $options['view_pivot_column'];
         $view_pivot_table = $options['view_pivot_table'];
         $codition_type = $options['codition_type'];
-        
+
         $query = [];
-        
+
         if ($append_table && isset($table_id)) {
             $query['table_id'] = $table_id;
         }
@@ -1040,13 +1045,13 @@ class Exment
         })->toArray());
     }
 
-    
+
     /**
      * Unique and merge custom value. Check same id and table.
      *
      * @return Collection
      */
-    public static function uniqueCustomValues(...$collections) : Collection
+    public static function uniqueCustomValues(...$collections): Collection
     {
         $result = collect();
         if (is_nullorempty($collections)) {
@@ -1078,7 +1083,7 @@ class Exment
         return $result;
     }
 
-    
+
     /**
      * Prefix a path.
      *
@@ -1086,7 +1091,7 @@ class Exment
      *
      * @return string prefixed path
      */
-    public function getPathPrefix($adapeer, string $path) : string
+    public function getPathPrefix($adapeer, string $path): string
     {
         return $this->getPrefixer($adapeer)->prefixPath($path);
     }
@@ -1097,7 +1102,7 @@ class Exment
      *
      * @return PathPrefixer
      */
-    protected function getPrefixer($adapter) : PathPrefixer
+    protected function getPrefixer($adapter): PathPrefixer
     {
         $reflectionClass = new \ReflectionClass($adapter);
         try {

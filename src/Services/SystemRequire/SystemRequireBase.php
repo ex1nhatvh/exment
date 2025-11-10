@@ -1,4 +1,5 @@
 <?php
+
 namespace Exceedone\Exment\Services\SystemRequire;
 
 use Exceedone\Exment\Enums\SystemRequireResult;
@@ -41,7 +42,7 @@ abstract class SystemRequireBase
      *
      * @return string
      */
-    public function getMessage() : ?string
+    public function getMessage(): ?string
     {
         $checkResult = $this->checkResult();
         switch ($checkResult) {
@@ -56,7 +57,7 @@ abstract class SystemRequireBase
         return null;
     }
 
-    public function getResultClassSet() : array
+    public function getResultClassSet(): ?array
     {
         switch ($this->checkResult()) {
             case SystemRequireResult::OK:
@@ -75,37 +76,38 @@ abstract class SystemRequireBase
                     'color' => '#d9534f',
                 ];
         }
-    }
-    
-
-    protected function getMessageOk() : ?string
-    {
-        return null;
-    }
-    protected function getMessageWarning() : ?string
-    {
-        return null;
-    }
-    protected function getMessageNg() : ?string
-    {
         return null;
     }
 
-    abstract public function checkResult() : string;
-    abstract public function getSettingUrl() : ?string;
-    abstract public function getExplain() : string;
+
+    protected function getMessageOk(): ?string
+    {
+        return null;
+    }
+    protected function getMessageWarning(): ?string
+    {
+        return null;
+    }
+    protected function getMessageNg(): ?string
+    {
+        return null;
+    }
+
+    abstract public function checkResult(): string;
+    abstract public function getSettingUrl(): ?string;
+    abstract public function getExplain(): string;
 
     /**
      * Get result text for display.
      *
      * @return string
      */
-    abstract protected function getResultText() : ?string;
-    
+    abstract protected function getResultText(): ?string;
+
     /**
      * Get label
      *
      * @return string
      */
-    abstract public function getLabel() : string;
+    abstract public function getLabel(): string;
 }

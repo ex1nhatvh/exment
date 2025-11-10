@@ -37,24 +37,28 @@ class DashboardController extends AdminControllerBase
         $this->dashboard = Dashboard::getDefault();
     }
 
+    /**
+     * @param Request $request
+     * @param Content $content
+     * @return Content|\Illuminate\Contracts\Foundation\Application|\Illuminate\Http\RedirectResponse|\Illuminate\Routing\Redirector
+     */
     public function index(Request $request, Content $content)
     {
         return redirect(admin_url(''));
     }
-    
-    
+
     /**
      * Edit interface.
      *
      * @param Request $request
      * @param Content $content
      * @param string|int|null $id
-     * @return Content
+     * @return Content|false
      */
     public function edit(Request $request, Content $content, $id)
     {
         $this->setDashboardInfo($request);
-        
+
         // check has system permission
         $dashboard = Dashboard::find($id);
         if (!$dashboard || !$dashboard->hasEditPermission()) {
@@ -68,7 +72,9 @@ class DashboardController extends AdminControllerBase
     /**
      * Create interface.
      *
-     * @return Content
+     * @param Request $request
+     * @param Content $content
+     * @return Content|false
      */
     public function create(Request $request, Content $content)
     {
@@ -133,7 +139,7 @@ class DashboardController extends AdminControllerBase
                     cancel:"$cancel",
                 });
             });
-            
+
             ///// reload click event
             $('[data-exment-widget="reload"]').off('click').on('click', function(ev){
                 // get suuid
@@ -163,7 +169,7 @@ class DashboardController extends AdminControllerBase
                 return true;
             }
             target.addClass('loading');
-            
+
             // set height
             var inner_body = target.find('.box-body-inner-body');
             var height = inner_body.height();
@@ -197,7 +203,7 @@ class DashboardController extends AdminControllerBase
                     if(data.footer){
                         target.find('.box-body .box-body-inner-footer').html(data.footer);
                     }
-                    
+
                     // remove height
                     this.inner_body.css('height', '');
 
@@ -207,7 +213,7 @@ class DashboardController extends AdminControllerBase
                     target.trigger('exment:dashboard_loaded');
 
                     target.removeClass('loading');
-                    
+
                     Exment.CommonEvent.tableHoverLink();
                 },
                 error: function () {
@@ -217,7 +223,7 @@ class DashboardController extends AdminControllerBase
 
                     target.find('.overlay').hide();
                     target.removeClass('loading');
-                   
+
                     // show error
                     target.find('.box-body .box-body-inner-body').html('$error');
                 },
@@ -235,7 +241,7 @@ EOT;
      */
     protected function form($id = null)
     {
-        $form = new Form(new Dashboard);
+        $form = new Form(new Dashboard());
 
         if (isset($id)) {
             $model = Dashboard::getEloquent($id);
@@ -266,7 +272,7 @@ EOT;
                 ->disableClear()
                 ->default(DashboardType::SYSTEM);
         } else {
-            $form->internal('dashboard_type')->default(DashboardType::USER);
+            $form->internal('dashboard_type')->default($dashboard_type?? DashboardType::USER);
         }
 
         $form->switchbool('default_flg', exmtrans("common.default"))->default(false);
@@ -313,7 +319,7 @@ EOT;
                     admin_urls(ShareTargetType::DASHBOARD()->lowerkey(), $id, "shareClick")
                 ));
             }
-    
+
             // addhome button
             $tools->append('<a href="'.admin_url('').'" class="btn btn-sm btn-default"  style="margin-right: 5px"><i class="fa fa-home"></i>&nbsp;'. exmtrans('common.home').'</a>');
         });
@@ -384,11 +390,11 @@ EOT;
                     $icons = array_prepend($icons, ['link' => admin_url('dashboardbox/'.$id.'/edit'), 'icon' => 'fa-cog', 'tooltip' => trans('admin.edit')]);
                     $icons[] = ['widget' => 'delete', 'icon' => 'fa-trash', 'tooltip' => trans('admin.delete')];
                 }
-                
+
                 // set column. use grid system
                 $grids = [
                     'xs' => 12,
-                    'md' => ($row_column_count == 0 ? 12 : 12 / $row_column_count)
+                    'md' => 12 / $row_column_count
                 ];
 
                 $row->column($grids, view('exment::dashboard.box', [
@@ -410,13 +416,13 @@ EOT;
         if (!\Exment::user()->hasPermission(Permission::SYSTEM)) {
             return;
         }
-        
+
         if (boolval(config('exment.disable_latest_version_dashboard', false))) {
             return;
         }
 
         $versionCheck = \Exment::checkLatestVersion();
-        if ($versionCheck == SystemVersion::HAS_NEXT) {
+        if ($versionCheck === SystemVersion::HAS_NEXT) {
             list($latest, $current) = \Exment::getExmentVersion();
             admin_info(exmtrans("system.version_old") . '(' . $latest . ')', '<a href="'. admin_url('system').'">'.exmtrans("system.update_guide").'</a>');
         }
@@ -430,7 +436,7 @@ EOT;
         $model = Dashboard::getEloquent($id);
 
         $form = DataShareAuthoritable::getShareDialogForm($model);
-        
+
         return getAjaxResponse([
             'body'  => $form->render(),
             'script' => $form->getScript(),

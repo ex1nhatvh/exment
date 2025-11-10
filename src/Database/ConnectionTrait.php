@@ -3,8 +3,14 @@
 namespace Exceedone\Exment\Database;
 
 use Closure;
+use Exceedone\Exment\Database\Schema\MariaDBBuilder;
+use Exceedone\Exment\Database\Schema\MySqlBuilder;
+use Exceedone\Exment\Database\Schema\SqlServerBuilder;
 use Throwable;
 
+/**
+ * @method MariaDBBuilder|MySqlBuilder|SqlServerBuilder getSchemaBuilder()
+ */
 trait ConnectionTrait
 {
     /**
@@ -24,7 +30,7 @@ trait ConnectionTrait
     /**
      * Get database version.
      *
-     * @return void
+     * @return string
      */
     public function getVersion()
     {
@@ -61,7 +67,7 @@ trait ConnectionTrait
         }
     }
 
-    
+
     /**
      * Execute a Closure within a transaction.
      * *PHP8 checks transactions, and if already closed transaction, throw exception. So we need other functions.
@@ -88,7 +94,7 @@ trait ConnectionTrait
 
             // If we catch an exception we'll rollback this transaction and try again if we
             // are not out of attempts. If we are out of attempts we will just throw the
-            // exception back out and let the developer handle an uncaught exceptions.
+            // exception back out, and let the developer handle an uncaught exception.
             catch (Throwable $e) {
                 $this->handleTransactionException(
                     $e,
@@ -107,14 +113,21 @@ trait ConnectionTrait
                 }
 
                 if ($this->transactions == 1) {
+                    $this->fireConnectionEvent('committing');
                     $this->getPdo()->commit();
                 }
 
-                $this->transactions = max(0, $this->transactions - 1);
+                [$levelBeingCommitted, $this->transactions] = [
+                    $this->transactions,
+                    max(0, $this->transactions - 1),
+                ];
 
-                if ($this->transactions == 0) {
-                    optional($this->transactionsManager)->commit($this->getName());
-                }
+                /** @phpstan-ignore-next-line Using nullsafe method call on non-nullable type Illuminate\Database\DatabaseTransactionsManager. Use -> instead. */
+                $this->transactionsManager?->commit(
+                    $this->getName(),
+                    $levelBeingCommitted,
+                    $this->transactions
+                );
             } catch (Throwable $e) {
                 $this->handleCommitTransactionException(
                     $e,

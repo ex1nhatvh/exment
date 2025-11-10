@@ -1,4 +1,5 @@
 <?php
+
 namespace Exceedone\Exment\Auth;
 
 use Laravel\Passport\Bridge\User;
@@ -78,13 +79,15 @@ class ApiKeyGrant extends AbstractGrant
     {
         return 'api_key';
     }
-    
+
     /**
      * {@inheritdoc}
      */
     public function getUserEntityByUserCredentials($api_key)
     {
+        /** @var ApiKey $api_key */
         $api_key = ApiKey::where('key', $api_key)->first();
+        // @phpstan-ignore-next-line
         if (is_null($api_key) || is_null($api_key->client)) {
             throw OAuthServerException::invalidCredentials();
         }

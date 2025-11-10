@@ -3,8 +3,24 @@
 namespace Exceedone\Exment\Model;
 
 use Exceedone\Exment\ColumnItems;
+use Exceedone\Exment\Database\Query\ExtendedBuilder;
 use Exceedone\Exment\Enums\FormColumnType;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * @phpstan-consistent-constructor
+ * @property mixed $view_column_target_id
+ * @property mixed $form_column_target_id
+ * @property mixed $form_column_type
+ * @property mixed $order
+ * @property mixed $custom_form_block_id
+ * @property mixed $column_no
+ * @property mixed $row_no
+ * @property mixed $width
+ * @property mixed $options
+ * @method static ExtendedBuilder where($column, $operator = null, $value = null, $boolean = 'and')
+ * @method static ExtendedBuilder orderBy($column, $direction = 'asc')
+ */
 class CustomFormColumn extends ModelBase implements Interfaces\TemplateImporterInterface
 {
     use Traits\UseRequestSessionTrait;
@@ -13,7 +29,7 @@ class CustomFormColumn extends ModelBase implements Interfaces\TemplateImporterI
     use Traits\TemplateTrait;
     use Traits\UniqueKeyCustomColumnTrait;
     use Traits\AutoSUuidTrait;
-    
+
     protected $casts = ['options' => 'json'];
     protected $appends = ['form_column_target'];
     protected $with = ['custom_column'];
@@ -28,7 +44,7 @@ class CustomFormColumn extends ModelBase implements Interfaces\TemplateImporterI
     /**
      * request key. Used by custom form setting display. Ex. NEW__f482dce0-662c-11eb-8f65-5f9d12681ab1
      *
-     * @var string
+     * @var string|null
      */
     protected $_request_key;
 
@@ -97,16 +113,16 @@ class CustomFormColumn extends ModelBase implements Interfaces\TemplateImporterI
         ]
     ];
 
-    public function custom_form_block()
+    public function custom_form_block(): BelongsTo
     {
         return $this->belongsTo(CustomFormBlock::class, 'custom_form_block_id');
     }
 
-    public function custom_column()
+    public function custom_column(): BelongsTo
     {
         return $this->belongsTo(CustomColumn::class, 'form_column_target_id');
     }
-    
+
     protected function getFormColumnTargetAttribute()
     {
         if ($this->form_column_type == FormColumnType::COLUMN) {
@@ -116,7 +132,7 @@ class CustomFormColumn extends ModelBase implements Interfaces\TemplateImporterI
         }
         return null;
     }
-    
+
     public function getColumnItemAttribute()
     {
         // if tagret is number, column type is column.
@@ -133,16 +149,16 @@ class CustomFormColumn extends ModelBase implements Interfaces\TemplateImporterI
     {
         return CustomFormBlock::getEloquentDefault($this->custom_form_block_id);
     }
-    
+
     protected function getCustomColumnCacheAttribute()
     {
         if ($this->form_column_type != FormColumnType::COLUMN) {
             return null;
         }
-        
+
         return CustomColumn::getEloquent($this->form_column_target_id);
     }
-    
+
     public function getTargetTableCacheAttribute()
     {
         $custom_form_block = $this->custom_form_block_cache ?: $this->custom_form_block;
@@ -159,14 +175,14 @@ class CustomFormColumn extends ModelBase implements Interfaces\TemplateImporterI
     {
         return $this->_delete_flg;
     }
-    
-    
+
+
     protected function setDeleteFlgAttribute($delete_flg)
     {
         $this->_delete_flg = $delete_flg;
         return $this;
     }
-    
+
     public function getRequestKeyAttribute()
     {
         return $this->_request_key ?? $this->id;
@@ -177,7 +193,7 @@ class CustomFormColumn extends ModelBase implements Interfaces\TemplateImporterI
         $this->_request_key = $request_key;
         return $this;
     }
-        
+
 
     /**
      * get Table And Column Name
@@ -276,14 +292,14 @@ class CustomFormColumn extends ModelBase implements Interfaces\TemplateImporterI
 
         return ['count', 'column_no'];
     }
-    
+
     protected static function boot()
     {
         parent::boot();
 
         // add default order
         static::addGlobalScope(new OrderScope('order'));
-        
+
         static::addGlobalScope('remove_system_column', function ($builder) {
             $builder->where('form_column_type', '<>', FormColumnType::SYSTEM);
         });

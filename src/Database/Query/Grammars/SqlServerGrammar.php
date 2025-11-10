@@ -17,11 +17,11 @@ class SqlServerGrammar extends BaseGrammar implements GrammarInterface
      *
      * @return bool
      */
-    public function isSupportWhereInMultiple() : bool
+    public function isSupportWhereInMultiple(): bool
     {
         return false;
     }
-    
+
 
     /**
      * wherein string.
@@ -58,8 +58,8 @@ class SqlServerGrammar extends BaseGrammar implements GrammarInterface
 
         return $builder;
     }
-    
-    
+
+
     /**
      * wherein column.
      * Ex. column is 1,12,23,31 , and want to match 1, getting.
@@ -95,20 +95,20 @@ class SqlServerGrammar extends BaseGrammar implements GrammarInterface
 
         return $builder;
 
-
-        $index = $this->wrap($column);
-        $baseColumnIndex = $this->wrap($baseColumn);
-
-        if ($isNot) {
-            $queryStr = "NOT FIND_IN_SET({$baseColumnIndex}, IFNULL(REPLACE(REPLACE(REPLACE(REPLACE($index, '[', ''), ' ', ''), ']', ''), '\\\"', ''), ''))";
-        } else {
-            $queryStr = "FIND_IN_SET({$baseColumnIndex}, REPLACE(REPLACE(REPLACE(REPLACE($index, '[', ''), ' ', ''), ']', ''), '\\\"', ''))";
-        }
-        
-        $func = $isOr ? 'orWhereRaw' : 'whereRaw';
-        $builder->{$func}($queryStr);
-
-        return $builder;
+//        TODO: unreachable statement
+//        $index = $this->wrap($column);
+//        $baseColumnIndex = $this->wrap($baseColumn);
+//
+//        if ($isNot) {
+//            $queryStr = "NOT FIND_IN_SET({$baseColumnIndex}, IFNULL(REPLACE(REPLACE(REPLACE(REPLACE($index, '[', ''), ' ', ''), ']', ''), '\\\"', ''), ''))";
+//        } else {
+//            $queryStr = "FIND_IN_SET({$baseColumnIndex}, REPLACE(REPLACE(REPLACE(REPLACE($index, '[', ''), ' ', ''), ']', ''), '\\\"', ''))";
+//        }
+//
+//        $func = $isOr ? 'orWhereRaw' : 'whereRaw';
+//        $builder->{$func}($queryStr);
+//
+//        return $builder;
     }
 
 
@@ -122,6 +122,7 @@ class SqlServerGrammar extends BaseGrammar implements GrammarInterface
      */
     public function getCastColumn($type, $column, $options = [])
     {
+        /** @phpstan-ignore-next-line getCastString() expects bool, string given */
         $cast = $this->getCastString($type, $column, $options);
 
         $column = $this->wrap($column);
@@ -154,7 +155,7 @@ class SqlServerGrammar extends BaseGrammar implements GrammarInterface
         return 'nvarchar';
     }
 
-    
+
 
     /**
      * Get cast string
@@ -192,7 +193,7 @@ class SqlServerGrammar extends BaseGrammar implements GrammarInterface
         if (!$addOption) {
             return $cast;
         }
-        
+
         $length = array_get($options, 'length') ?? 50;
 
         switch ($type) {
@@ -201,7 +202,7 @@ class SqlServerGrammar extends BaseGrammar implements GrammarInterface
                 $length = ($length > 38 ? 38 : $length);
                 $cast .= "($length, $decimal_digit)";
                 break;
-                
+
             case DatabaseDataType::TYPE_STRING:
                 $cast .= "($length)";
                 break;
@@ -209,14 +210,14 @@ class SqlServerGrammar extends BaseGrammar implements GrammarInterface
 
         return $cast;
     }
-    
+
     /**
      * Get date format string
      *
      * @param GroupCondition $groupCondition Y, YM, YMD, ...
      * @param string $column column name
      * @param bool $groupBy if group by query, return true
-     * @return void
+     * @return string|null
      */
     public function getDateFormatString($groupCondition, $column, $groupBy = false, $wrap = true)
     {
@@ -255,7 +256,7 @@ class SqlServerGrammar extends BaseGrammar implements GrammarInterface
      * @param GroupCondition $groupCondition Y, YM, YMD, ...
      * @param \Carbon\Carbon $carbon
      *
-     * @return string
+     * @return string|null
      */
     public function convertCarbonDateFormat($groupCondition, $carbon)
     {
@@ -365,5 +366,17 @@ class SqlServerGrammar extends BaseGrammar implements GrammarInterface
     public function wrapJsonUnquote($value, $prefixAlias = false)
     {
         return $this->wrap($value, $prefixAlias);
+    }
+
+    /**
+     * Wrap and add json_extract if needs
+     *
+     * @param mixed $column
+     * @param string $path
+     * @return string
+     */
+    public function wrapJsonExtract($column, $path = '$')
+    {
+        return $this->wrap($column);
     }
 }

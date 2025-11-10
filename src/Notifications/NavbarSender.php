@@ -11,16 +11,17 @@ use Exceedone\Exment\Jobs;
 class NavbarSender extends SenderBase
 {
     use Notifiable;
-    
+
     protected $notify_id;
     protected $custom_value;
     protected $custom_table_id;
     protected $user;
-    
+
     /**
      * Create a new notification instance.
      *
      * @return void
+     * @phpstan-ignore-next-line
      */
     public function __construct($notify_id, $subject, $body, array $options = [])
     {
@@ -38,7 +39,7 @@ class NavbarSender extends SenderBase
      * @param array $options
      * @return NavbarSender
      */
-    public static function make($notify_id, $subject, $body, $options) : NavbarSender
+    public static function make($notify_id, $subject, $body, $options): NavbarSender
     {
         return new self($notify_id, $subject, $body, $options);
     }
@@ -60,7 +61,7 @@ class NavbarSender extends SenderBase
 
         return $this;
     }
-    
+
     public function user($user)
     {
         if (isset($user)) {

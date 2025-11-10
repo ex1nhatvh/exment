@@ -28,7 +28,7 @@ class LoginUserProvider extends \Illuminate\Auth\EloquentUserProvider
         //return \Encore\Admin\Auth\Database\Administrator::find($identifier);
         return LoginUser::find($identifier);
     }
- 
+
     /**
      * retrieveByCredentials.
      * execute login using each service.
@@ -46,7 +46,7 @@ class LoginUserProvider extends \Illuminate\Auth\EloquentUserProvider
      * execute login using each service.
      *
      * @param array $credentials
-     * @return ?Authenticatable
+     * @return Authenticatable|null|array
      */
     public static function RetrieveByCredential(array $credentials)
     {
@@ -65,7 +65,7 @@ class LoginUserProvider extends \Illuminate\Auth\EloquentUserProvider
 
         return $classname::retrieveByCredential($credentials);
     }
- 
+
     public function validateCredentials(Authenticatable $login_user, array $credentials)
     {
         return static::ValidateCredential($login_user, $credentials);
@@ -115,13 +115,18 @@ class LoginUserProvider extends \Illuminate\Auth\EloquentUserProvider
                 return $login_user;
             }
         }
-        
+
         return null;
     }
-    
 
+    /**
+     * @param Authenticatable $login_user
+     * @param array $credentials
+     * @return false
+     */
     public static function ValidateCredential(Authenticatable $login_user, array $credentials)
     {
+        /** @phpstan-ignore-next-line  */
         if (is_null($login_user)) {
             return false;
         }

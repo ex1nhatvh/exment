@@ -7,16 +7,16 @@ trait ImportValueTrait
     /**
      * replace value for import
      *
-     * @param mixed $value
+     * @param $value
      * @param array $setting
-     * @return void
+     * @return array
      */
     public function getImportValue($value, $setting = [])
     {
         $isMultiple = is_array($value) || boolval(array_get($this->custom_column, 'options.multiple_enabled'));
         $result = true;
         $options = $this->getImportValueOption();
-        
+
         ///// not default value check
         // to array
         $value = stringToArray($value);

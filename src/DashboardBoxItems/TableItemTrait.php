@@ -14,7 +14,7 @@ trait TableItemTrait
     /**
      * Has show permission this dashboard item
      *
-     * @return boolean
+     * @return array|string|boolean
      */
     protected function hasPermission()
     {
@@ -55,7 +55,7 @@ trait TableItemTrait
     /**
      * get dashboard attributes for display html
      *
-     * @return void
+     * @return array
      */
     public function attributes()
     {
@@ -66,7 +66,7 @@ trait TableItemTrait
         ];
     }
 
-    public static function getCustomViewSelectOptions($value, $field, $model, $dashboard, bool $isCalendar = false) : array
+    public static function getCustomViewSelectOptions($value, $field, $model, $dashboard, bool $isCalendar = false): array
     {
         if (is_nullorempty($field)) {
             return [];

@@ -2,13 +2,18 @@
 
 namespace Exceedone\Exment\DashboardBoxItems;
 
+use Exceedone\Exment\DashboardBoxItems\SystemItems\Editor;
+use Exceedone\Exment\DashboardBoxItems\SystemItems\Guideline;
+use Exceedone\Exment\DashboardBoxItems\SystemItems\News;
+use Exceedone\Exment\DashboardBoxItems\SystemItems\NotifyNavbar;
 use Exceedone\Exment\Enums\DashboardBoxSystemPage;
+use Exceedone\Exment\Model\Notify;
 
 class SystemItem implements ItemInterface
 {
     protected $dashboard_box;
     protected $systemItem;
-    
+
     public function __construct($dashboard_box)
     {
         $this->dashboard_box = $dashboard_box;
@@ -32,7 +37,7 @@ class SystemItem implements ItemInterface
     {
         return $this->systemItem->header();
     }
-    
+
     /**
      * get footer
      */
@@ -40,7 +45,7 @@ class SystemItem implements ItemInterface
     {
         return $this->systemItem->footer();
     }
-    
+
     /**
      * get html body
      */
@@ -52,7 +57,7 @@ class SystemItem implements ItemInterface
     /**
      * get dashboard attributes for display html
      *
-     * @return void
+     * @return array
      */
     public function attributes()
     {
@@ -79,12 +84,14 @@ class SystemItem implements ItemInterface
             ->required()
             ->attribute(['data-filtertrigger' =>true])
             ->options($options)
-            ;
+        ;
 
         // set embed options
         foreach (DashboardBoxSystemPage::options() as $page) {
+            /** @var Guideline|News|Editor|Notify|NotifyNavbar|null $classname */
             $classname = array_get($page, 'class');
             if (isset($classname) && method_exists($classname, "setAdminOptions")) {
+                /** @var Editor|NotifyNavbar $classname */
                 $classname::setAdminOptions($form, $dashboard);
             }
         }

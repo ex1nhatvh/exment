@@ -3,6 +3,7 @@
 /**
  * Execute Batch
  */
+
 namespace Exceedone\Exment\Services\Plugin;
 
 use Exceedone\Exment\Controllers\ApiTrait;
@@ -14,12 +15,12 @@ class PluginApiBase
 {
     use ApiTrait;
     use PluginBase;
-    
+
     public function _plugin()
     {
         return $this->plugin;
     }
-    
+
     public function __construct($plugin)
     {
         $this->plugin = $plugin;
@@ -28,7 +29,7 @@ class PluginApiBase
     /**
      * Get route uri for page
      *
-     * @return string
+     * @return string|null
      */
     public function getRouteUri($endpoint = null)
     {
@@ -42,7 +43,7 @@ class PluginApiBase
     /**
      * override method.
      *
-     * @return void
+     * @return null
      */
     public function _getLoadView()
     {

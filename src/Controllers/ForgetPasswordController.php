@@ -7,6 +7,7 @@ use Illuminate\Foundation\Auth\SendsPasswordResetEmails;
 use App\Http\Controllers\Controller;
 use Exceedone\Exment\Enums\LoginType;
 use Password;
+use Symfony\Component\Mailer\Exception\TransportExceptionInterface;
 
 class ForgetPasswordController extends Controller
 {
@@ -26,15 +27,14 @@ class ForgetPasswordController extends Controller
 
     /**
      * Display the form to request a password reset link.
-     * *Cutomize
-     *
-     * @return \Illuminate\Http\Response
+     * Customize
+     * @return bool|\Illuminate\Auth\Access\Response|\Illuminate\Contracts\Foundation\Application|\Illuminate\Contracts\View\Factory|\Illuminate\Contracts\View\View|mixed
      */
     public function showLinkRequestForm()
     {
         return view('exment::auth.email', $this->getLoginPageData());
     }
-    
+
     //defining which password broker to use, in our case its the exment
     protected function broker()
     {
@@ -66,7 +66,7 @@ class ForgetPasswordController extends Controller
             return $response == Password::RESET_LINK_SENT
                         ? $this->sendResetLinkResponse($request, $response)
                         : $this->sendResetLinkFailedResponse($request, $response);
-        } catch (\Swift_TransportException $ex) {
+        } catch (TransportExceptionInterface $ex) {
             \Log::error($ex);
             return back()->with('status_error', exmtrans('error.mailsend_failed'));
         }

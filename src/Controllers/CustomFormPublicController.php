@@ -25,13 +25,15 @@ use Exceedone\Exment\Services\NotifyService;
 use Exceedone\Exment\Services\TemplateImportExport;
 use Exceedone\Exment\Exceptions\PublicFormNotFoundException;
 use Illuminate\Http\Request;
+use Symfony\Component\Console\Input\Input;
 
 /**
  * Custom Form public
  */
 class CustomFormPublicController extends AdminControllerTableBase
 {
-    use HasResourceTableActions, NotifyTrait;
+    use HasResourceTableActions;
+    use NotifyTrait;
 
     protected $mailTemplates = [];
 
@@ -43,11 +45,16 @@ class CustomFormPublicController extends AdminControllerTableBase
         $this->setPageInfo($title, $title, exmtrans("custom_form_public.description"), 'fa-share-alt');
     }
 
+    /**
+     * @param Request $request
+     * @param Content $content
+     * @return Content|\Illuminate\Contracts\Foundation\Application|\Illuminate\Http\RedirectResponse|\Illuminate\Routing\Redirector
+     */
     public function index(Request $request, Content $content)
     {
         return redirect(admin_urls('form', $this->custom_table->table_name));
     }
-    
+
     /**
      * Make a form builder.
      *
@@ -77,7 +84,7 @@ class CustomFormPublicController extends AdminControllerTableBase
     /**
      * Make a form builder.
      *
-     * @return Form
+     * @return Form|void
      */
     protected function basicForm($id = null)
     {
@@ -85,7 +92,7 @@ class CustomFormPublicController extends AdminControllerTableBase
             return;
         }
 
-        $form = new Form(new PublicForm);
+        $form = new Form(new PublicForm());
         $form->disableValidate(); // Not working validation if tab.
         $public_form = PublicForm::find($id);
         $custom_table = $this->custom_table;
@@ -93,9 +100,9 @@ class CustomFormPublicController extends AdminControllerTableBase
         // Basic setting ----------------------------------------------------
         $form->tab(exmtrans("common.basic_setting"), function ($form) use ($public_form, $custom_table) {
             $form->exmheader(exmtrans("common.basic_setting"))->hr();
-                
+
             $form->descriptionHtml(exmtrans('common.help.more_help'));
-            
+
             if (isset($public_form)) {
                 if ($public_form->active_flg) {
                     $form->url('share_url', exmtrans('custom_form_public.share_url'))
@@ -104,19 +111,19 @@ class CustomFormPublicController extends AdminControllerTableBase
                         ->default($public_form->getUrl())
                         ->readonly();
                     $form->ignore('share_url');
-                    
+
                     $form->display('proxy_user_id', exmtrans('common.executed_user'))->displayText(function ($user_id) {
                         return getUserName($user_id, true);
                     })->help(exmtrans('custom_form_public.help.proxy_user_id'))->escape(false);
                 }
-                
+
                 $form->display('active_flg', exmtrans("plugin.active_flg"))->displayText(function ($value) {
                     return boolval($value) ? exmtrans('common.available_true') : exmtrans('common.available_false');
                 })->help(exmtrans("custom_form_public.help.active_flg"));
             }
 
-            
-            
+
+
             $form->select('custom_form_id', exmtrans("custom_form_public.custom_form_id"))
                 ->requiredRule()
                 ->help(exmtrans("custom_form_public.help.custom_form_id"))
@@ -125,12 +132,12 @@ class CustomFormPublicController extends AdminControllerTableBase
                         return [$item['id'] => $item['form_view_name']];
                     });
                 });
-                
+
             $form->text('public_form_view_name', exmtrans("custom_form_public.public_form_view_name"))
                 ->requiredRule()
                 ->rules("max:40")
                 ->help(exmtrans('common.help.view_name'));
-            
+
             $form->embeds("basic_setting", exmtrans("common.basic_setting"), function ($form) {
                 $form->dateTimeRange('validity_period_start', 'validity_period_end', exmtrans("custom_form_public.validity_period"))
                     ->help(exmtrans("custom_form_public.help.validity_period"))
@@ -139,13 +146,13 @@ class CustomFormPublicController extends AdminControllerTableBase
         })->tab(exmtrans("custom_form_public.design_setting"), function ($form) use ($id, $custom_table) {
             $form->embeds("design_setting", exmtrans("common.design_setting"), function ($form) use ($id, $custom_table) {
                 $form->exmheader(exmtrans("custom_form_public.header_setting"))->hr();
-                
+
                 $form->switchbool('use_header', exmtrans("custom_form_public.use_header"))
                     ->help(exmtrans("custom_form_public.help.use_header"))
                     ->default(true)
                     ->attribute(['data-filtertrigger' => true])
-                    ;
-                
+                ;
+
                 $form->color('header_background_color', exmtrans("custom_form_public.header_background_color"))
                     ->help(exmtrans("custom_form_public.help.header_background_color"))
                     ->attribute(['data-filter' => json_encode(['key' => 'design_setting_use_header', 'value' => '1'])])
@@ -178,16 +185,16 @@ class CustomFormPublicController extends AdminControllerTableBase
                     ->help(exmtrans("custom_form_public.help.header_text_color"))
                     ->attribute(['data-filter' => json_encode(['key' => 'design_setting_use_header', 'value' => '1'])])
                     ->default('#FFFFFF')
-                    ;
+                ;
 
 
                 $form->exmheader(exmtrans("custom_form_public.body_setting"))->hr();
                 ;
-                
+
                 $form->color('background_color_outer', exmtrans("custom_form_public.background_color_outer"))
                     ->help(exmtrans("custom_form_public.help.background_color_outer"))
                     ->default('#FFFFFF')
-                    ;
+                ;
                 $form->color('background_color', exmtrans("custom_form_public.background_color"))
                     ->help(exmtrans("custom_form_public.help.background_color"))
                     ->default('#FFFFFF')
@@ -199,7 +206,7 @@ class CustomFormPublicController extends AdminControllerTableBase
                     ->attribute(['data-filtertrigger' => true])
                     ->default(true);
                 ;
-                
+
                 $form->color('footer_background_color', exmtrans("custom_form_public.footer_background_color"))
                     ->help(exmtrans("custom_form_public.help.footer_background_color"))
                     ->attribute(['data-filter' => json_encode(['key' => 'design_setting_use_footer', 'value' => '1'])])
@@ -209,7 +216,7 @@ class CustomFormPublicController extends AdminControllerTableBase
                     ->help(exmtrans("custom_form_public.help.footer_text_color"))
                     ->attribute(['data-filter' => json_encode(['key' => 'design_setting_use_footer', 'value' => '1'])])
                     ->default('#FFFFFF')
-                    ;
+                ;
             })->disableHeader();
         })->tab(exmtrans("custom_form_public.confirm_complete_setting"), function ($form) use ($custom_table) {
             $form->embeds("confirm_complete_setting", exmtrans("common.confirm_complete_setting"), function ($form) {
@@ -231,7 +238,7 @@ class CustomFormPublicController extends AdminControllerTableBase
                     ->attribute(['data-filter' => json_encode(['key' => 'confirm_complete_setting_use_confirm', 'value' => '1'])])
                     ->rows(3);
                 ;
-                
+
                 $form->exmheader(exmtrans("custom_form_public.complate_setting"))->hr();
                 $form->text('complete_title', exmtrans("custom_form_public.complete_title"))
                     ->help(exmtrans("custom_form_public.help.complete_title"))
@@ -248,11 +255,11 @@ class CustomFormPublicController extends AdminControllerTableBase
                 $form->text('complete_link_text', exmtrans("custom_form_public.complete_link_text"))
                     ->help(exmtrans("custom_form_public.help.complete_link_text"));
                 ;
-                    
+
                 $form->exmheader(exmtrans("custom_form_public.notify_complete_user"))->hr();
-                
+
                 $form->description(exmtrans("custom_form_public.help.notify_complete_user"));
-                
+
                 $form->switchbool('use_notify_complete_user', exmtrans("custom_form_public.use_notify_complete_user"))
                     ->help(exmtrans("custom_form_public.help.use_notify_complete_user"))
                     ->default(false);
@@ -264,7 +271,7 @@ class CustomFormPublicController extends AdminControllerTableBase
             $form->embeds("notify_actions_complete_user", exmtrans("common.confirm_complete_setting"), function ($form) use ($custom_table) {
                 $form->internal('notify_action')
                     ->default(NotifyAction::EMAIL);
-                
+
                 $form->multipleSelect('notify_action_target', exmtrans("notify.notify_action_target"))
                 ->options(function ($val, $field, $notify) use ($custom_table) {
                     $options = [
@@ -279,11 +286,11 @@ class CustomFormPublicController extends AdminControllerTableBase
                 ->help(exmtrans("custom_form_public.help.notify_action_target_complete_user"));
             })->disableHeader();
 
-            
+
             $form->embeds("confirm_complete_setting2", exmtrans("common.confirm_complete_setting"), function ($form) {
                 $form->exmheader(exmtrans("custom_form_public.notify_complete_admin"))->hr();
                 $form->description(exmtrans("custom_form_public.help.notify_complete_admin"));
-                
+
                 $form->switchbool('use_notify_complete_admin', exmtrans("custom_form_public.use_notify_complete_admin"))
                     ->help(exmtrans("custom_form_public.help.use_notify_complete_admin"))
                     ->default(false);
@@ -306,8 +313,8 @@ class CustomFormPublicController extends AdminControllerTableBase
                         ]),
                     ])
                     ->help(exmtrans("notify.help.notify_action"))
-                    ;
-                
+                ;
+
                 $this->setActionForm($form, null, $custom_table, null, [
                     'as_default' => false,
                     'get_custom_columns' => false,
@@ -358,8 +365,8 @@ class CustomFormPublicController extends AdminControllerTableBase
                         ]),
                     ])
                     ->help(exmtrans("notify.help.notify_action"))
-                    ;
-                
+                ;
+
                 $this->setActionForm($form, null, $custom_table, null, [
                     'as_default' => false,
                     'get_custom_columns' => false,
@@ -370,7 +377,7 @@ class CustomFormPublicController extends AdminControllerTableBase
         })
         ->tab(exmtrans("custom_form_public.css_js_setting"), function ($form) {
             $form->exmheader(exmtrans("custom_form_public.css_js_setting"))->hr();
-             
+
             $form->embeds("css_js_setting", exmtrans("common.css_js_setting"), function ($form) {
                 $form->textarea('custom_css', exmtrans("custom_form_public.custom_css"))
                     ->help(exmtrans("custom_form_public.help.custom_css"))
@@ -394,18 +401,18 @@ class CustomFormPublicController extends AdminControllerTableBase
         })
         ->tab(exmtrans("custom_form_public.option_setting"), function ($form) {
             $form->exmheader(exmtrans("custom_form_public.option_setting"))->hr();
-             
+
             $form->embeds("option_setting", exmtrans("common.option_setting"), function ($form) {
                 $form->switchbool('use_default_query', exmtrans("custom_form_public.use_default_query"))
                     ->help(exmtrans("custom_form_public.help.use_default_query") . \Exment::getMoreTag('publicform'))
                     ->default(false);
                 ;
-                
+
                 $form->text('analytics_tag', exmtrans("custom_form_public.analytics_tag"))
                     ->rules(['nullable', 'regex:/^(UA-|G-)/u'])
                     ->help(exmtrans("custom_form_public.help.analytics_tag"));
                 ;
-                
+
                 if (($message = PublicForm::isEnableRecaptcha()) === true) {
                     $form->switchbool('use_recaptcha', exmtrans("custom_form_public.use_recaptcha"))
                         ->help(exmtrans("custom_form_public.help.use_recaptcha"))
@@ -426,11 +433,11 @@ class CustomFormPublicController extends AdminControllerTableBase
     }
 
 
-    
+
     /**
      * Make a form builder, for import.
      *
-     * @return Form
+     * @return Form|void
      */
     protected function importForm()
     {
@@ -438,7 +445,7 @@ class CustomFormPublicController extends AdminControllerTableBase
             return;
         }
 
-        $form = new Form(new PublicForm);
+        $form = new Form(new PublicForm());
         $custom_table = $this->custom_table;
 
         $transes = ['header_logo', 'analytics_tag', 'use_recaptcha'];
@@ -451,17 +458,18 @@ class CustomFormPublicController extends AdminControllerTableBase
         $form->select('custom_form_id', exmtrans("custom_form_public.custom_form_id"))
             ->requiredRule()
             ->help(exmtrans("custom_form_public.help.custom_form_id"))
+            /** @phpstan-ignore-next-line Parameter #1 $options of method Encore\Admin\Form\Field::options() expects array, Closure given. need to fix laravel-admin */
             ->options(function ($value) use ($custom_table) {
                 return $custom_table->custom_forms->mapWithKeys(function ($item) {
                     return [$item['id'] => $item['form_view_name']];
                 });
             });
-    
+
         $form->text('public_form_view_name', exmtrans("custom_form_public.public_form_view_name"))
             ->requiredRule()
             ->rules("max:40")
             ->help(exmtrans('common.help.view_name'));
-        
+
         $form->file('upload_template', exmtrans('template.upload_template'))
             ->rules('mimes:zip')
             ->attribute(['accept' => ".zip"])
@@ -471,7 +479,7 @@ class CustomFormPublicController extends AdminControllerTableBase
             ->options(Define::FILE_OPTION());
 
         $this->setFormInfo($form, null, null, false);
-        
+
         $form->hidden('template')->default(1);
         $form->ignore('template');
 
@@ -500,8 +508,9 @@ class CustomFormPublicController extends AdminControllerTableBase
             ]);
         });
         $form->disableEditingCheck(false);
-            
+
         $form->tools(function (Form\Tools $tools) use ($custom_table, $id, $public_form, $preview) {
+            /** @phpstan-ignore-next-line add() expects string, Exceedone\Exment\Form\Tools\CustomTableMenuButton given */
             $tools->add(new Tools\CustomTableMenuButton('form', $custom_table));
             $tools->setListPath(admin_urls('form', $custom_table->table_name));
 
@@ -544,7 +553,7 @@ class CustomFormPublicController extends AdminControllerTableBase
                     ]));
                 }
             }
-            
+
             if ($preview) {
                 $tools->append(view('exment::tools.button', [
                     'href' => 'javascript:void(0);',
@@ -558,7 +567,7 @@ class CustomFormPublicController extends AdminControllerTableBase
                         'data-preview-error-text' => '',
                     ],
                 ])->render());
-                
+
                 if (isset($id)) {
                     $tools->append(view('exment::tools.button', [
                         'href' => admin_urls("formpublic", $custom_table->table_name, $public_form->id, "export"),
@@ -599,7 +608,7 @@ class CustomFormPublicController extends AdminControllerTableBase
             ->disableClear()
             ->default($notify_mail ? $notify_mail->id : null);
     }
-    
+
 
     /**
      * Store form for import
@@ -615,7 +624,7 @@ class CustomFormPublicController extends AdminControllerTableBase
         }
 
         // get json from zip
-        $importer = new TemplateImportExport\TemplateImporter;
+        $importer = new TemplateImportExport\TemplateImporter();
         $file = $request->file('upload_template');
         $json = $importer->getJsonFromZip($file);
 
@@ -636,37 +645,41 @@ class CustomFormPublicController extends AdminControllerTableBase
             $public_form->setPluginImported(array_get($json, 'public_form'));
         });
 
-        return $form->setModel($public_form)->redirectAfterStore();
+        /** @var Form $model */
+        $model = $form->setModel($public_form);
+        return $model->redirectAfterStore();
     }
-
 
     /**
      * Showing preview
      *
      * @param Request $request
+     * @param $tableKey
      * @param string|int|null $id If already saved model, set id
-     * @return void
+     * @return PublicContent
+     * @throws PublicFormNotFoundException
      */
     public function preview(Request $request, $tableKey, $id = null)
     {
         $original_public_form = PublicForm::find($id);
         // get this form's info
         $form = $this->form();
-        
+
+        /** @var PublicForm $model */
         $model = $form->getModelByInputs(null, $original_public_form);
 
         // Now, cannot set header logo by getModelByInputs.
         if ($original_public_form) {
             $model->setOption('header_logo', $original_public_form->getOption('header_logo'));
         }
-        
+
         // get public form
         $preview_form = $model->getForm($request);
         if (!$preview_form) {
-            throw new PublicFormNotFoundException;
+            throw new PublicFormNotFoundException();
         }
         $preview_form->disableSubmit();
-        
+
         // add admin url etc
         foreach (\Exceedone\Exment\Form\Navbar\Hidden::getHiddenItemsCommon() as $key => $value) {
             $preview_form->hidden($key)->default($value)
@@ -674,10 +687,10 @@ class CustomFormPublicController extends AdminControllerTableBase
         }
 
         // set content
-        $content = new PublicContent;
+        $content = new PublicContent();
         $model->setContentOption($content);
         $content->row($preview_form);
-        
+
         admin_info(exmtrans('common.preview'), exmtrans('common.message.preview'));
 
         return $content;
@@ -697,7 +710,7 @@ class CustomFormPublicController extends AdminControllerTableBase
         if (!$id) {
             return $trueResult;
         }
-        
+
         $original_public_form = PublicForm::find($id);
         if (!$original_public_form) {
             return $trueResult;
@@ -709,16 +722,16 @@ class CustomFormPublicController extends AdminControllerTableBase
         }
 
         ExmentFile::deleteFileInfo($uri);
-        
+
         $original_public_form->forgetOption('header_logo')
             ->save();
-        
+
         return getAjaxResponse([
             'result'  => true,
             'message' => trans('admin.delete_succeeded'),
         ]);
     }
-    
+
 
     // Active・DeActive ----------------------------------------------------
     /**
@@ -740,7 +753,7 @@ class CustomFormPublicController extends AdminControllerTableBase
         $form->display('foobar', trans('admin.alert'))
             ->displayText(exmtrans('custom_form_public.help.activate_modal_header'))
             ->escape(false);
-        
+
         $tableUseds = $public_form->getListOfTablesUsed();
         $html = "<ul>" . $tableUseds->map(function ($tableUsed) {
             return "<li>" . esc_html($tableUsed->table_view_name) . "</li>";
@@ -748,7 +761,7 @@ class CustomFormPublicController extends AdminControllerTableBase
         $form->descriptionHtml($html);
 
         $form->description(exmtrans('custom_form_public.help.activate_modal_footer'));
-        
+
         $form->setWidth(10, 2);
 
         return getAjaxResponse([
@@ -784,18 +797,18 @@ class CustomFormPublicController extends AdminControllerTableBase
         return $this->toggleActivate($request, $id, false);
     }
 
-
     /**
      * export
      *
      * @param Request $request
-     * @param string|int|null $id
-     * @return void
+     * @param $tableKey
+     * @param $id
+     * @return \Symfony\Component\HttpFoundation\BinaryFileResponse
      */
     public function export(Request $request, $tableKey, $id)
     {
         $public_form = PublicForm::find($id);
-        
+
         // execute export
         return TemplateImportExport\TemplateExporter::exportTemplate(
             make_uuid(),
@@ -810,14 +823,13 @@ class CustomFormPublicController extends AdminControllerTableBase
         );
     }
 
-
     /**
      * Toggle activate and deactivate
      *
      * @param Request $request
-     * @param string $id
-     * @param boolean $active_flg
-     * @return \Symfony\Component\HttpFoundation\Response
+     * @param $id
+     * @param bool $active_flg
+     * @return \Symfony\Component\HttpFoundation\Response|void
      */
     protected function toggleActivate(Request $request, $id, bool $active_flg)
     {
@@ -828,13 +840,13 @@ class CustomFormPublicController extends AdminControllerTableBase
         $public_form = PublicForm::find($id);
         $public_form->active_flg = $active_flg;
         $public_form->save();
-        
+
         return getAjaxResponse([
             'result'  => true,
             'toastr' => trans('admin.update_succeeded'),
         ]);
     }
-    
+
 
     public function notify_action_target(Request $request)
     {
@@ -848,7 +860,7 @@ class CustomFormPublicController extends AdminControllerTableBase
         return $options;
     }
 
-    
+
     protected static function getFileOptions($custom_table, $id)
     {
         return array_merge(
@@ -865,7 +877,7 @@ class CustomFormPublicController extends AdminControllerTableBase
             ]
         );
     }
-    
+
     /**
      * validation table
      * @param mixed $table id or customtable

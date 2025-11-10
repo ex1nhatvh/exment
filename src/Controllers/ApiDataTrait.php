@@ -2,10 +2,14 @@
 
 namespace Exceedone\Exment\Controllers;
 
+use Exceedone\Exment\ColumnItems\CustomColumns\Editor;
+use Exceedone\Exment\Enums\ColumnType;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Exceedone\Exment\Model\CustomTable;
 use Exceedone\Exment\Model\CustomColumn;
+use Exceedone\Exment\Model\CustomRelation;
 use Exceedone\Exment\Model\CustomView;
 use Exceedone\Exment\Model\CustomValue;
 use Exceedone\Exment\Model\Linkage;
@@ -21,7 +25,7 @@ use Validator;
 trait ApiDataTrait
 {
     use ApiTrait;
-    
+
     /**
      * find data by id
      * use select Changedata
@@ -34,7 +38,12 @@ trait ApiDataTrait
             return abortJson(403, trans('admin.deny'), $code);
         }
 
-        $model = getModelName($this->custom_table->table_name)::find($id);
+        $query = $this->custom_table->getValueQuery();
+
+        // set query
+        $this->setQueryInfo($query);
+
+        $model = $query->where('id', $id)->first();
         // not contains data, return empty data.
         if (!isset($model)) {
             $code = $this->custom_table->getNoDataErrorCode($id);
@@ -53,14 +62,12 @@ trait ApiDataTrait
         return $this->modifyAfterGetValue($request, $model);
     }
 
-
     /**
      * get table columns data. seletcting column, and search.
      *
      * @param Request $request
-     * @param string $tableKey
      * @param string $column_name
-     * @return Response
+     * @return false|string|Response
      */
     protected function _columnData(Request $request, $column_name)
     {
@@ -82,7 +89,7 @@ trait ApiDataTrait
         return json_encode($list);
     }
 
-    
+
     /**
      * find match data for select ajax
      * @param Request $request
@@ -94,7 +101,7 @@ trait ApiDataTrait
         if (!isset($paginator)) {
             return [];
         }
-        
+
         if (!($paginator instanceof \Illuminate\Pagination\LengthAwarePaginator)) {
             return $paginator;
         }
@@ -108,8 +115,8 @@ trait ApiDataTrait
 
         return $paginator;
     }
-    
-    
+
+
     /**
      * get selected id's children values
      * *parent_select_table_id(required) : The select_table of the parent column(Changed by user) that executed Linkage. .
@@ -160,11 +167,12 @@ trait ApiDataTrait
         });
     }
 
-
     /**
      * Modify logic for getting value
-     *
-     * @return \Illuminate\Pagination\LengthAwarePaginator|CustomValue
+     * @param Request $request
+     * @param Collection|\Illuminate\Pagination\LengthAwarePaginator|CustomValue $target
+     * @param $options
+     * @return array|CustomValue|\Illuminate\Pagination\LengthAwarePaginator|mixed|void
      */
     protected function modifyAfterGetValue(Request $request, $target, $options = [])
     {
@@ -193,12 +201,13 @@ trait ApiDataTrait
                     'q',
                     'id',
                     'target_view_id',
+                    'children',
                 ]),
                 $options['appends']
             );
-            
+
             if (boolval($options['makeHidden'])) {
-                // execute makehidden
+                /** @phpstan-ignore-next-line Call to an undefined method Illuminate\Pagination\LengthAwarePaginator::makeHidden(). */
                 $results = $target->makeHidden($this->custom_table->getMakeHiddenArray());
 
                 // if need to convert to custom values, call setSelectTableValues, for performance
@@ -206,10 +215,11 @@ trait ApiDataTrait
                 if (ValueType::isRegetApiCustomValue($valuetype)) {
                     $this->custom_table->setSelectTableValues($results);
                 }
-                
+
                 $results->map(function ($result) use ($request) {
                     $this->modifyCustomValue($request, $result);
                 });
+                /** @phpstan-ignore-next-lineAccess to an undefined property Illuminate\Pagination\LengthAwarePaginator::$value. */
                 $target->value = $results;
             }
 
@@ -222,6 +232,11 @@ trait ApiDataTrait
         }
         // as single model
         elseif ($target instanceof CustomValue) {
+            $editor_cols = CustomColumn::where('custom_table_id', $this->custom_table->id)->where('column_type', ColumnType::EDITOR)->get();
+            foreach($editor_cols as $col) {
+                $val = $target->getValue($col->column_name);
+                $target->setValue($col->column_name, Editor::replaceImgUrl($val, ['dirName' => true]));
+            }
             if (boolval($options['makeHidden'])) {
                 $target = $target->makeHidden($this->custom_table->getMakeHiddenArray());
                 return $this->modifyCustomValue($request, $target);
@@ -231,12 +246,25 @@ trait ApiDataTrait
         }
     }
 
-    
-    protected function modifyCustomValue(Request $request, $custom_value)
+
+    /**
+     * Modify cystom value result
+     *
+     * @param Request $request
+     * @param CustomValue|array|mixed $custom_value
+     * @param bool $recursive if true, this is $recursive, so not call children
+     * @return mixed
+     */
+    protected function modifyCustomValue(Request $request, $custom_value, $recursive = false)
     {
         // append label
         if ($this->isAppendLabel($request)) {
             $custom_value->append('label');
+        }
+
+        // Change relation key name
+        if (!$recursive && $request->has('children') && boolval($request->get('children'))) {
+            $custom_value = $this->modifyChildrenValue($request, $custom_value);
         }
 
         // convert to custom values
@@ -269,7 +297,7 @@ trait ApiDataTrait
 
         return false;
     }
-    
+
 
     protected function executeQuery(Request $request, $count = null)
     {
@@ -288,7 +316,7 @@ trait ApiDataTrait
 
         // filtered query
         $q = $request->get('q');
-        
+
         if (!isset($count)) {
             if (($count = $this->getCount($request)) instanceof Response) {
                 return $count;
@@ -330,13 +358,63 @@ trait ApiDataTrait
             'relationColumnValue' => $linkage_value_id ?? null,
             'display_table' => $request->get('display_table_id'),
             'all' => $column ? $column->isGetAllUserOrganization() : false,
+            'withChildren' => boolval($request->get('children')) ? CustomRelation::getRelationsByParent($this->custom_table) : null,
         ]);
-        
+
         return $this->modifyAfterGetValue($request, $paginator, [
             'appends' => [
                 'q' => $q,
                 'count' => $count,
             ]
         ]);
+    }
+
+
+    /**
+     * Set query
+     * (1)Get children.
+     *
+     * @param mixed $query
+     * @return mixed $query
+     */
+    protected function setQueryInfo($query)
+    {
+        $request = request();
+        if ($request->has('children') && boolval($request->get('children'))) {
+            $relations = CustomRelation::getRelationsByParent($this->custom_table);
+            foreach ($relations as $relation) {
+                $query->with($relation->getRelationName());
+            }
+        }
+
+        return $query;
+    }
+
+    protected function modifyChildrenValue(Request $request, $custom_value)
+    {
+        $relations = CustomRelation::getRelationsByParent($this->custom_table);
+
+        $results = [];
+        foreach ($relations as $relation) {
+            // If getted relation name, change key name
+            $reltionName = $relation->getRelationName();
+            if (array_has($custom_value, $reltionName)) {
+                $relationValues = $custom_value[$reltionName];
+                $makeHiddenArray = $relation->child_custom_table_cache->getMakeHiddenArray();
+                $relationValues = $relationValues->map(function ($relationValue) use ($makeHiddenArray, $request) {
+                    // Call makehidden
+                    $relationValue = $relationValue->makeHidden($makeHiddenArray);
+                    // Call modify custom value
+                    $relationValue = $this->modifyCustomValue($request, $relationValue, true);
+                    return $relationValue;
+                });
+                // Set key name
+                $results[$relation->child_custom_table_cache->table_name] = $relationValues;
+                unset($custom_value[$reltionName]);
+            }
+        }
+
+        $custom_value['children'] = $results;
+        return $custom_value;
     }
 }

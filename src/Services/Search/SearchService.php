@@ -1,4 +1,5 @@
 <?php
+
 namespace Exceedone\Exment\Services\Search;
 
 use Exceedone\Exment\Model\CustomTable;
@@ -17,6 +18,7 @@ use Exceedone\Exment\Enums\SearchType;
 use Exceedone\Exment\Enums\ConditionType;
 use Exceedone\Exment\Enums\RelationType;
 use Exceedone\Exment\Enums\SystemColumn;
+use Illuminate\Database\Eloquent\Builder;
 
 /**
  * Custom Value's Search model.
@@ -38,48 +40,48 @@ class SearchService
      * @var \Illuminate\Database\Eloquent\Builder
      */
     protected $query;
-    
+
     /**
      * Whether is append select for target custom_table's columns.
      *
      * @var bool
      */
     protected $isAppendSelect = true;
-    
+
     /**
      * Whether is already append select for target custom_table's columns.
      *
      * @var bool
      */
     protected $alreadyAppendSelect = false;
-    
+
     /**
      * Already joined tables
      *
      * @var array
      */
     protected $joinedTables = [];
-    
+
     /**
      * Already joined workflows(status, work_user)
      *
      * @var array
      */
     protected $joinedWorkflows = [];
-    
+
     /**
      * Summary orders
      * @var array
      */
     protected $summaryOrders = [];
-    
+
     /**
      * Summary Joins.
      * "joinSub" query only calls once, so First set select and group by, and after these, join sub query.
      * @var array
      */
     protected $summaryJoins = [];
-    
+
 
     public function __construct(CustomTable $custom_table)
     {
@@ -111,7 +113,7 @@ class SearchService
         if (!$this->alreadyAppendSelect) {
             $db_table_name = getDBTableName($this->custom_table);
             $this->query->select("$db_table_name.*");
-    
+
             $this->alreadyAppendSelect = true;
         }
         return $this;
@@ -140,12 +142,11 @@ class SearchService
         return $this;
     }
 
-    
     /**
      * Get query's value.
      *
      * @param  array|string  $columns
-     * @return \Illuminate\Database\Eloquent\Collection|static[]
+     * @return \Illuminate\Database\Eloquent\Collection
      */
     public function get($columns = ['*'])
     {
@@ -173,7 +174,7 @@ class SearchService
             $operator,
             func_num_args() === 2
         );
-        
+
         // If custom column, execute where custom column's exists query.
         if ($column instanceof CustomColumn) {
             return $this->whereCustomColumn($column, $operator, $value, $boolean);
@@ -186,12 +187,12 @@ class SearchService
         return $this;
     }
 
-    
+
     /**
      * Add an "order by" clause to the query.
      * If CustomColumn, and linkage(relation or select table), add where exists query.
      *
-     * @param  \Closure|\Illuminate\Database\Query\Builder|\Illuminate\Database\Query\Expression|string  $column
+     * @param  \Closure|CustomColumn|\Illuminate\Database\Query\Builder|\Illuminate\Database\Query\Expression|string  $column
      * @param  string  $direction
      * @return $this
      *
@@ -211,7 +212,7 @@ class SearchService
         return $this;
     }
 
-    
+
 
     /**
      * Add a where custom column. Contains CustomColumn.
@@ -221,7 +222,7 @@ class SearchService
      * @param  mixed  $operator
      * @param  mixed  $value
      * @param  string  $boolean
-     * @return $this
+     * @return $this|Builder
      */
     protected function whereCustomColumn(CustomColumn $column, $operator = null, $value = null, $boolean = 'and')
     {
@@ -273,13 +274,13 @@ class SearchService
 
         if (!$relationTable) {
             $this->query->whereNotMatch();
-        } elseif ($relationTable->searchType == SearchType::MANY_TO_MANY) {
+        } elseif ((int)$relationTable->searchType === SearchType::MANY_TO_MANY) {
             throw new \Exception('Many to many relation not support order by.');
         }
         // set relation query using relation type class.
         else {
             $this->setJoin($relationTable, $whereCustomTable);
-            
+
             // Add orderBy query
             $this->query->orderBy($column->getQueryKey(), $direction);
         }
@@ -310,7 +311,7 @@ class SearchService
 
         return $this;
     }
-    
+
     /**
      * Add orderby custom column. Contains CustomViewColumn.
      * Convert to custom view sort directly.
@@ -337,7 +338,7 @@ class SearchService
 
         return $this->orderByCustomViewSort($custom_view_sort);
     }
-    
+
 
 
     /**
@@ -356,35 +357,55 @@ class SearchService
         $column_item = $column->column_item;
 
         // get group's column. this is wraped.
-        $wrap_column = $column_item->getGroupByWrapTableColumn();
         $sqlAsName = \Exment::wrapColumn($column_item->sqlAsName());
-        
+
         // if has sub query(for child relation), set to sub query
         $isSubQuery = false;
         if ($relationTable && SearchType::isSummarySearchType($relationTable->searchType)) {
             $isSubQuery = true;
-            $relationTable->subQueryCallbacks[] = function ($subquery, $relationTable) use ($wrap_column, $sqlAsName) {
+            $relationTable->subQueryCallbacks[] = function ($subquery, $relationTable) use ($column_item, $sqlAsName) {
+                $wrap_column = $column_item->getGroupByWrapTableColumn(true);
                 $subquery->selectRaw("$wrap_column AS $sqlAsName");
+                $wrap_column = $column_item->getGroupByWrapTableColumn();
                 $subquery->groupByRaw($wrap_column);
             };
         }
 
-        // set group by. Maybe if has subquery, set again.
-        $wrap_column = $column_item->getGroupByWrapTableColumn(false, $isSubQuery);
-        $this->query->groupByRaw($wrap_column);
+        if (\Exment::isSqlServer()) {
+            // set group by. Maybe if has subquery, set again.
+            $wrap_column = $column_item->getGroupByWrapTableColumn(false, $isSubQuery);
+            $this->query->groupByRaw($wrap_column);
 
-        // get group's column for select. this is wraped.
-        $wrap_column = $column_item->getGroupByWrapTableColumn(true, $isSubQuery);
-        // set select column. And add "as".
-        $this->query->selectRaw("$wrap_column AS $sqlAsName");
-        
-        // if has sort order, set order by
-        $this->setSummaryOrderBy($column, $wrap_column);
+            // get group's column for select. this is wraped.
+            $wrap_column = $column_item->getGroupByWrapTableColumn(true, $isSubQuery);
+            // set select column. And add "as".
+            $this->query->selectRaw("$wrap_column AS $sqlAsName");
+
+            // if has sort order, set order by
+            $this->setSummaryOrderBy($column, $wrap_column);
+        } else {
+            // get group's column for select. this is wraped.
+            $wrap_column = $column_item->getGroupByWrapTableColumn(true, $isSubQuery);
+            // set select column. And add "as".
+            $this->query->selectRaw("$wrap_column AS $sqlAsName");
+
+            // set group by. 
+            $this->query->groupByRaw($sqlAsName);
+
+            // case sqlasname
+            $cast = $column_item->getCastName(true);
+            if (isset($cast)) {
+                $sqlAsName = "CAST($sqlAsName AS $cast)";
+            }
+            // if has sort order, set order by
+            $this->setSummaryOrderBy($column, $sqlAsName);
+        }
+
 
         return $this;
     }
 
-    
+
     /**
      * Add select by custom view summary. Contains CustomViewSummary.
      *
@@ -419,18 +440,18 @@ class SearchService
 
             // set to default query group by.
             // Need MIN, MAX.
-            $result_column = $column_item->getGroupByJoinResultWrapTableColumn();
-            if (!is_nullorempty($result_column)) {
-                $this->query->groupByRaw($result_column);
-            }
+            // $result_column = $column_item->getGroupByJoinResultWrapTableColumn();
+            // if (!is_nullorempty($result_column)) {
+            //     $this->query->groupByRaw($result_column);
+            // }
         }
         // default, set to default query.
         else {
             $this->query->selectRaw("$wrap_column AS $sqlAsName");
         }
-        
+
         // if has sort order, set order by
-        $this->setSummaryOrderBy($column, $wrap_column);
+        $this->setSummaryOrderBy($column, $sqlAsName);
 
         return $this;
     }
@@ -463,8 +484,6 @@ class SearchService
 
     /**
      * Execute  order by if for summary
-     *
-     * @return $this
      */
     public function executeSummaryOrderBy()
     {
@@ -476,8 +495,6 @@ class SearchService
 
     /**
      * Execute summary join.
-     *
-     * @return $this
      */
     public function executeSummaryJoin()
     {
@@ -500,7 +517,7 @@ class SearchService
         if (is_null($query)) {
             $query = $this->query;
         }
- 
+
         // // set relation table join.
         // Cannot join in $query->where(function($query), so please call outer $query->where.
         // $this->setRelationJoin($column);
@@ -543,13 +560,15 @@ class SearchService
         return $this;
     }
 
-
     /**
      * Join relation table for filter or sort
      *
-     * @param CustomViewColumn|CustomViewSort|CustomViewFilter|CustomViewSummary|CustomViewGridFilter|Notify $column
+     * @param $column
+     * @param array $options
+     * @return RelationTable|null
+     * @throws \Exception
      */
-    public function setRelationJoin($column, array $options = []) : ?RelationTable
+    public function setRelationJoin($column, array $options = []): ?RelationTable
     {
         $options = array_merge([
             'asSummary' => false,
@@ -571,7 +590,7 @@ class SearchService
 
             if (!$relationTable) {
                 $this->query->whereNotMatch();
-            } elseif ($asOrderBy && $relationTable->searchType == SearchType::MANY_TO_MANY) {
+            } elseif ($asOrderBy && (int)$relationTable->searchType === SearchType::MANY_TO_MANY) {
                 throw new \Exception('Many to many relation not support order by.');
             }
             // set relation query using relation type class.
@@ -582,6 +601,7 @@ class SearchService
                 $column_item = $this->getColumnItem($column);
                 if (!isset($column_item)) {
                     $this->query->whereNotMatch();
+                    // @phpstan-ignore-next-line Maybe function type hinting miss
                     return $this;
                 }
                 $column_item->setUniqueTableName($relationTable->tableUniqueName);
@@ -600,7 +620,7 @@ class SearchService
         return $relationTable;
     }
 
-    
+
     /**
      * Join relation join for workflow. For use workflow view filter.
      *
@@ -623,7 +643,7 @@ class SearchService
      * Get relation table info
      *
      * @param CustomTable $whereCustomTable
-     * @return RelationTable relation table info
+     * @return RelationTable|null relation table info
      */
     protected function getRelationTable($whereCustomTable, bool $asSummary = false, $filterObj = null)
     {
@@ -652,7 +672,7 @@ class SearchService
      * @param CustomViewColumn|CustomViewSort|CustomViewFilter|CustomViewSummary|CustomViewGridFilter $filterObj
      * @return RelationTable|null filtered Relation Table
      */
-    protected function filterRelationTable($relationTables, $filterObj) : ?RelationTable
+    protected function filterRelationTable($relationTables, $filterObj): ?RelationTable
     {
         // if only 1, return first.
         if ($relationTables->count() <= 1) {
@@ -759,7 +779,7 @@ class SearchService
      *
      * @return boolean is join workflow status
      */
-    protected function isJoinWorkflowStatus($custom_view_filter) : bool
+    protected function isJoinWorkflowStatus($custom_view_filter): bool
     {
         return $this->isJoinWorkflow($custom_view_filter, SystemColumn::WORKFLOW_STATUS);
     }
@@ -769,7 +789,7 @@ class SearchService
      *
      * @return boolean is join workflow status
      */
-    protected function isJoinWorkflowWorkUsers($custom_view_filter) : bool
+    protected function isJoinWorkflowWorkUsers($custom_view_filter): bool
     {
         return $this->isJoinWorkflow($custom_view_filter, SystemColumn::WORKFLOW_WORK_USERS);
     }
@@ -779,7 +799,7 @@ class SearchService
      *
      * @return boolean is join workflow status
      */
-    protected function isJoinWorkflow($custom_view_filter, $key) : bool
+    protected function isJoinWorkflow($custom_view_filter, $key): bool
     {
         // Whether custom_view_filter is boolelan. if true, always call.
         if ($custom_view_filter === true) {
@@ -790,7 +810,7 @@ class SearchService
             if ($custom_view_filter->view_column_type != ConditionType::WORKFLOW) {
                 return false;
             }
-            
+
             $enum = SystemColumn::getEnum($key);
             if ($custom_view_filter->view_column_target_id != $enum->option()['id']) {
                 return false;
@@ -809,14 +829,14 @@ class SearchService
     /**
      * Get condition params
      *
-     * @param CustomViewColumn|CustomViewSort|CustomViewFilter|CustomViewSummary|CustomViewGridFilter $column
+     * @param CustomViewColumn|CustomViewSort|CustomViewFilter|CustomViewSummary|CustomViewGridFilter|Notify|null $column
      * @return array
      *  offset0 : target column's table id
      *  offset1 : target column's id
      *  offset2 : this table's id
      *  offset2 : this column's id
      */
-    protected function getConditionParams($column) : array
+    protected function getConditionParams($column): array
     {
         if ($column instanceof CustomViewColumn || $column instanceof CustomViewFilter || $column instanceof CustomViewSort || $column instanceof CustomViewSummary || $column instanceof CustomViewGridFilter) {
             return [
@@ -846,7 +866,7 @@ class SearchService
     /**
      * Get column item
      *
-     * @param CustomViewColumn|CustomViewSort|CustomViewFilter|CustomViewSummary|CustomViewGridFilter $column
+     * @param CustomViewColumn|CustomViewSort|CustomViewFilter|CustomViewSummary|CustomViewGridFilter|Notify $column
      * @return mixed
      */
     protected function getColumnItem($column)

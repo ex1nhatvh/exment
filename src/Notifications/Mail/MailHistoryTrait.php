@@ -12,7 +12,7 @@ trait MailHistoryTrait
      */
     protected $mailHistory;
 
-    
+
     /**
      * Get the value of mailHistory
      *
@@ -80,7 +80,7 @@ trait MailHistoryTrait
      *
      * @return null|CustomValue
      */
-    public function getCustomValue() : ?CustomValue
+    public function getCustomValue(): ?CustomValue
     {
         return $this->mailHistory->getCustomValue();
     }
@@ -89,29 +89,25 @@ trait MailHistoryTrait
      * Whether history
      * @return bool
      */
-    public function isSetHistory() : bool
+    public function isSetHistory(): bool
     {
         return $this->mailHistory->isSetHistory();
     }
-    
+
     /**
      * Whether history body
      * @return bool
      */
-    public function isSetHistoryBody() : bool
+    public function isSetHistoryBody(): bool
     {
         return $this->mailHistory->isSetHistoryBody();
     }
 
-
-
-    
     /**
      * Set the value of user
      *
      * @param  string|CustomValue|NotifyTarget|null  $user
-     *
-     * @return  self
+     * @return MailHistory
      */
     public function setUser($user)
     {
@@ -122,7 +118,7 @@ trait MailHistoryTrait
     {
         return $this->mailHistory->setCustomValue($custom_value);
     }
-    
+
     public function setHistory(bool $isSetHistory)
     {
         return $this->mailHistory->setHistory($isSetHistory);
@@ -132,13 +128,12 @@ trait MailHistoryTrait
     {
         return $this->mailHistory->setHistoryBody($isSetHistoryBody);
     }
-    
+
     /**
      * Set the value of mail_template
      *
-     * @param  string|CustomValue|null  $mail_template
-     *
-     * @return  self
+     * @param string|CustomValue|null $mail_template
+     * @return MailHistory
      */
     public function setMailTemplate($mail_template)
     {

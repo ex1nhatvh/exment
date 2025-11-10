@@ -6,6 +6,10 @@ use Exceedone\Exment\Model\Traits\SerializeDateTrait;
 use Illuminate\Database\Eloquent\Model;
 use Exceedone\Exment\Enums\SystemTableName;
 
+/**
+ * @property mixed $id
+ * @phpstan-consistent-constructor
+ */
 class ModelBase extends Model
 {
     use SerializeDateTrait;
@@ -20,9 +24,17 @@ class ModelBase extends Model
     public $saving_users = true;
 
     /**
+     * @param array $attributes
+     */
+    public function __construct(array $attributes = [])
+    {
+        parent::__construct($attributes);
+    }
+
+    /**
      * Get CreatedUser. Only name.
      *
-     * @return void
+     * @return array|\Illuminate\Contracts\Foundation\Application|\Illuminate\Contracts\Translation\Translator|mixed|string|null
      */
     public function getCreatedUserAttribute()
     {
@@ -36,7 +48,7 @@ class ModelBase extends Model
     /**
      * Get CreatedUser. As custom value object
      *
-     * @return void
+     * @return CustomValue|null
      */
     public function getCreatedUserValueAttribute()
     {
@@ -50,7 +62,7 @@ class ModelBase extends Model
     /**
      * Get CreatedUser. As HTML
      *
-     * @return void
+     * @return array|\Illuminate\Contracts\Foundation\Application|\Illuminate\Contracts\Translation\Translator|mixed|string|null
      */
     public function getCreatedUserTagAttribute()
     {
@@ -61,11 +73,10 @@ class ModelBase extends Model
         return $this->getUser('updated_user_id', true);
     }
 
-
     /**
      * Get CreatedUser. Append avatar
      *
-     * @return void
+     * @return array|\Illuminate\Contracts\Foundation\Application|\Illuminate\Contracts\Translation\Translator|mixed|string|null
      */
     public function getCreatedUserAvatarAttribute()
     {
@@ -88,7 +99,7 @@ class ModelBase extends Model
 
     public static function getTableName()
     {
-        return with(new static)->getTable();
+        return (new static())->getTable();
     }
 
     /**
@@ -235,7 +246,7 @@ class ModelBase extends Model
     {
         return in_array($key, $this->getGuarded()) || $this->getGuarded() == ['*'];
     }
-    
+
     /**
      * Prepare a date for array / JSON serialization.
      *

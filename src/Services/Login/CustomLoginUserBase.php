@@ -44,7 +44,7 @@ abstract class CustomLoginUserBase
     {
         return array_get($this->mapping_values, 'user_code');
     }
-    
+
     public function user_name()
     {
         return array_get($this->mapping_values, 'user_name');
@@ -54,19 +54,20 @@ abstract class CustomLoginUserBase
     {
         return array_get($this->mapping_values, 'email');
     }
-    
+
     public function domain()
     {
         if (is_nullorempty($email = $this->email())) {
             return null;
         }
+        /** @phpstan-ignore-next-line If condition is always false. explode always one element in array */
         if (count($emails = explode("@", $email)) == 0) {
             return null;
         }
 
         return $emails[1];
     }
-    
+
     /**
      * Mapping Exment and provider user value
      *
@@ -81,7 +82,7 @@ abstract class CustomLoginUserBase
             $key = $user_custom_column->column_name;
 
             $mappingKeys = $user->login_setting->getOption("mapping_column_$key");
-            
+
             $mappingValue = null;
             foreach (stringToArray($mappingKeys) as $mappingKey) {
                 // if has ${XXXXX}format, replace get items

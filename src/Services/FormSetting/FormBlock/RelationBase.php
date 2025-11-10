@@ -1,4 +1,5 @@
 <?php
+
 namespace Exceedone\Exment\Services\FormSetting\FormBlock;
 
 use Exceedone\Exment\Model\CustomFormBlock;
@@ -6,8 +7,6 @@ use Exceedone\Exment\Model\CustomTable;
 use Exceedone\Exment\Model\CustomRelation;
 use Exceedone\Exment\Enums\RelationType;
 
-/**
- */
 abstract class RelationBase extends BlockBase
 {
     /**
@@ -22,19 +21,20 @@ abstract class RelationBase extends BlockBase
         $this->custom_relation = $custom_relation;
         return $this;
     }
-    
 
     /**
-     * Get deafult block for create
+     * Get default block for create
      *
-     * @return array
+     * @param CustomTable $custom_table
+     * @param CustomRelation $custom_relation
+     * @return static
      */
-    public static function getDefaultBlock(CustomTable $custom_table, CustomRelation $custom_relation) : self
+    public static function getDefaultBlock(CustomTable $custom_table, CustomRelation $custom_relation): self
     {
         // get classname...
         $classname = isMatchString($custom_relation->relation_type, RelationType::ONE_TO_MANY) ? OneToMany::class : ManyToMany::class;
-        
-        $block = new CustomFormBlock;
+
+        $block = new CustomFormBlock();
         $block->id = null;
         $block->form_block_type = $custom_relation->relation_type;
         $block->form_block_target_table_id = $custom_relation->child_custom_table_id;
@@ -42,9 +42,11 @@ abstract class RelationBase extends BlockBase
         $block->form_block_view_name = $block->label;
         $block->available = 0;
         $block->options = [
-            'hasmany_type' => null
+            'hasmany_type' => null,
+            'form_block_order' => 0
         ];
 
+        /** @phpstan-ignore-next-line */
         return BlockBase::make($block, $custom_table)->setCustomRelation($custom_relation);
     }
 }

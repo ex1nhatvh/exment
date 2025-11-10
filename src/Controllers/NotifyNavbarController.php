@@ -5,6 +5,7 @@ namespace Exceedone\Exment\Controllers;
 use Encore\Admin\Form;
 use Encore\Admin\Grid;
 use Encore\Admin\Grid\Linker;
+use Exceedone\Exment\Model\CustomValue;
 use Illuminate\Http\Request;
 use Encore\Admin\Show;
 use Exceedone\Exment\Form\Tools\SwalMenuButton;
@@ -28,7 +29,7 @@ class NotifyNavbarController extends AdminControllerBase
      */
     protected function grid()
     {
-        $grid = new Grid(new NotifyNavbar);
+        $grid = new Grid(new NotifyNavbar());
         $grid->column('read_flg', exmtrans('notify_navbar.read_flg'))->sortable()->display(function ($read_flg) {
             return exmtrans("notify_navbar.read_flg_options.$read_flg");
         });
@@ -40,11 +41,12 @@ class NotifyNavbarController extends AdminControllerBase
         });
         $grid->column('notify_subject', exmtrans('notify_navbar.notify_subject'))->sortable();
         $grid->column('created_at', exmtrans('common.created_at'))->sortable();
-       
+
         $grid->disableCreation();
         $grid->disableExport();
 
         $grid->tools(function (Grid\Tools $tools) {
+            /** @phpstan-ignore-next-line append() expects Encore\Admin\Grid\Tools\AbstractTool|string, Exceedone\Exment\Form\Tools\SwalMenuButton given */
             $tools->append(new SwalMenuButton($this->getMenuList()));
             $tools->batch(function (Grid\Tools\BatchActions $batch) {
                 $batch->add(exmtrans('notify_navbar.all_check'), new BatchCheck());
@@ -53,17 +55,17 @@ class NotifyNavbarController extends AdminControllerBase
 
         $grid->actions(function (Grid\Displayers\Actions $actions) {
             $actions->disableEdit();
-            
+
             if (isset($actions->row->parent_id)) {
                 // reference target data
-                $linker = (new Linker)
+                $linker = (new Linker())
                     ->url(admin_url("notify_navbar/rowdetail/{$actions->row->id}"))
                     ->icon('fa-list')
                     ->tooltip(exmtrans('notify_navbar.data_refer'));
                 $actions->prepend($linker);
             }
         });
-        
+
         $grid->filter(function ($filter) {
             $filter->disableIdFilter();
 
@@ -77,7 +79,7 @@ class NotifyNavbarController extends AdminControllerBase
             $filter->equal('parent_type', exmtrans("notify_navbar.parent_type"))->select(function ($val) {
                 return CustomTable::filterList()->pluck('table_view_name', 'table_view_name');
             });
-            
+
             $filter->like('notify_subject', exmtrans("notify_navbar.notify_subject"));
         });
 
@@ -130,7 +132,7 @@ class NotifyNavbarController extends AdminControllerBase
      */
     protected function form($id = null)
     {
-        return new Form(new NotifyNavbar);
+        return new Form(new NotifyNavbar());
     }
 
     /**
@@ -152,6 +154,7 @@ class NotifyNavbarController extends AdminControllerBase
         }
 
         $custom_value = null;
+        /** @var CustomValue|null $custom_table */
         $custom_table = null;
         if (!is_null($parent_type = array_get($model, 'parent_type'))) {
             if (!is_null($custom_table = CustomTable::getEloquent($parent_type))) {
@@ -182,7 +185,7 @@ class NotifyNavbarController extends AdminControllerBase
 
             $show->panel()->tools(function ($tools) use ($id, $custom_value) {
                 $tools->disableEdit();
-                
+
                 if ($custom_value) {
                     $tools->append(view('exment::tools.button', [
                         'href' => admin_url("notify_navbar/rowdetail/{$id}"),
@@ -194,7 +197,7 @@ class NotifyNavbarController extends AdminControllerBase
             });
         });
     }
-    
+
     /**
      * batch processing all notifications
      *
@@ -220,7 +223,7 @@ class NotifyNavbarController extends AdminControllerBase
                 default:
                     throw new \Exception();
             }
-            
+
             \DB::commit();
 
             return getAjaxResponse([
@@ -230,14 +233,14 @@ class NotifyNavbarController extends AdminControllerBase
         } catch (\Exception $e) {
             \DB::rollback();
         }
-    
+
         return getAjaxResponse([
             'result'  => false,
             'swal' => exmtrans('common.error'),
             'swaltext' => exmtrans('notify_navbar.message.batch_error'),
         ]);
     }
-    
+
     /**
      * redirect custom values's detail page
      *
@@ -294,7 +297,7 @@ class NotifyNavbarController extends AdminControllerBase
         foreach ($models as $model) {
             $model->update(['read_flg' => true]);
         }
-        
+
         return getAjaxResponse([
             'result'  => true,
             'toastr' => exmtrans('notify_navbar.message.check_succeeded'),

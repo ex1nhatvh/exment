@@ -26,14 +26,14 @@ class Email extends CustomItem
         $form->email('default', exmtrans("custom_column.options.default"))
             ->help(exmtrans("custom_column.help.default"));
     }
-    
+
     /**
      * Get grid filter option. Use grid filter, Ex. LIKE search.
      *
-     * @return string
+     * @return string|null
      */
-    protected function getGridFilterOption() : ?string
+    protected function getGridFilterOption(): ?string
     {
-        return FilterOption::LIKE;
+        return (string)FilterOption::LIKE;
     }
 }

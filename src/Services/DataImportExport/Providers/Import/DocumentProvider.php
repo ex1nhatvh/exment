@@ -27,14 +27,13 @@ class DocumentProvider extends FileColumnProvider
 
         return [$success_data, $error_data];
     }
-    
+
     /**
      * validate data row
      * @param int $line_no
      * @param array $dataAndModel
-     * @param array $validate_columns(not use)
+     * @param array|null $validate_columns(not use)
      * @param array $dataObjects
-     * @return array
      */
     public function validateDataRow($line_no, $dataAndModel, $validate_columns, $dataObjects)
     {
@@ -58,10 +57,10 @@ class DocumentProvider extends FileColumnProvider
         // save file info
         $exmentfile = ExmentFile::storeAs(FileType::CUSTOM_VALUE_DOCUMENT, $file, $this->custom_table->table_name, $displayFileName)
             ->saveCustomValue($model->id, null, $this->custom_table);
-        
+
         // save document model
         $exmentfile->saveDocumentModel($model, $displayFileName);
-                
+
         return $model;
     }
 }

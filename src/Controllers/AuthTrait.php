@@ -15,7 +15,6 @@ use Symfony\Component\HttpFoundation\Response;
  * Auth trait, use from Auth Controller.
  *
  * @method string redirectPath()
- * @method string getFailedLoginMessage()
  */
 trait AuthTrait
 {
@@ -32,11 +31,11 @@ trait AuthTrait
 
         $val = System::site_logo();
         if (!boolval(config('exment.disable_login_header_logo', false)) && !is_nullorempty($val)) {
-            $array['header_image'] = admin_url('auth/login/header');
+            $array['header_image'] = admin_url('auth/file/header');
         }
         $val = System::login_page_image();
         if (!is_nullorempty($val)) {
-            $array['background_image'] = admin_url('auth/login/background');
+            $array['background_image'] = admin_url('auth/file/background');
         }
         $val = System::login_page_image_type();
         if (!is_nullorempty($val)) {
@@ -67,8 +66,24 @@ trait AuthTrait
 
     protected function logoutSso(Request $request, $login_user, $options = [])
     {
-        if ($login_user->login_type == LoginType::SAML) {
-            return $this->logoutSaml($request, $login_user->login_provider, $options);
+        switch ($login_user->login_type) {
+            case LoginType::SAML:
+                return $this->logoutSaml($request, $login_user->login_provider, $options);
+            case LoginType::OAUTH:
+                $provider_name = $login_user->login_provider;
+                $oauth_setting = LoginSetting::getOAuthSetting($provider_name);
+
+                // Only if oauth provider type is 'other'
+                // ( Because no other provider type has 'getLogoutUrl' )
+                if ( $oauth_setting->getOption('oauth_provider_type') == 'other' ) {
+                    $socialite_provider = LoginSetting::getSocialiteProvider($provider_name);
+                    if ( $oauth_setting->getOption('oauth_option_single_logout') == 1 && method_exists($socialite_provider, 'getLogoutUrl')  ) {
+                        return redirect( $socialite_provider->getLogoutUrl( \URL::route('exment.login') ) );
+                    }
+                }
+                break;
+            default:
+                break;
         }
 
         return redirect(\URL::route('exment.login'));
@@ -77,31 +92,35 @@ trait AuthTrait
     /**
      * Initiate a logout request across all the SSO infrastructure.
      *
+     * @param Request $request
+     * @param $provider_name
+     * @param $options
+     * @return \Illuminate\Contracts\Foundation\Application|\Illuminate\Http\RedirectResponse|\Illuminate\Routing\Redirector|void
+     * @throws \OneLogin\Saml2\Error
      */
     protected function logoutSaml(Request $request, $provider_name, $options = [])
     {
         $login_setting = LoginSetting::getSamlSetting($provider_name);
-        
+
         // if not set ssout_url, return login
         if (!isset($login_setting) || is_nullorempty($login_setting->getOption('saml_idp_ssout_url'))) {
             return redirect(\URL::route('exment.login'));
         }
 
         $saml2Auth = LoginSetting::getSamlAuth($provider_name);
-        
+
         $returnTo = route('exment.saml_sls');
         $sessionIndex = array_get($options, Define::SYSTEM_KEY_SESSION_SAML_SESSION . '.sessionIndex');
         $nameId = array_get($options, Define::SYSTEM_KEY_SESSION_SAML_SESSION . '.nameId');
         $saml2Auth->logout($returnTo, $nameId, $sessionIndex, $login_setting->name_id_format_string); //will actually end up in the sls endpoint
         //does not return
     }
-    
+
     /**
      * Send the response after the user was authenticated.
      *
-     * @param \Illuminate\Http\Request $request
-     *
-     * @return \Illuminate\Http\Response
+     * @param Request $request
+     * @return \Illuminate\Http\RedirectResponse|\Illuminate\Http\JsonResponse|\Illuminate\Http\Response
      */
     protected function sendLoginResponse(Request $request)
     {
@@ -120,6 +139,8 @@ trait AuthTrait
         if (Lang::has('exment::exment.error.login_failed')) {
             return exmtrans('error.login_failed');
         }
+        /* TODO:used in a class that does not implement `getFailedLoginMessage` in the parent. */
+        /* @phpstan-ignore-next-line */
         return parent::getFailedLoginMessage();
     }
 }

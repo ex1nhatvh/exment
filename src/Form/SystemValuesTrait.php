@@ -4,12 +4,13 @@ namespace Exceedone\Exment\Form;
 
 use Exceedone\Exment\Model\CustomValue;
 use Exceedone\Exment\Enums\SystemColumn;
+use Illuminate\Database\Eloquent\Model;
 
 trait SystemValuesTrait
 {
     public $withTrashed = false;
 
-    public function renderSystemItem(?CustomValue $custom_value)
+    public function renderSystemItem(CustomValue|Model|null $custom_value)
     {
         if (!isset($custom_value) || !isset($custom_value->id)) {
             return null;
@@ -18,7 +19,7 @@ trait SystemValuesTrait
         if ($custom_value->custom_table->isOneRecord()) {
             return null;
         }
-        
+
         // get label and value
         $keys = [
             'workflows' => [
@@ -37,12 +38,12 @@ trait SystemValuesTrait
             ]
         ];
 
-        
+
         $workflows = $this->getValues($custom_value, $keys['workflows']);
         $bodies = $this->getValues($custom_value, $keys['bodies']);
 
         $positon = $custom_value->custom_table->getSystemValuesPosition();
-        
+
         // return any content that can be rendered
         return view('exment::form.field.system_values', [
             'workflows' => $workflows,
@@ -66,10 +67,10 @@ trait SystemValuesTrait
                 $result[] = $funcResult;
                 continue;
             }
-        
+
             $option = SystemColumn::getEnum($key)->option();
             $param = array_get($option, 'avatarname') ?: array_get($option, 'tagname') ?: array_get($option, 'name');
-            
+
             $value = null;
             if (boolval(array_get($options, 'getOld'))) {
                 $value = old($param);
@@ -90,7 +91,7 @@ trait SystemValuesTrait
 
         return $result;
     }
-    
+
     protected function showWorkflowHistories($custom_value)
     {
         $workflowHistories = $custom_value->getWorkflowHistories();

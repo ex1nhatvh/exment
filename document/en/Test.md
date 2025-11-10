@@ -7,17 +7,17 @@ How to test.
 - Please execute this command.
 
 ```
-composer require symfony/css-selector=~5.0
-composer require laravel/browser-kit-testing=~6.3
-composer require dms/phpunit-arraysubset-asserts=~0.3
+composer require symfony/css-selector=~6.3
+composer require laravel/browser-kit-testing=~7.0
+composer require dms/phpunit-arraysubset-asserts=~0.5.0
 ```
 
 ### Change PHPUnit version (Only first)
-- Exment uses version 8.X for PHPUnit.  
+- Exment uses version 10.X for PHPUnit.  
 If there is a description about "phpunit / phpunit" in require-dev of composer.json in the root folder, please modify it as follows.
 
 ```
-"phpunit/phpunit": "~8.5",
+"phpunit/phpunit": "~10.1",
 ```
 
 And execute this command.
@@ -93,17 +93,19 @@ Execute Lint (PHPStan / Laratisan) and perform syntax check etc.
 
 ```
 # for lint
-composer require --dev nunomaduro/larastan=~1.0
+composer require --dev nunomaduro/larastan=~2.6
 
 # for Exment related libraries
 composer require pragmarx/google2fa
 composer require simplesoftwareio/simple-qrcode=^2.0.0
 composer require laravel/socialite=~5.1
 composer require aacotroneo/laravel-saml2
-composer require league/flysystem-sftp=~1.0
-composer require league/flysystem-aws-s3-v3=~1.0
-composer require league/flysystem-azure-blob-storage=~0.1.6
-composer require spatie/flysystem-dropbox=^1.2.0
+composer require league/flysystem-ftp ~3.0
+composer require phpseclib/phpseclib ^2.0
+composer require league/flysystem-sftp ~3.0
+composer require league/flysystem-aws-s3-v3 ~3.0
+composer require league/flysystem-azure-blob-storage ~3.0
+composer require spatie/flysystem-dropbox=^3.0
 ```
 
 - Copy setting file.

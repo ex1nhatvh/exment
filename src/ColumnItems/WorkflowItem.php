@@ -16,7 +16,7 @@ class WorkflowItem extends SystemItem
     /**
      * get workflow
      */
-    protected function getWorkflow() : ?Workflow
+    protected function getWorkflow(): ?Workflow
     {
         return Workflow::getWorkflowByTable($this->custom_table);
     }
@@ -43,7 +43,7 @@ class WorkflowItem extends SystemItem
         } else {
             $sqlname = array_get($option, 'sqlname');
         }
-        
+
         if ($appendTable) {
             return $this->sqlUniqueTableName() .'.'. $sqlname;
         }
@@ -77,7 +77,7 @@ class WorkflowItem extends SystemItem
      * Get workflow item as status name string
      *
      * @param bool $html is call as html, set true
-     * @return string
+     * @return string|null
      */
     protected function getWorkflowValue($val, $html)
     {
@@ -108,7 +108,7 @@ class WorkflowItem extends SystemItem
             return $html ? esc_html($status_name) : $status_name;
         }
     }
-    
+
     public function getFilterField($value_type = null)
     {
         $field = new MultipleSelect($this->name(), [$this->label()]);
@@ -131,7 +131,7 @@ class WorkflowItem extends SystemItem
         return $this->table_name;
     }
 
-    
+
     /**
      * get real table name.
      * If workflow, this name is workflow view.
@@ -141,22 +141,23 @@ class WorkflowItem extends SystemItem
         return $this->getTableName();
     }
 
-    
     /**
      * Set admin filter options
      *
-     * @param [type] $filter
+     * @param $filter
      * @return void
+     * @throws \Psr\Container\ContainerExceptionInterface
+     * @throws \Psr\Container\NotFoundExceptionInterface
      */
     protected function setAdminFilterOptions(&$filter)
     {
         $option = $this->getSystemColumnOption();
         $workflow = $this->getWorkflow();
-        
+
         if ($workflow) {
             // Whether executed search.
             $searched = boolval(request()->get($filter->getId()));
-            
+
             if (array_get($option, 'name') == SystemColumn::WORKFLOW_WORK_USERS) {
                 $filter->checkbox([1 => 'YES']);
                 $key = Define::SYSTEM_KEY_SESSION_WORLFLOW_FILTER_CHECK;

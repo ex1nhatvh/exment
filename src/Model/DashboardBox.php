@@ -8,13 +8,25 @@ use Exceedone\Exment\Enums\SystemColumn;
 use Exceedone\Exment\Enums\ConditionType;
 use Exceedone\Exment\Enums\ViewKindType;
 
+/**
+ * @phpstan-consistent-constructor
+ * @property mixed $suuid
+ * @property mixed $row_no
+ * @property mixed $dashboard_box_view_name
+ * @property mixed $dashboard_box_type
+ * @property mixed $column_no
+ * @property mixed $options
+ * @method static \Illuminate\Database\Query\Builder whereNotNull($columns, $boolean = 'and')
+ * @method static int count($columns = '*')
+ * @method static \Illuminate\Database\Query\Builder orderBy($column, $direction = 'asc')
+ */
 class DashboardBox extends ModelBase implements Interfaces\TemplateImporterInterface
 {
     use Traits\AutoSUuidTrait;
     use Traits\DatabaseJsonOptionTrait;
     use Traits\TemplateTrait;
     use Traits\UseRequestSessionTrait;
-    
+
     protected $guarded = ['id'];
     protected $casts = ['options' => 'json'];
 
@@ -98,7 +110,7 @@ class DashboardBox extends ModelBase implements Interfaces\TemplateImporterInter
     {
         return $this->belongsTo(Dashboard::class, 'dashboard_id');
     }
-    
+
     public function getDashboardBoxItemAttribute()
     {
         $enum_class = DashboardBoxType::getEnum($this->dashboard_box_type)->getDashboardBoxItemClass();
@@ -119,7 +131,7 @@ class DashboardBox extends ModelBase implements Interfaces\TemplateImporterInter
      *
      * @return array
      */
-    public function getBoxHtmlAttr() : array
+    public function getBoxHtmlAttr(): array
     {
         $attributes = [
             'row_no' => $this->row_no,
@@ -182,8 +194,8 @@ class DashboardBox extends ModelBase implements Interfaces\TemplateImporterInter
                 })['id'] ?? null;
                 array_set($json, 'options.target_system_id', $id);
                 break;
-            
-            // list
+
+                // list
             case DashboardBoxType::LIST:
             case DashboardBoxType::CALENDAR:
             case DashboardBoxType::CHART:
@@ -193,7 +205,7 @@ class DashboardBox extends ModelBase implements Interfaces\TemplateImporterInter
                 array_set($json, 'options.target_view_id', CustomView::findBySuuid(array_get($json, 'options.target_view_suuid'))->id ?? null);
                 break;
         }
-        
+
         // replace chartx and y
         static::importReplaceJsonCustomColumn('chart_axisx', $json);
         static::importReplaceJsonCustomColumn('chart_axisy', $json);
@@ -227,13 +239,16 @@ class DashboardBox extends ModelBase implements Interfaces\TemplateImporterInter
                 break;
         }
 
+        /** @var mixed $id */
         if (isset($id) && \is_numeric($id)) {
             $table_type = array_get($json, $table_type_key);
             if ($table_type == ViewKindType::AGGREGATE) {
+                /** @var CustomViewColumn|null $view_column */
                 $view_column = CustomViewSummary::where('custom_view_id', array_get($json, 'options.target_view_id'))
                     ->where('view_column_type', $view_column_type)
                     ->where('view_column_target_id', $id)->first();
             } else {
+                /** @var CustomViewColumn|null $view_column */
                 $view_column = CustomViewColumn::where('custom_view_id', array_get($json, 'options.target_view_id'))
                     ->where('view_column_type', $view_column_type)
                     ->where('view_column_target_id', $id)->first();

@@ -64,7 +64,7 @@ abstract class PhpSpreadSheet extends FormatBase
             if ($this->isOutputAsZip()) {
                 $spreadsheet->addSheet($sheet);
                 $spreadsheet->removeSheetByIndex(0);
-                
+
                 // save file
                 $writer = $this->createWriter($spreadsheet);
                 $writer->save($outputPath);
@@ -83,7 +83,7 @@ abstract class PhpSpreadSheet extends FormatBase
 
         if (!$this->isOutputAsZip()) {
             $spreadsheet->removeSheetByIndex(0);
-            
+
             $writer = $this->createWriter($spreadsheet);
             $writer->save($outputPath);
             $files[] = [
@@ -91,24 +91,22 @@ abstract class PhpSpreadSheet extends FormatBase
                 'path' => $outputPath,
             ];
         }
-        
+
         // create download file
         $this->createDownloadFile($files);
 
         return $files;
     }
 
-
     /**
-     * Get Data from excel sheet
-     *
+     * Get Data from Excel sheet
      * @param Worksheet $sheet
-     * @param int $skip_excel_row_no
-     * @param boolean $keyvalue
-     * @param boolean $isGetMerge
+     * @param bool $keyvalue
+     * @param bool $isGetMerge
+     * @param array $options
      * @return array
      */
-    public function getDataFromSheet($sheet, bool $keyvalue = false, bool $isGetMerge = false, array $options = []) : array
+    public function getDataFromSheet($sheet, bool $keyvalue = false, bool $isGetMerge = false, array $options = []): array
     {
         $data = [];
         foreach ($sheet->getRowIterator() as $row_no => $row) {
@@ -143,7 +141,7 @@ abstract class PhpSpreadSheet extends FormatBase
         return $data;
     }
 
-    
+
     /**
      * get cell value
      *

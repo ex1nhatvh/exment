@@ -5,13 +5,13 @@ namespace Exceedone\Exment\Enums;
 /**
  * Share Target Type.
  *
- * @method static ErrorCode DEFAULT()
- * @method static ErrorCode DASHBOARD()
- * @method static ErrorCode VIEW()
+ * @method static ShareTargetType DEFAULT()
+ * @method static ShareTargetType DASHBOARD()
+ * @method static ShareTargetType VIEW()
  */
 class ShareTargetType extends EnumBase
 {
-    const DEFAULT = null;
-    const DASHBOARD = '_dashboard';
-    const VIEW = '_custom_view';
+    public const DEFAULT = null;
+    public const DASHBOARD = '_dashboard';
+    public const VIEW = '_custom_view';
 }

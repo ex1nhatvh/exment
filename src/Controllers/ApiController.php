@@ -2,7 +2,11 @@
 
 namespace Exceedone\Exment\Controllers;
 
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\Request;
+use Illuminate\Pagination\AbstractPaginator;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Symfony\Component\HttpFoundation\Response;
 use Exceedone\Exment\Model\System;
 use Exceedone\Exment\Model\CustomTable;
@@ -25,13 +29,13 @@ use Carbon\Carbon;
 class ApiController extends AdminControllerBase
 {
     use ApiTrait;
-    
+
     /**
      * get Exment version
      */
     public function version(Request $request)
     {
-        return response()->json(['version' => (new \Exceedone\Exment\Exment)->version(false)]);
+        return response()->json(['version' => (new \Exceedone\Exment\Exment())->version(false)]);
     }
 
     /**
@@ -56,8 +60,9 @@ class ApiController extends AdminControllerBase
 
     /**
      * get login user avatar
+     *
      * @param Request $request
-     * @return null|\Symfony\Component\HttpFoundation\StreamedResponse
+     * @return \Illuminate\Http\JsonResponse|\Symfony\Component\HttpFoundation\StreamedResponse|null
      */
     public function avatar(Request $request)
     {
@@ -201,8 +206,7 @@ class ApiController extends AdminControllerBase
             return [];
         }
 
-        return CustomView
-            ::where('custom_table_id', $table->id)
+        return CustomView::where('custom_table_id', $table->id)
             ->where('view_kind_type', ViewKindType::FILTER)
             ->get();
     }
@@ -253,7 +257,7 @@ class ApiController extends AdminControllerBase
 
         return $query->first();
     }
-    
+
 
 
     /**
@@ -281,7 +285,10 @@ class ApiController extends AdminControllerBase
         if (!isset($select_target_table)) {
             return [];
         }
-        return CustomTable::getEloquent($select_target_table)->custom_columns()->get(['id', 'column_view_name'])->pluck('column_view_name', 'id');
+        return CustomTable::getEloquent($select_target_table)
+            ->custom_columns()
+            ->selectRaw('id as view_id, column_view_name as view_name')
+            ->get();
     }
 
 
@@ -339,6 +346,7 @@ class ApiController extends AdminControllerBase
         $query->orderBy('created_at', 'desc');
         $paginator = $query->paginate($count);
 
+        /** @phpstan-ignore-next-line need Class Reflection Extension */
         $paginator->appends($request->all([
             'login_user_id',
             'base_user_id',
@@ -413,7 +421,7 @@ class ApiController extends AdminControllerBase
 
         foreach ($target_users as $target_user) {
             $notify = new NotifyNavbar();
-    
+
             $notify->fill([
                 'notify_id' => 0,
                 'target_user_id' => $target_user,
@@ -421,7 +429,7 @@ class ApiController extends AdminControllerBase
                 'notify_body' => $request->get('notify_body'),
                 'trigger_user_id' => \Exment::getUserId()
             ]);
-    
+
             $notify->saveOrFail();
 
             $response[] = $notify;
@@ -433,12 +441,12 @@ class ApiController extends AdminControllerBase
             return $response;
         }
     }
-    
+
     /**
      * Get notify List
      *
      * @param Request $request
-     * @return void
+     * @return \Illuminate\Config\Repository|\Illuminate\Contracts\Foundation\Application|mixed|Response|null
      */
     public function notifyList(Request $request)
     {
@@ -448,7 +456,7 @@ class ApiController extends AdminControllerBase
 
         // get notify NotifyNavbar list
         $query = NotifyNavbar::where('target_user_id', \Exment::getUserId());
-                
+
         if (!boolval($request->get('all', false))) {
             $query->where('read_flg', false);
         }
@@ -473,14 +481,14 @@ class ApiController extends AdminControllerBase
      * Get notify for page
      *
      * @param Request $request
-     * @return void
+     * @return array
      */
     public function notifyPage(Request $request)
     {
         // get notify NotifyNavbar list
         $query = NotifyNavbar::where('target_user_id', \Exment::getUserId())
             ->where('read_flg', false);
-        
+
         $count = $query->count();
         $list = $query->take(5)->get();
 
@@ -511,7 +519,7 @@ class ApiController extends AdminControllerBase
      * Get user or organization for select
      *
      * @param Request $request
-     * @return void
+     * @return \Illuminate\Config\Repository|\Illuminate\Contracts\Foundation\Application|LengthAwarePaginator|mixed|Response|null
      */
     public function userOrganizationSelect(Request $request)
     {
@@ -541,7 +549,7 @@ class ApiController extends AdminControllerBase
 
             // filtered query
             $q = $request->get('q');
-            
+
             if (($count = $this->getCount($request)) instanceof Response) {
                 return $count;
             }

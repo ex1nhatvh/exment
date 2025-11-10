@@ -10,7 +10,8 @@ use Exceedone\Exment\Services\DataImportExport;
 
 class ExportChunkCommand extends Command
 {
-    use CommandTrait, ExportCommandTrait;
+    use CommandTrait;
+    use ExportCommandTrait;
 
     /**
      * The name and signature of the console command.
@@ -47,9 +48,10 @@ class ExportChunkCommand extends Command
 
     protected function getParameters()
     {
+        /** @var null|string $table_name */
         $table_name = $this->argument("table_name");
 
-        if (!isset($table_name)) {
+        if ($table_name === null) {
             throw new \Exception('parameter table name is empty');
         }
 
@@ -75,7 +77,7 @@ class ExportChunkCommand extends Command
         } else {
             $options['count'] = 1000;
         }
-        
+
         if ($options['start']) {
             if (!preg_match("/^[0-9]+$/", $options['start'])) {
                 throw new \Exception('optional parameter start error : ' . $options['start']);
@@ -90,7 +92,7 @@ class ExportChunkCommand extends Command
         } else {
             $options['end'] = 1000;
         }
-        
+
         if ($options['seqlength']) {
             if (!preg_match("/^[0-9]+$/", $options['seqlength'])) {
                 throw new \Exception('optional parameter seqlength error : ' . $options['seqlength']);
@@ -116,15 +118,16 @@ class ExportChunkCommand extends Command
             $message = null;
 
             $executeCount = 0;
+            /** @phpstan-ignore-next-line Expression on left side of ?? is not nullable. */
             for ($i = $options['start'] ?? 1; $i <= $options['end'] ?? 1000; $i++) {
-                $grid = new Grid(new $classname);
+                $grid = new Grid(new $classname());
                 // set data get range
                 $grid->model()->setPerPageArguments([$options['count'] ?? 1000, ['*'], 'page', $i])
                     ->disableHandleInvalidPage();
                 if (isset($options['view']) && $options['view'] instanceof CustomView) {
                     $options['view']->filterSortModel($grid->model());
                 }
-
+                /* @phpstan-ignore-next-line str_pad expects string, int given */
                 $seq = str_pad($i, $options['seqlength'], 0, STR_PAD_LEFT);
 
                 $service = (new DataImportExport\DataImportExportService())
@@ -147,7 +150,7 @@ class ExportChunkCommand extends Command
                     break;
                 }
             }
-            
+
             if (!empty($message)) {
                 $this->line($message);
             }

@@ -1,4 +1,5 @@
 <?php
+
 namespace Exceedone\Exment\Services;
 
 use Exceedone\Exment\Model\Define;
@@ -7,6 +8,8 @@ use Exceedone\Exment\Model\CustomValue;
 use Exceedone\Exment\Model\CustomRelation;
 use Exceedone\Exment\Model\RoleGroup;
 use Exceedone\Exment\Model\LoginUser;
+use Exceedone\Exment\Model\RoleGroupPermission;
+use Exceedone\Exment\Model\RoleGroupUserOrganization;
 use Exceedone\Exment\Model\System;
 use Exceedone\Exment\Enums\SystemTableName;
 use Exceedone\Exment\Enums\RoleType;
@@ -43,7 +46,7 @@ class AuthUserOrgHelper
         $key = sprintf(Define::SYSTEM_KEY_SESSION_TABLE_ACCRSSIBLE_ORGS, $target_table->id);
         return static::_getRoleUserOrOrgQueryTable(SystemTableName::ORGANIZATION, $key, $target_table, $tablePermission, $builder);
     }
-    
+
 
     /**
      * get users who has roles for target table.
@@ -75,7 +78,7 @@ class AuthUserOrgHelper
         }
         $target_table = CustomTable::getEloquent($target_table);
         $key = sprintf(Define::SYSTEM_KEY_SESSION_TABLE_ACCRSSIBLE_USERS_ORGS, $target_table->id);
-        
+
         return static::_getRoleUserOrOrgQueryTable(SystemTableName::USER, $key, $target_table, $tablePermission, $builder, function ($target_ids, $target_table) use ($tablePermission) {
             // joined organization belongs user ----------------------------------------------------
             if (!System::organization_available()) {
@@ -101,22 +104,22 @@ class AuthUserOrgHelper
         });
     }
 
-
     protected static function _getRoleUserOrOrgQueryTable($table_name, $key, $target_table, $tablePermission = null, $builder = null, ?\Closure $target_ids_callback = null)
     {
         if (is_null($target_table)) {
             return [];
         }
         $target_table = CustomTable::getEloquent($target_table);
-        
+
         // get custom_value's users
         $target_ids = [];
         $all = false;
-        
+
         if ($target_table->allUserAccessable()) {
             $all = true;
         } else {
             // if set $tablePermission, always call
+            /** @phpstan-ignore-next-line Call to function is_null() with mixed will always evaluate to false. */
             if (isset($tablePermission) || is_null($target_ids = System::requestSession($key))) {
                 // get user ids
                 $target_ids = static::getRoleUserOrgId($target_table ?? [], $table_name, $tablePermission);
@@ -130,7 +133,7 @@ class AuthUserOrgHelper
                 }
             }
         }
-    
+
         $target_ids = array_unique($target_ids);
         // return target values
         if (!isset($builder)) {
@@ -147,7 +150,7 @@ class AuthUserOrgHelper
     /**
      * get all users and organizations who can access custom_value.
      *
-     * @param CustomValue $custom_value
+     * @param CustomValue|null $custom_value
      * @param string|null|array $tablePermission
      * @return array
      */
@@ -165,10 +168,11 @@ class AuthUserOrgHelper
             SystemTableName::USER => [],
             SystemTableName::ORGANIZATION => [],
         ];
-        
+
         // check request session
         $key = sprintf(Define::SYSTEM_KEY_SESSION_VALUE_ACCRSSIBLE_USERS, $custom_table->id, $custom_value->id ?? null);
         // if set $tablePermission, always call
+        /** @phpstan-ignore-next-line Call to function is_null() with mixed will always evaluate to false. */
         if (isset($tablePermission) || is_null($results = System::requestSession($key))) {
             // get ids contains value_authoritable table
             $ids[SystemTableName::USER] = $custom_value ? $custom_value->value_authoritable_users()->pluck('authoritable_target_id')->toArray() : [];
@@ -202,7 +206,7 @@ class AuthUserOrgHelper
                 System::requestSession($key, $results);
             }
         }
-        
+
         return $results;
     }
 
@@ -216,7 +220,7 @@ class AuthUserOrgHelper
     protected static function getRoleUserOrgId($target_table, $related_type, $tablePermission = null)
     {
         $target_table = CustomTable::getEloquent($target_table);
-        
+
         // Get role group contains target_table's
         $roleGroups = RoleGroup::whereHas('role_group_permissions', function ($query) use ($target_table) {
             $query->where(function ($query) use ($target_table) {
@@ -235,6 +239,7 @@ class AuthUserOrgHelper
             // check permission
             if (!$roleGroup->role_group_permissions->contains(function ($role_group_permission) use ($target_table, $tablePermission) {
                 // check as system
+                /** @var RoleGroupPermission $role_group_permission */
                 if ($role_group_permission->role_group_permission_type == RoleType::SYSTEM) {
                     $tablePermission = [Permission::SYSTEM, Permission::CUSTOM_TABLE, Permission::CUSTOM_VALUE_EDIT_ALL];
                 }
@@ -250,7 +255,7 @@ class AuthUserOrgHelper
                 if (!isset($tablePermission)) {
                     $tablePermission = Permission::AVAILABLE_ACCESS_CUSTOM_VALUE;
                 }
-                
+
                 // check contains $tablePermission in $role_group_permission
                 return collect($tablePermission)->contains(function ($p) use ($role_group_permission) {
                     return in_array($p, $role_group_permission->permissions);
@@ -259,6 +264,7 @@ class AuthUserOrgHelper
                 continue;
             }
 
+            /** @var RoleGroupUserOrganization $role_group_user_organization */
             foreach ($roleGroup->role_group_user_organizations as $role_group_user_organization) {
                 // merge users from $role_group_user_organization
                 if ($role_group_user_organization->role_group_user_org_type != $related_type) {
@@ -276,7 +282,7 @@ class AuthUserOrgHelper
         return $target_ids->filter()->unique()->toArray();
     }
 
-    
+
     /**
      * get organization ids for query.
      *
@@ -291,10 +297,10 @@ class AuthUserOrgHelper
         if (!System::organization_available()) {
             return [];
         }
-        
+
         // get organization and ids
         $orgsArray = static::getOrganizationTreeArray();
-                
+
         if (!isset($targetUserId)) {
             $targetUserId = \Exment::getUserId();
         }
@@ -312,7 +318,7 @@ class AuthUserOrgHelper
      *
      * @return array
      */
-    protected static function getOrganizationTreeArray() : array
+    protected static function getOrganizationTreeArray(): array
     {
         return System::requestSession(Define::SYSTEM_KEY_SESSION_ORGANIZATION_TREE, function () {
             $modelname = getModelName(SystemTableName::ORGANIZATION);
@@ -435,14 +441,14 @@ class AuthUserOrgHelper
         // First, get users org joined
         $db_table_name_pivot = CustomRelation::getRelationNameByTables(SystemTableName::ORGANIZATION, SystemTableName::USER);
         $target_users = \DB::table($db_table_name_pivot)->whereIn('parent_id', $user->getOrganizationIdsForQuery($joinedOrgFilterType))
-            ->get(['child_id'])->pluck('child_id');
+            ->pluck('child_id');
 
         $target_users = $target_users->merge($user->getUserId())->unique();
-        
+
         // get only login user's organization user
         $builder->whereIn("$db_table_name.id", $target_users->toArray());
     }
-    
+
     /**
      * Filtering user. Only join. set by filter_multi_user.
      *

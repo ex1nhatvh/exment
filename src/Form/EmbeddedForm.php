@@ -64,7 +64,7 @@ class EmbeddedForm extends EmbeddedFormBase
     /**
      * Push field and set for grid
      *
-     * @param AdminField $field
+     * @param Field $field
      * @param array $options
      * @return $this
      */
@@ -88,5 +88,21 @@ class EmbeddedForm extends EmbeddedFormBase
     public function getFieldAndOptions()
     {
         return $this->fieldAndOptions;
+    }
+
+    /**
+     * Prepare for insert or update.
+     *
+     * @param array|null $input
+     *
+     * @return mixed
+     */
+    public function prepare($input, bool $asConfirm = false)
+    {
+        if (is_null($input)) {
+            return $input;
+        }
+
+        return parent::prepare($input, $asConfirm);
     }
 }

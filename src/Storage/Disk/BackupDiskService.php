@@ -44,32 +44,31 @@ class BackupDiskService extends DiskServiceBase
     {
         return true;
     }
-    
-    
+
     /**
      * copy file from disk to localSyncDisk disk
      *
-     * @return void
+     * @return true
      */
     protected function sync()
     {
         ///// copy to sync disk
         $diskItem = $this->diskItem();
         $localSyncDiskItem = $this->localSyncDiskItem();
-        
+
         $disk = $diskItem->disk();
         $localSyncDisk = $localSyncDiskItem->disk();
 
         // download zip
         \Exment::makeDirectoryDisk($localSyncDisk, $localSyncDiskItem->dirName());
-        
+
         $stream = $disk->readStream($diskItem->filePath());
         $localSyncDisk->writeStream($localSyncDiskItem->filePath(), $stream);
         try {
             fclose($stream);
         } catch (\Exception $ex) {
         }
-        
+
         // open new zip file
         $zip = new \ZipArchive();
         if ($zip->open($localSyncDiskItem->fileFullPath()) === true) {
@@ -78,7 +77,7 @@ class BackupDiskService extends DiskServiceBase
         }
 
         $localSyncDisk->delete($localSyncDiskItem->filePath());
-        
+
         return true;
     }
 }

@@ -3,6 +3,7 @@
 /**
  * Execute Batch
  */
+
 namespace Exceedone\Exment\Services\Plugin;
 
 /**
@@ -10,7 +11,8 @@ namespace Exceedone\Exment\Services\Plugin;
  */
 class PluginPageBase extends PluginPublicBase
 {
-    use PluginBase, PluginPageTrait;
+    use PluginBase;
+    use PluginPageTrait;
 
     protected $showHeader = true;
 
@@ -22,17 +24,17 @@ class PluginPageBase extends PluginPublicBase
     /**
      * whether showing content header
      *
-     * @return void
+     * @return bool|mixed
      */
     public function _showHeader()
     {
         return $this->showHeader;
     }
-    
+
     /**
      * Get route uri for page
      *
-     * @return string
+     * @return string|null
      */
     public function getRouteUri($endpoint = null)
     {

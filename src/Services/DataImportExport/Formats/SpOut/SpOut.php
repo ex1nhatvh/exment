@@ -6,6 +6,7 @@ use Exceedone\Exment\Services\DataImportExport\Formats\FormatBase;
 use Box\Spout\Writer\Common\Creator\WriterEntityFactory;
 use Box\Spout\Common\Entity\Cell;
 use Box\Spout\Reader\SheetInterface;
+use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 
 abstract class SpOut extends FormatBase
 {
@@ -25,7 +26,7 @@ abstract class SpOut extends FormatBase
         foreach ($this->datalist as $index => $data) {
             $sheet_name = array_get($data, 'name');
             $outputs = array_get($data, 'outputs');
-            
+
             // if output as zip, change file name.
             if ($this->isOutputAsZip()) {
                 $outputPath = $this->getTmpFilePath($this->getRealFileName($sheet_name));
@@ -80,24 +81,22 @@ abstract class SpOut extends FormatBase
                 'path' => $outputPath,
             ];
         }
-        
+
         // create download file
         $this->createDownloadFile($files);
 
         return $files;
     }
 
-
     /**
      * Get Data from excel sheet
-     *
      * @param SheetInterface $sheet
-     * @param int $skip_excel_row_no
-     * @param boolean $keyvalue
-     * @param boolean $isGetMerge
+     * @param bool $keyvalue
+     * @param bool $isGetMerge
+     * @param array $options
      * @return array
      */
-    public function getDataFromSheet($sheet, bool $keyvalue = false, bool $isGetMerge = false, array $options = []) : array
+    public function getDataFromSheet($sheet, bool $keyvalue = false, bool $isGetMerge = false, array $options = []): array
     {
         $data = [];
         foreach ($sheet->getRowIterator() as $row_no => $row) {
@@ -131,14 +130,14 @@ abstract class SpOut extends FormatBase
         return $data;
     }
 
-    
+
     /**
      * get cell value
      *
-     * @param \Box\Spout\Common\Entity\Cell $cell
-     * @param SheetInterface $sheet
-     * @param boolean $isGetMerge
-     * @return mixed
+     * @param \Box\Spout\Common\Entity\Cell|string $cell
+     * @param Worksheet|\Box\Spout\Reader\SheetInterface $sheet
+     * @param bool $isGetMerge
+     * @return null
      */
     public function getCellValue($cell, $sheet, $isGetMerge = false)
     {

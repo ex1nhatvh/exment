@@ -2,40 +2,54 @@
 
 namespace Exceedone\Exment\Model;
 
+use Exceedone\Exment\Database\Eloquent\ExtendedBuilder;
 use Exceedone\Exment\Enums;
 use Exceedone\Exment\Enums\CopyColumnType;
 use Exceedone\Exment\Enums\CustomOperationType;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Validation\ValidationException;
 
+/**
+ * @phpstan-consistent-constructor
+ * @property mixed $operation_type
+ * @property mixed $operation_name
+ * @property mixed $custom_table_id
+ * @method static int count($columns = '*')
+ * @method static ExtendedBuilder whereNull($columns, $boolean = 'and', $not = false)
+ * @method static ExtendedBuilder orderBy($column, $direction = 'asc')
+ * @method static ExtendedBuilder create(array $attributes = [])
+ */
 class CustomOperation extends ModelBase
 {
     use Traits\UseRequestSessionTrait;
     use Traits\ClearCacheTrait;
     use Traits\AutoSUuidTrait;
     use Traits\DatabaseJsonOptionTrait;
-    
-    protected $casts = ['options' => 'json', 'operation_type' => 'array'];
-    protected $appends = ['condition_join'];
 
-   
-    public function custom_table()
+    protected $casts = ['options' => 'json', 'operation_type' => 'array'];
+    protected $appends = ['condition_join', 'active_flg', 'condition_reverse'];
+
+
+    public function custom_table(): BelongsTo
     {
         return $this->belongsTo(CustomTable::class, 'custom_table_id');
     }
 
-    public function custom_operation_columns()
+    public function custom_operation_columns(): HasMany
     {
         return $this->hasMany(CustomOperationColumn::class, 'custom_operation_id')
             ->where('operation_column_type', CopyColumnType::DEFAULT);
     }
 
-    public function custom_operation_input_columns()
+    public function custom_operation_input_columns(): HasMany
     {
         return $this->hasMany(CustomOperationColumn::class, 'custom_operation_id')
             ->where('operation_column_type', CopyColumnType::INPUT);
     }
 
-    public function custom_operation_conditions()
+    public function custom_operation_conditions(): MorphMany
     {
         return $this->morphMany(Condition::class, 'morph', 'morph_type', 'morph_id');
     }
@@ -53,7 +67,7 @@ class CustomOperation extends ModelBase
     {
         return static::getEloquentDefault($id, $withs);
     }
-        
+
     public function getConditionJoinAttribute()
     {
         return $this->getOption('condition_join');
@@ -65,7 +79,32 @@ class CustomOperation extends ModelBase
 
         return $this;
     }
-    
+
+    public function getConditionReverseAttribute()
+    {
+        return $this->getOption('condition_reverse');
+    }
+
+    public function setConditionReverseAttribute($val)
+    {
+        $this->setOption('condition_reverse', $val);
+
+        return $this;
+    }
+
+    public function getActiveFlgAttribute()
+    {
+        $active_flg = $this->getOption('active_flg');
+        return is_null($active_flg) || $active_flg;
+    }
+
+    public function setActiveFlgAttribute($val)
+    {
+        $this->setOption('active_flg', $val);
+
+        return $this;
+    }
+
     public function deletingChildren()
     {
         $this->custom_operation_columns()->delete();
@@ -76,12 +115,12 @@ class CustomOperation extends ModelBase
     protected static function boot()
     {
         parent::boot();
-        
+
         static::deleting(function ($model) {
             $model->deletingChildren();
         });
     }
-    
+
     /**
      * check if operation target data
      *
@@ -116,11 +155,25 @@ class CustomOperation extends ModelBase
     }
 
     /**
-     * check if custom_value is match for conditions.
+     * check if custom_value is match for conditions(with reverse option).
      * @param CustomValue $custom_value
      * @return bool is match condition.
      */
     public function isMatchCondition($custom_value)
+    {
+        $result = $this->_isMatchCondition($custom_value);
+        if (boolval($this->condition_reverse)) {
+            $result = !$result;
+        }
+        return $result;
+    }
+
+    /**
+     * check if custom_value is match for conditions.
+     * @param CustomValue $custom_value
+     * @return bool is match condition.
+     */
+    public function _isMatchCondition($custom_value)
     {
         $is_or = $this->condition_join == 'or';
         foreach ($this->custom_operation_conditions as $condition) {
@@ -136,12 +189,12 @@ class CustomOperation extends ModelBase
         }
         return !$is_or;
     }
-    
+
     /**
      * Check all operations related to custom-table
      * If operation type and filter is matched, then update target column's value
      *
-     * @param CustomOperationType|array $operation_types
+     * @param CustomOperationType|array|string $operation_types
      * @param CustomValue $custom_value
      * @param boolean $is_save
      */
@@ -154,7 +207,7 @@ class CustomOperation extends ModelBase
         if (count($operations) > 0) {
             foreach ($operations as $operation) {
                 // if $operation_type is trigger and custom-value is match for conditions, execute
-                if ($operation->isOperationTarget($custom_value, $operation_types)) {
+                if ($operation->active_flg && $operation->isOperationTarget($custom_value, $operation_types)) {
                     $updates = $operation->getUpdateValues($custom_value);
                     $custom_value->setValue($updates);
                     $update_flg = true;
@@ -203,6 +256,7 @@ class CustomOperation extends ModelBase
         } catch (\Exception $ex) {
             \DB::rollback();
             if ($ex instanceof ValidationException) {
+                /** @phpstan-ignore-next-line */
                 return array_first(array_flatten($ex->validator->getMessages()));
             }
             throw $ex;
@@ -232,7 +286,11 @@ class CustomOperation extends ModelBase
                 return [$column_name => Enums\OperationValueType::getOperationValue($custom_column, $operation_column['update_value_text'], $model)];
             }
 
-            return [$column_name => $operation_column['update_value_text']];
+            $update_value_text = $operation_column->update_value_text;
+            if (is_nullorempty($update_value_text)) {
+                $update_value_text = null;
+            }
+            return [$column_name => $update_value_text];
         });
 
         $input_updates = [];

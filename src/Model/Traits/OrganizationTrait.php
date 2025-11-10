@@ -12,6 +12,9 @@ use Exceedone\Exment\Model\System;
 use Encore\Admin\Traits\ModelTree;
 use Encore\Admin\Traits\AdminBuilder;
 
+/**
+ * @uses \Exceedone\Exment\Services\ClassBuilder
+ */
 trait OrganizationTrait
 {
     use AdminBuilder, ModelTree {
@@ -26,7 +29,7 @@ trait OrganizationTrait
     {
         return $this->belongsTo(static::class, static::getParentOrgIndexName());
     }
- 
+
     /**
      * get children organizations.
      * (*)Only one deeply organizations. not all deeply organizations.
@@ -54,7 +57,7 @@ trait OrganizationTrait
 
     public static function getParentOrgIndexName()
     {
-        return CustomColumn::getEloquent('parent_organization', new static)->getIndexColumnName();
+        return CustomColumn::getEloquent('parent_organization', new static())->getIndexColumnName();
     }
 
     /**
@@ -149,7 +152,7 @@ trait OrganizationTrait
             static::setChildrenOrganizations($deep, $children_organization, $organizations);
         }
     }
-    
+
     /**
      * get role_group user or org joined.
      *

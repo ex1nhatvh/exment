@@ -16,8 +16,13 @@ use Exceedone\Exment\Tests\DatabaseTransactions;
 
 class OAuthLoginTest extends UnitTestBase
 {
-    use TestTrait, DatabaseTransactions;
+    use TestTrait;
+    use DatabaseTransactions;
 
+    /**
+     * @param array<mixed> $options
+     * @return array<mixed>
+     */
     protected function _commonProcess($options = [])
     {
         $this->initAllTest();
@@ -42,7 +47,7 @@ class OAuthLoginTest extends UnitTestBase
             ],
         ]);
 
-        $test_user = (new SocialiteUser)->map([
+        $test_user = (new SocialiteUser())->map([
             'id' => $options['user_code'],
             'name' => 'テストユーザー',
             'email' => $options['email'],
@@ -61,6 +66,7 @@ class OAuthLoginTest extends UnitTestBase
      * mapping column: email
      * new user create: no
      * update user info: yes
+     * @return void
      */
     public function testNewUserNoCreate1()
     {
@@ -83,6 +89,7 @@ class OAuthLoginTest extends UnitTestBase
      * mapping column: email
      * new user create: no
      * update user info: no
+     * @return void
      */
     public function testNewUserNoCreate2()
     {
@@ -103,6 +110,7 @@ class OAuthLoginTest extends UnitTestBase
      * mapping column: email
      * new user create: yes
      * update user info: yes
+     * @return void
      */
     public function testNewUserCreate1()
     {
@@ -125,6 +133,7 @@ class OAuthLoginTest extends UnitTestBase
      * mapping column: email
      * new user create: yes
      * update user info: no
+     * @return void
      */
     public function testNewUserCreate2()
     {
@@ -147,6 +156,7 @@ class OAuthLoginTest extends UnitTestBase
      * mapping column: email
      * new user create: yes
      * update user info: no
+     * @return void
      */
     public function testValidateErrorEmail()
     {
@@ -166,6 +176,7 @@ class OAuthLoginTest extends UnitTestBase
      * mapping column: email
      * new user create: yes
      * update user info: no
+     * @return void
      */
     public function testValidateErrorUserCode()
     {
@@ -185,6 +196,7 @@ class OAuthLoginTest extends UnitTestBase
      * mapping column: email
      * new user create: no
      * update user info: yes
+     * @return void
      */
     public function testExistsUser1()
     {
@@ -210,6 +222,7 @@ class OAuthLoginTest extends UnitTestBase
      * mapping column: email
      * new user create: yes
      * update user info: no
+     * @return void
      */
     public function testExistsUser2()
     {
@@ -234,6 +247,7 @@ class OAuthLoginTest extends UnitTestBase
      * mapping column: email
      * new user create: yes
      * update user info: yes
+     * @return void
      */
     public function testExistsUser3()
     {
@@ -260,6 +274,7 @@ class OAuthLoginTest extends UnitTestBase
      * mapping column: email
      * new user create: yes
      * update user info: no
+     * @return void
      */
     public function testExistsUser4()
     {
@@ -285,6 +300,7 @@ class OAuthLoginTest extends UnitTestBase
      * mapping column: email
      * new user create: no
      * update user info: yes
+     * @return void
      */
     public function testExistsUserEmail1()
     {
@@ -306,6 +322,7 @@ class OAuthLoginTest extends UnitTestBase
      * mapping column: email
      * new user create: yes
      * update user info: no
+     * @return void
      */
     public function testExistsUserEmail2()
     {
@@ -329,6 +346,7 @@ class OAuthLoginTest extends UnitTestBase
      * mapping column: email
      * new user create: yes
      * update user info: yes
+     * @return void
      */
     public function testExistsUserEmail3()
     {
@@ -351,6 +369,7 @@ class OAuthLoginTest extends UnitTestBase
      * mapping column: email
      * new user create: yes
      * update user info: no
+     * @return void
      */
     public function testExistsUserEmail4()
     {
@@ -376,6 +395,7 @@ class OAuthLoginTest extends UnitTestBase
      * mapping column: email
      * new user create: yes
      * update user info: yes
+     * @return void
      */
     public function testValidateErrorUpdate()
     {
@@ -400,6 +420,7 @@ class OAuthLoginTest extends UnitTestBase
      * mapping column: email
      * new user create: yes
      * update user info: no
+     * @return void
      */
     public function testValidateErrorNoUpdate()
     {
@@ -425,6 +446,7 @@ class OAuthLoginTest extends UnitTestBase
      * mapping column: email
      * new user create: no
      * update user info: yes
+     * @return void
      */
     public function testOtherUserCodeMatch1()
     {
@@ -448,6 +470,7 @@ class OAuthLoginTest extends UnitTestBase
      * mapping column: email
      * new user create: no
      * update user info: no
+     * @return void
      */
     public function testOtherUserCodeMatch2()
     {
@@ -473,6 +496,7 @@ class OAuthLoginTest extends UnitTestBase
      * mapping column: email
      * new user create: yes
      * update user info: yes
+     * @return void
      */
     public function testOtherUserCodeMatch3()
     {
@@ -497,6 +521,7 @@ class OAuthLoginTest extends UnitTestBase
      * mapping column: email
      * new user create: yes
      * update user info: no
+     * @return void
      */
     public function testOtherUserCodeMatch4()
     {
@@ -523,6 +548,7 @@ class OAuthLoginTest extends UnitTestBase
      * mapping column: user_code
      * new user create: no
      * update user info: yes
+     * @return void
      */
     public function testExistsUserUserCode1()
     {
@@ -548,6 +574,7 @@ class OAuthLoginTest extends UnitTestBase
      * mapping column: user_code
      * new user create: no
      * update user info: no
+     * @return void
      */
     public function testExistsUserUserCode2()
     {
@@ -572,6 +599,7 @@ class OAuthLoginTest extends UnitTestBase
      * mapping column: user_code
      * new user create: yes
      * update user info: yes
+     * @return void
      */
     public function testExistsUserUserCode3()
     {
@@ -598,6 +626,7 @@ class OAuthLoginTest extends UnitTestBase
      * mapping column: user_code
      * new user create: yes
      * update user info: no
+     * @return void
      */
     public function testExistsUserUserCode4()
     {
@@ -623,6 +652,7 @@ class OAuthLoginTest extends UnitTestBase
      * mapping column: user_code
      * new user create: yes
      * update user info: yes
+     * @return void
      */
     public function testValidateErrorEmailUpdate()
     {
@@ -647,6 +677,7 @@ class OAuthLoginTest extends UnitTestBase
      * mapping column: user_code
      * new user create: yes
      * update user info: no
+     * @return void
      */
     public function testValidateErrorEmailNoUpdate()
     {
@@ -673,6 +704,7 @@ class OAuthLoginTest extends UnitTestBase
      * mapping column: user_code
      * new user create: no
      * update user info: yes
+     * @return void
      */
     public function testOtherEmailMatch1()
     {
@@ -697,6 +729,7 @@ class OAuthLoginTest extends UnitTestBase
      * mapping column: user_code
      * new user create: no
      * update user info: no
+     * @return void
      */
     public function testOtherEmailMatch2()
     {
@@ -723,6 +756,7 @@ class OAuthLoginTest extends UnitTestBase
      * mapping column: user_code
      * new user create: yes
      * update user info: yes
+     * @return void
      */
     public function testOtherEmailMatch3()
     {
@@ -748,6 +782,7 @@ class OAuthLoginTest extends UnitTestBase
      * mapping column: user_code
      * new user create: yes
      * update user info: no
+     * @return void
      */
     public function testOtherEmailMatch4()
     {

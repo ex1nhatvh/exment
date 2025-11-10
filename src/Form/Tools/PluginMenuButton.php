@@ -15,7 +15,7 @@ class PluginMenuButton
     protected $id;
     // set this plugin type
     protected $plugin_type;
-    
+
     public function __construct($listButton, $custom_table, $id = null)
     {
         if ($listButton instanceof Plugin) {
@@ -41,7 +41,8 @@ class PluginMenuButton
         $confirm = trans('admin.confirm');
         $cancel = trans('admin.cancel');
 
-        $text = esc_html(sprintf(exmtrans('common.message.confirm_execute'), ($label ?? exmtrans('common.plugin'))));
+        $label = esc_html($label);
+        $text = sprintf(exmtrans('common.message.confirm_execute'), ($label ?? exmtrans('common.plugin')));
         $plugin_type = $this->plugin_type;
         return <<<EOT
 
@@ -103,7 +104,7 @@ EOT;
             'icon' => array_get($this->plugin, 'options.icon') ?? '',
         ]);
     }
-    
+
     /**
      * @return string
      */

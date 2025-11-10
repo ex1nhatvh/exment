@@ -11,8 +11,13 @@ use Exceedone\Exment\Enums\SystemTableName;
 class CustomColumnTest extends UnitTestBase
 {
     use CustomColumnTrait;
-    
+
     // Text ----------------------------------------------------
+
+    /**
+     * @param mixed $value_type
+     * @return void
+     */
     public function _testText($value_type)
     {
         $custom_column = $this->getCustomColumnModel(ColumnType::TEXT);
@@ -21,22 +26,38 @@ class CustomColumnTest extends UnitTestBase
         $v = $column_item->{$value_type}();
         $this->assertMatch($v, 'text');
     }
+
+    /**
+     * @return void
+     */
     public function testTextValue()
     {
-        return $this->_testText(ValueType::VALUE);
+        $this->_testText(ValueType::VALUE);
     }
+    /**
+     * @return void
+     */
     public function testTextText()
     {
-        return $this->_testText(ValueType::TEXT);
+        $this->_testText(ValueType::TEXT);
     }
+    /**
+     * @return void
+     */
     public function testTextHtml()
     {
-        return $this->_testText(ValueType::HTML);
+        $this->_testText(ValueType::HTML);
     }
 
 
     // TextArea ----------------------------------------------------
-    const TEXTAREA_VALUE = 'text1\r\ntext2\r\ntext3\r\n<a href="abc">aaa</a>';
+    public const TEXTAREA_VALUE = 'text1\r\ntext2\r\ntext3\r\n<a href="abc">aaa</a>';
+
+    /**
+     * @param mixed $value_type
+     * @param mixed $matchedValue
+     * @return void
+     */
     public function _testTextarea($value_type, $matchedValue)
     {
         $custom_column = $this->getCustomColumnModel(ColumnType::TEXTAREA);
@@ -45,24 +66,43 @@ class CustomColumnTest extends UnitTestBase
         $v = $column_item->{$value_type}();
         $this->assertMatch($v, $matchedValue);
     }
+
+
+    /**
+     * @return void
+     */
     public function testTextareaValue()
     {
-        return $this->_testTextarea(ValueType::VALUE, static::TEXTAREA_VALUE);
-    }
-    public function testTextareaText()
-    {
-        return $this->_testTextarea(ValueType::TEXT, static::TEXTAREA_VALUE);
-    }
-    public function testTextareaHtml()
-    {
-        return $this->_testTextarea(ValueType::HTML, preg_replace('/ /', '<span style="margin-right: 0.5em;"></span>', replaceBreakEsc(static::TEXTAREA_VALUE)));
+        $this->_testTextarea(ValueType::VALUE, static::TEXTAREA_VALUE);
     }
 
-    
+    /**
+     * @return void
+     */
+    public function testTextareaText()
+    {
+        $this->_testTextarea(ValueType::TEXT, static::TEXTAREA_VALUE);
+    }
+
+    /**
+     * @return void
+     */
+    public function testTextareaHtml()
+    {
+        $this->_testTextarea(ValueType::HTML, preg_replace('/ /', '<span style="margin-right: 0.5em;"></span>', replaceBreakEsc(static::TEXTAREA_VALUE)));
+    }
+
+
 
 
     // Editor ----------------------------------------------------
-    const EDITOR_VALUE = "<p>normal</p>\r\n<p><strong>bold</strong></p>\r\n<p><span style=\"text-decoration: underline;\">under</span></p>\r\n<p><span style=\"color: #ff0000;\">red</span></p>";
+    public const EDITOR_VALUE = "<p>normal</p>\r\n<p><strong>bold</strong></p>\r\n<p><span style=\"text-decoration: underline;\">under</span></p>\r\n<p><span style=\"color: #ff0000;\">red</span></p>";
+
+    /**
+     * @param mixed $value_type
+     * @param mixed $matchedValue
+     * @return void
+     */
     public function _testEditor($value_type, $matchedValue)
     {
         $custom_column = $this->getCustomColumnModel(ColumnType::EDITOR);
@@ -71,25 +111,43 @@ class CustomColumnTest extends UnitTestBase
         $v = $column_item->{$value_type}();
         $this->assertMatch($v, $matchedValue);
     }
+
+    /**
+     * @return void
+     */
     public function testEditorValue()
     {
-        return $this->_testEditor(ValueType::VALUE, static::EDITOR_VALUE);
-    }
-    public function testEditorText()
-    {
-        return $this->_testEditor(ValueType::TEXT, static::EDITOR_VALUE);
-    }
-    public function testEditorHtml()
-    {
-        return $this->_testEditor(ValueType::HTML, '<div class="show-tinymce">'.replaceBreak(html_clean(static::EDITOR_VALUE), false).'</div>');
+        $this->_testEditor(ValueType::VALUE, static::EDITOR_VALUE);
     }
 
-    
-    
+    /**
+     * @return void
+     */
+    public function testEditorText()
+    {
+        $this->_testEditor(ValueType::TEXT, static::EDITOR_VALUE);
+    }
+
+    /**
+     * @return void
+     */
+    public function testEditorHtml()
+    {
+        $this->_testEditor(ValueType::HTML, '<div class="show-tinymce">'.replaceBreak(html_clean(static::EDITOR_VALUE), false).'</div>');
+    }
+
+
+
 
 
     // URL ----------------------------------------------------
-    const URL_VALUE = "https://github.com/exceedone/exment/";
+    public const URL_VALUE = "https://github.com/exceedone/exment/";
+
+    /**
+     * @param mixed $value_type
+     * @param mixed $matchedValue
+     * @return void
+     */
     public function _testUrl($value_type, $matchedValue)
     {
         $custom_column = $this->getCustomColumnModel(ColumnType::URL);
@@ -98,25 +156,43 @@ class CustomColumnTest extends UnitTestBase
         $v = $column_item->{$value_type}();
         $this->assertMatch($v, $matchedValue);
     }
+
+    /**
+     * @return void
+     */
     public function testUrlValue()
     {
-        return $this->_testUrl(ValueType::VALUE, static::URL_VALUE);
+        $this->_testUrl(ValueType::VALUE, static::URL_VALUE);
     }
+
+    /**
+     * @return void
+     */
     public function testUrlText()
     {
-        return $this->_testUrl(ValueType::TEXT, static::URL_VALUE);
+        $this->_testUrl(ValueType::TEXT, static::URL_VALUE);
     }
+
+    /**
+     * @return void
+     */
     public function testUrlHtml()
     {
-        return $this->_testUrl(ValueType::HTML, '<a href="' . static::URL_VALUE . '" target="_blank">' . static::URL_VALUE . "</a>");
+        $this->_testUrl(ValueType::HTML, '<a href="' . static::URL_VALUE . '" target="_blank">' . static::URL_VALUE . "</a>");
     }
 
 
-    
+
 
 
     // EMAIL ----------------------------------------------------
-    const EMAIL_VALUE = "test@foobar.test";
+    public const EMAIL_VALUE = "test@foobar.test";
+
+    /**
+     * @param mixed $value_type
+     * @param mixed $matchedValue
+     * @return void
+     */
     public function _testEmail($value_type, $matchedValue)
     {
         $custom_column = $this->getCustomColumnModel(ColumnType::EMAIL);
@@ -125,24 +201,43 @@ class CustomColumnTest extends UnitTestBase
         $v = $column_item->{$value_type}();
         $this->assertMatch($v, $matchedValue);
     }
+
+    /**
+     * @return void
+     */
     public function testEmailValue()
     {
-        return $this->_testEmail(ValueType::VALUE, static::EMAIL_VALUE);
-    }
-    public function testEmailText()
-    {
-        return $this->_testEmail(ValueType::TEXT, static::EMAIL_VALUE);
-    }
-    public function testEmailHtml()
-    {
-        return $this->_testEmail(ValueType::HTML, static::EMAIL_VALUE);
+        $this->_testEmail(ValueType::VALUE, static::EMAIL_VALUE);
     }
 
-    
+    /**
+     * @return void
+     */
+    public function testEmailText()
+    {
+        $this->_testEmail(ValueType::TEXT, static::EMAIL_VALUE);
+    }
+
+    /**
+     * @return void
+     */
+    public function testEmailHtml()
+    {
+        $this->_testEmail(ValueType::HTML, static::EMAIL_VALUE);
+    }
+
+
 
 
     // INTEGER ----------------------------------------------------
-    const INTEGER_VALUE = 1000;
+    public const INTEGER_VALUE = 1000;
+
+    /**
+     * @param mixed $value_type
+     * @param mixed $matchedValue
+     * @param array<mixed>$options
+     * @return void
+     */
     public function _testInteger($value_type, $matchedValue, $options = [])
     {
         $custom_column = $this->getCustomColumnModel(ColumnType::INTEGER, $options);
@@ -151,39 +246,71 @@ class CustomColumnTest extends UnitTestBase
         $v = $column_item->{$value_type}();
         $this->assertMatch($v, $matchedValue);
     }
+
+    /**
+     * @return void
+     */
     public function testIntegerValue()
     {
-        return $this->_testInteger(ValueType::VALUE, static::INTEGER_VALUE);
-    }
-    public function testIntegerText()
-    {
-        return $this->_testInteger(ValueType::TEXT, static::INTEGER_VALUE);
-    }
-    public function testIntegerHtml()
-    {
-        return $this->_testInteger(ValueType::HTML, static::INTEGER_VALUE);
-    }
-    //comma
-    public function testIntegerValueComma()
-    {
-        return $this->_testInteger(ValueType::VALUE, '1000', ['number_format' => 1]);
-    }
-    public function testIntegerTextComma()
-    {
-        return $this->_testInteger(ValueType::TEXT, '1,000', ['number_format' => 1]);
-    }
-    public function testIntegerHtmlComma()
-    {
-        return $this->_testInteger(ValueType::HTML, '1,000', ['number_format' => 1]);
+        $this->_testInteger(ValueType::VALUE, static::INTEGER_VALUE);
     }
 
-    
+    /**
+     * @return void
+     */
+    public function testIntegerText()
+    {
+        $this->_testInteger(ValueType::TEXT, static::INTEGER_VALUE);
+    }
+
+    /**
+     * @return void
+     */
+    public function testIntegerHtml()
+    {
+        $this->_testInteger(ValueType::HTML, static::INTEGER_VALUE);
+    }
+    //comma
+
+    /**
+     * @return void
+     */
+    public function testIntegerValueComma()
+    {
+        $this->_testInteger(ValueType::VALUE, '1000', ['number_format' => 1]);
+    }
+
+    /**
+     * @return void
+     */
+    public function testIntegerTextComma()
+    {
+        $this->_testInteger(ValueType::TEXT, '1,000', ['number_format' => 1]);
+    }
+
+    /**
+     * @return void
+     */
+    public function testIntegerHtmlComma()
+    {
+        $this->_testInteger(ValueType::HTML, '1,000', ['number_format' => 1]);
+    }
+
+
 
 
     // DECIMAL ----------------------------------------------------
-    const DECIMAL_VALUE = 1000.25;
-    const DECIMAL_VALUE2 = 1000;
-    const DECIMAL_VALUE3 = 1000.2;
+    public const DECIMAL_VALUE = 1000.25;
+    public const DECIMAL_VALUE2 = 1000;
+    public const DECIMAL_VALUE3 = 1000.2;
+
+    /**
+     * @param mixed $value_type
+     * @param mixed $matchedValue
+     * @param array<mixed> $options
+     * @param mixed|null $originalValue
+     * @return void
+     */
     public function _testDecimal($value_type, $matchedValue, $options = [], $originalValue = null)
     {
         $originalValue = $originalValue?? static::CURRENCY_VALUE;
@@ -193,68 +320,128 @@ class CustomColumnTest extends UnitTestBase
         $v = $column_item->{$value_type}();
         $this->assertMatch($v, $matchedValue);
     }
+
+    /**
+     * @return void
+     */
     public function testDecimalValue()
     {
-        return $this->_testDecimal(ValueType::VALUE, static::DECIMAL_VALUE);
+        $this->_testDecimal(ValueType::VALUE, static::DECIMAL_VALUE);
     }
+
+    /**
+     * @return void
+     */
     public function testDecimalText()
     {
-        return $this->_testDecimal(ValueType::TEXT, static::DECIMAL_VALUE);
+        $this->_testDecimal(ValueType::TEXT, static::DECIMAL_VALUE);
     }
+
+    /**
+     * @return void
+     */
     public function testDecimalHtml()
     {
-        return $this->_testDecimal(ValueType::HTML, static::DECIMAL_VALUE);
+        $this->_testDecimal(ValueType::HTML, static::DECIMAL_VALUE);
     }
     //comma(only test, html)
+
+    /**
+     * @return void
+     */
     public function testDecimalValueComma()
     {
-        return $this->_testDecimal(ValueType::VALUE, '1000.25', ['number_format' => 1, 'decimal_digit' => 2]);
+        $this->_testDecimal(ValueType::VALUE, '1000.25', ['number_format' => 1, 'decimal_digit' => 2]);
     }
+
+    /**
+     * @return void
+     */
     public function testDecimalTextComma()
     {
-        return $this->_testDecimal(ValueType::TEXT, '1,000.25', ['number_format' => 1, 'decimal_digit' => 2]);
+        $this->_testDecimal(ValueType::TEXT, '1,000.25', ['number_format' => 1, 'decimal_digit' => 2]);
     }
+
+    /**
+     * @return void
+     */
     public function testDecimalHtmlComma()
     {
-        return $this->_testDecimal(ValueType::HTML, '1,000.25', ['number_format' => 1, 'decimal_digit' => 2]);
+        $this->_testDecimal(ValueType::HTML, '1,000.25', ['number_format' => 1, 'decimal_digit' => 2]);
     }
     //percent(only html)
+
+    /**
+     * @return void
+     */
     public function testDecimalValuePercent()
     {
-        return $this->_testDecimal(ValueType::VALUE, '1000.25', ['percent_format' => 1, 'decimal_digit' => 2]);
+        $this->_testDecimal(ValueType::VALUE, '1000.25', ['percent_format' => 1, 'decimal_digit' => 2]);
     }
+
+    /**
+     * @return void
+     */
     public function testDecimalTextPercent()
     {
-        return $this->_testDecimal(ValueType::TEXT, '1000.25', ['percent_format' => 1, 'decimal_digit' => 2]);
+        $this->_testDecimal(ValueType::TEXT, '1000.25', ['percent_format' => 1, 'decimal_digit' => 2]);
     }
+
+    /**
+     * @return void
+     */
     public function testDecimalHtmlPercent()
     {
-        return $this->_testDecimal(ValueType::HTML, '100025%', ['percent_format' => 1, 'decimal_digit' => 2]);
+        $this->_testDecimal(ValueType::HTML, '100025%', ['percent_format' => 1, 'decimal_digit' => 2]);
     }
+
+    /**
+     * @return void
+     */
     public function testDecimalText2()
     {
-        return $this->_testDecimal(ValueType::TEXT, '1000', ['decimal_digit' => 2], static::DECIMAL_VALUE2);
+        $this->_testDecimal(ValueType::TEXT, '1000', ['decimal_digit' => 2], static::DECIMAL_VALUE2);
     }
+
+    /**
+     * @return void
+     */
     public function testDecimalTextComma2()
     {
-        return $this->_testDecimal(ValueType::TEXT, '1,000', ['number_format' => 1, 'decimal_digit' => 2], static::DECIMAL_VALUE2);
+        $this->_testDecimal(ValueType::TEXT, '1,000', ['number_format' => 1, 'decimal_digit' => 2], static::DECIMAL_VALUE2);
     }
+
+    /**
+     * @return void
+     */
     public function testDecimalText3()
     {
-        return $this->_testDecimal(ValueType::TEXT, '1000.2', ['decimal_digit' => 2], static::DECIMAL_VALUE3);
+        $this->_testDecimal(ValueType::TEXT, '1000.2', ['decimal_digit' => 2], static::DECIMAL_VALUE3);
     }
+
+    /**
+     * @return void
+     */
     public function testDecimalTextComma3()
     {
-        return $this->_testDecimal(ValueType::TEXT, '1,000.2', ['number_format' => 1, 'decimal_digit' => 2], static::DECIMAL_VALUE3);
+        $this->_testDecimal(ValueType::TEXT, '1,000.2', ['number_format' => 1, 'decimal_digit' => 2], static::DECIMAL_VALUE3);
     }
 
 
 
-    
+
     // CURRENCY ----------------------------------------------------
-    const CURRENCY_VALUE = 1000.25;
-    const CURRENCY_VALUE2 = 1000;
-    const CURRENCY_VALUE3 = 1000.2;
+    public const CURRENCY_VALUE = 1000.25;
+    public const CURRENCY_VALUE2 = 1000;
+    public const CURRENCY_VALUE3 = 1000.2;
+
+    /**
+     * @param mixed $value_type
+     * @param mixed $matchedValue
+     * @param array<mixed> $options
+     * @param null|mixed $originalValue
+     * @return void
+     */
     public function _testCurrency($value_type, $matchedValue, $options = [], $originalValue = null)
     {
         $originalValue = $originalValue?? static::CURRENCY_VALUE;
@@ -264,34 +451,62 @@ class CustomColumnTest extends UnitTestBase
         $v = $column_item->{$value_type}();
         $this->assertMatch($v, $matchedValue);
     }
+
+    /**
+     * @return void
+     */
     public function testCurrencyValue()
     {
-        return $this->_testCurrency(ValueType::VALUE, static::CURRENCY_VALUE, ['currency_symbol' => CurrencySymbol::JPY1]);
+        $this->_testCurrency(ValueType::VALUE, static::CURRENCY_VALUE, ['currency_symbol' => CurrencySymbol::JPY1]);
     }
+
+    /**
+     * @return void
+     */
     public function testCurrencyText()
     {
-        return $this->_testCurrency(ValueType::TEXT, '¥' . static::CURRENCY_VALUE, ['currency_symbol' => CurrencySymbol::JPY1]);
+        $this->_testCurrency(ValueType::TEXT, '¥' . static::CURRENCY_VALUE, ['currency_symbol' => CurrencySymbol::JPY1]);
     }
+
+    /**
+     * @return void
+     */
     public function testCurrencyHtml()
     {
-        return $this->_testCurrency(ValueType::HTML, '&yen;' . static::CURRENCY_VALUE, ['currency_symbol' => CurrencySymbol::JPY1]);
+        $this->_testCurrency(ValueType::HTML, '&yen;' . static::CURRENCY_VALUE, ['currency_symbol' => CurrencySymbol::JPY1]);
     }
     //comma(only test, html)
+
+    /**
+     * @return void
+     */
     public function testCurrencyValueComma()
     {
-        return $this->_testCurrency(ValueType::VALUE, '1000.25', ['currency_symbol' => CurrencySymbol::JPY1, 'number_format' => 1, 'decimal_digit' => 2]);
+        $this->_testCurrency(ValueType::VALUE, '1000.25', ['currency_symbol' => CurrencySymbol::JPY1, 'number_format' => 1, 'decimal_digit' => 2]);
     }
+
+    /**
+     * @return void
+     */
     public function testCurrencyTextComma()
     {
-        return $this->_testCurrency(ValueType::TEXT, '¥1,000.25', ['currency_symbol' => CurrencySymbol::JPY1, 'number_format' => 1, 'decimal_digit' => 2]);
+        $this->_testCurrency(ValueType::TEXT, '¥1,000.25', ['currency_symbol' => CurrencySymbol::JPY1, 'number_format' => 1, 'decimal_digit' => 2]);
     }
+
+    /**
+     * @return void
+     */
     public function testCurrencyHtmlComma()
     {
-        return $this->_testCurrency(ValueType::HTML, '&yen;1,000.25', ['currency_symbol' => CurrencySymbol::JPY1, 'number_format' => 1, 'decimal_digit' => 2]);
+        $this->_testCurrency(ValueType::HTML, '&yen;1,000.25', ['currency_symbol' => CurrencySymbol::JPY1, 'number_format' => 1, 'decimal_digit' => 2]);
     }
+
+    /**
+     * @return void
+     */
     public function testCurrencyText2()
     {
-        return $this->_testCurrency(
+        $this->_testCurrency(
             ValueType::TEXT,
             '1000.00円',
             ['currency_symbol' => CurrencySymbol::JPY2,
@@ -299,9 +514,13 @@ class CustomColumnTest extends UnitTestBase
             static::CURRENCY_VALUE2
         );
     }
+
+    /**
+     * @return void
+     */
     public function testCurrencyTextComma2()
     {
-        return $this->_testCurrency(
+        $this->_testCurrency(
             ValueType::TEXT,
             '1,000.00円',
             ['currency_symbol' => CurrencySymbol::JPY2,
@@ -310,9 +529,13 @@ class CustomColumnTest extends UnitTestBase
             static::CURRENCY_VALUE2
         );
     }
+
+    /**
+     * @return void
+     */
     public function testCurrencyText3()
     {
-        return $this->_testCurrency(
+        $this->_testCurrency(
             ValueType::TEXT,
             '$1000.20',
             ['currency_symbol' => CurrencySymbol::USD,
@@ -320,9 +543,13 @@ class CustomColumnTest extends UnitTestBase
             static::CURRENCY_VALUE3
         );
     }
+
+    /**
+     * @return void
+     */
     public function testCurrencyTextComma3()
     {
-        return $this->_testCurrency(
+        $this->_testCurrency(
             ValueType::TEXT,
             '$1,000.20',
             ['currency_symbol' => CurrencySymbol::USD,
@@ -334,10 +561,17 @@ class CustomColumnTest extends UnitTestBase
 
 
 
-    
+
     // DATE ----------------------------------------------------
-    const DATE_VALUE = '2020/06/12';
-    const DATE_VALUE_FORMAT = '2020-06-12';
+    public const DATE_VALUE = '2020/06/12';
+    public const DATE_VALUE_FORMAT = '2020-06-12';
+
+    /**
+     * @param mixed $value_type
+     * @param mixed $matchedValue
+     * @param array<mixed> $options
+     * @return void
+     */
     public function _testDate($value_type, $matchedValue, $options = [])
     {
         $custom_column = $this->getCustomColumnModel(ColumnType::DATE, $options);
@@ -346,30 +580,54 @@ class CustomColumnTest extends UnitTestBase
         $v = $column_item->{$value_type}();
         $this->assertMatch($v, $matchedValue);
     }
+
+    /**
+     * @return void
+     */
     public function testDateValue()
     {
-        return $this->_testDate(ValueType::VALUE, static::DATE_VALUE);
+        $this->_testDate(ValueType::VALUE, static::DATE_VALUE);
     }
+
+    /**
+     * @return void
+     */
     public function testDateText()
     {
-        return $this->_testDate(ValueType::TEXT, static::DATE_VALUE);
+        $this->_testDate(ValueType::TEXT, static::DATE_VALUE);
     }
+
+    /**
+     * @return void
+     */
     public function testDateHtml()
     {
-        return $this->_testDate(ValueType::HTML, static::DATE_VALUE);
+        $this->_testDate(ValueType::HTML, static::DATE_VALUE);
     }
     // format(only text and html)
+
+    /**
+     * @return void
+     */
     public function testDateValueFormat()
     {
-        return $this->_testDate(ValueType::VALUE, static::DATE_VALUE, ['format' => 'Y-m-d']);
+        $this->_testDate(ValueType::VALUE, static::DATE_VALUE, ['format' => 'Y-m-d']);
     }
+
+    /**
+     * @return void
+     */
     public function testDateTextFormat()
     {
-        return $this->_testDate(ValueType::TEXT, static::DATE_VALUE_FORMAT, ['format' => 'Y-m-d']);
+        $this->_testDate(ValueType::TEXT, static::DATE_VALUE_FORMAT, ['format' => 'Y-m-d']);
     }
+
+    /**
+     * @return void
+     */
     public function testDateHtmlFormat()
     {
-        return $this->_testDate(ValueType::HTML, static::DATE_VALUE_FORMAT, ['format' => 'Y-m-d']);
+        $this->_testDate(ValueType::HTML, static::DATE_VALUE_FORMAT, ['format' => 'Y-m-d']);
     }
 
 
@@ -377,10 +635,17 @@ class CustomColumnTest extends UnitTestBase
 
 
 
-    
+
     // TIME ----------------------------------------------------
-    const TIME_VALUE = '20:10:00';
-    const TIME_VALUE_FORMAT = '201000';
+    public const TIME_VALUE = '20:10:00';
+    public const TIME_VALUE_FORMAT = '201000';
+
+    /**
+     * @param mixed $value_type
+     * @param mixed $matchedValue
+     * @param array<mixed> $options
+     * @return void
+     */
     public function _testTime($value_type, $matchedValue, $options = [])
     {
         $custom_column = $this->getCustomColumnModel(ColumnType::TIME, $options);
@@ -389,30 +654,54 @@ class CustomColumnTest extends UnitTestBase
         $v = $column_item->{$value_type}();
         $this->assertMatch($v, $matchedValue);
     }
+
+    /**
+     * @return void
+     */
     public function testTimeValue()
     {
-        return $this->_testTime(ValueType::VALUE, static::TIME_VALUE);
+        $this->_testTime(ValueType::VALUE, static::TIME_VALUE);
     }
+
+    /**
+     * @return void
+     */
     public function testTimeText()
     {
-        return $this->_testTime(ValueType::TEXT, static::TIME_VALUE);
+        $this->_testTime(ValueType::TEXT, static::TIME_VALUE);
     }
+
+    /**
+     * @return void
+     */
     public function testTimeHtml()
     {
-        return $this->_testTime(ValueType::HTML, static::TIME_VALUE);
+        $this->_testTime(ValueType::HTML, static::TIME_VALUE);
     }
     // format(only text and html)
+
+    /**
+     * @return void
+     */
     public function testTimeValueFormat()
     {
-        return $this->_testTime(ValueType::VALUE, static::TIME_VALUE, ['format' => 'His']);
+        $this->_testTime(ValueType::VALUE, static::TIME_VALUE, ['format' => 'His']);
     }
+
+    /**
+     * @return void
+     */
     public function testTimeTextFormat()
     {
-        return $this->_testTime(ValueType::TEXT, static::TIME_VALUE_FORMAT, ['format' => 'His']);
+        $this->_testTime(ValueType::TEXT, static::TIME_VALUE_FORMAT, ['format' => 'His']);
     }
+
+    /**
+     * @return void
+     */
     public function testTimeHtmlFormat()
     {
-        return $this->_testTime(ValueType::HTML, static::TIME_VALUE_FORMAT, ['format' => 'His']);
+        $this->_testTime(ValueType::HTML, static::TIME_VALUE_FORMAT, ['format' => 'His']);
     }
 
 
@@ -420,10 +709,17 @@ class CustomColumnTest extends UnitTestBase
 
 
 
-    
+
     // DATETIME ----------------------------------------------------
-    const DATETIME_VALUE = '2020/06/12 20:10:00';
-    const DATETIME_VALUE_FORMAT = '2020-06-12 201000';
+    public const DATETIME_VALUE = '2020/06/12 20:10:00';
+    public const DATETIME_VALUE_FORMAT = '2020-06-12 201000';
+
+    /**
+     * @param mixed $value_type
+     * @param mixed $matchedValue
+     * @param array<mixed> $options
+     * @return void
+     */
     public function _testDateTime($value_type, $matchedValue, $options = [])
     {
         $custom_column = $this->getCustomColumnModel(ColumnType::DATETIME, $options);
@@ -432,38 +728,69 @@ class CustomColumnTest extends UnitTestBase
         $v = $column_item->{$value_type}();
         $this->assertMatch($v, $matchedValue);
     }
+
+    /**
+     * @return void
+     */
     public function testDateTimeValue()
     {
-        return $this->_testDateTime(ValueType::VALUE, static::DATETIME_VALUE);
+        $this->_testDateTime(ValueType::VALUE, static::DATETIME_VALUE);
     }
+
+    /**
+     * @return void
+     */
     public function testDateTimeText()
     {
-        return $this->_testDateTime(ValueType::TEXT, static::DATETIME_VALUE);
+        $this->_testDateTime(ValueType::TEXT, static::DATETIME_VALUE);
     }
+
+    /**
+     * @return void
+     */
     public function testDateTimeHtml()
     {
-        return $this->_testDateTime(ValueType::HTML, static::DATETIME_VALUE);
+        $this->_testDateTime(ValueType::HTML, static::DATETIME_VALUE);
     }
     // format(only text and html)
+
+    /**
+     * @return void
+     */
     public function testDateTimeValueFormat()
     {
-        return $this->_testDateTime(ValueType::VALUE, static::DATETIME_VALUE, ['format' => 'Y-m-d His']);
+        $this->_testDateTime(ValueType::VALUE, static::DATETIME_VALUE, ['format' => 'Y-m-d His']);
     }
+
+    /**
+     * @return void
+     */
     public function testDateTimeTextFormat()
     {
-        return $this->_testDateTime(ValueType::TEXT, static::DATETIME_VALUE_FORMAT, ['format' => 'Y-m-d His']);
+        $this->_testDateTime(ValueType::TEXT, static::DATETIME_VALUE_FORMAT, ['format' => 'Y-m-d His']);
     }
+
+    /**
+     * @return void
+     */
     public function testDateTimeHtmlFormat()
     {
-        return $this->_testDateTime(ValueType::HTML, static::DATETIME_VALUE_FORMAT, ['format' => 'Y-m-d His']);
+        $this->_testDateTime(ValueType::HTML, static::DATETIME_VALUE_FORMAT, ['format' => 'Y-m-d His']);
     }
 
 
 
 
-    
+
     // SELECT ----------------------------------------------------
-    const SELECT_VALUE = 'orange';
+    public const SELECT_VALUE = 'orange';
+
+    /**
+     * @param mixed $value_type
+     * @param mixed $matchedValue
+     * @param array<mixed> $options
+     * @return void
+     */
     public function _testSelect($value_type, $matchedValue, $options = [])
     {
         $custom_column = $this->getCustomColumnModel(ColumnType::SELECT, $options);
@@ -472,21 +799,38 @@ class CustomColumnTest extends UnitTestBase
         $v = $column_item->{$value_type}();
         $this->assertMatch($v, $matchedValue);
     }
+
+    /**
+     * @return void
+     */
     public function testSelectValue()
     {
-        return $this->_testSelect(ValueType::VALUE, static::SELECT_VALUE, ["select_item" => "orange\r\nbanana\r\napple"]);
+        $this->_testSelect(ValueType::VALUE, static::SELECT_VALUE, ["select_item" => "orange\r\nbanana\r\napple"]);
     }
+    /**
+     * @return void
+     */
     public function testSelectText()
     {
-        return $this->_testSelect(ValueType::TEXT, static::SELECT_VALUE, ["select_item" => "orange\r\nbanana\r\napple"]);
+        $this->_testSelect(ValueType::TEXT, static::SELECT_VALUE, ["select_item" => "orange\r\nbanana\r\napple"]);
     }
+
+    /**
+     * @return void
+     */
     public function testSelectHtml()
     {
-        return $this->_testSelect(ValueType::HTML, static::SELECT_VALUE, ["select_item" => "orange\r\nbanana\r\napple"]);
+        $this->_testSelect(ValueType::HTML, static::SELECT_VALUE, ["select_item" => "orange\r\nbanana\r\napple"]);
     }
-    
+
     // SELECT(multiple) ----------------------------------------------------
-    const SELECT_VALUE_MULTIPLE = ['orange', 'banana'];
+    public const SELECT_VALUE_MULTIPLE = ['orange', 'banana'];
+    /**
+     * @param mixed $value_type
+     * @param mixed $matchedValue
+     * @param array<mixed> $options
+     * @return void
+     */
     public function _testSelectMultiple($value_type, $matchedValue, $options = [])
     {
         $custom_column = $this->getCustomColumnModel(ColumnType::SELECT, $options);
@@ -495,26 +839,45 @@ class CustomColumnTest extends UnitTestBase
         $v = $column_item->{$value_type}();
         $this->assertMatch($v, $matchedValue);
     }
+
+    /**
+     * @return void
+     */
     public function testSelectMultipleValue()
     {
-        return $this->_testSelectMultiple(ValueType::VALUE, static::SELECT_VALUE_MULTIPLE, ["select_item" => "orange\r\nbanana\r\napple"]);
+        $this->_testSelectMultiple(ValueType::VALUE, static::SELECT_VALUE_MULTIPLE, ["select_item" => "orange\r\nbanana\r\napple"]);
     }
+
+    /**
+     * @return void
+     */
     public function testSelectMultipleText()
     {
-        return $this->_testSelectMultiple(ValueType::TEXT, collect(static::SELECT_VALUE_MULTIPLE)->implode(exmtrans('common.separate_word')), ["select_item" => "orange\r\nbanana\r\napple"]);
+        $this->_testSelectMultiple(ValueType::TEXT, collect(static::SELECT_VALUE_MULTIPLE)->implode(exmtrans('common.separate_word')), ["select_item" => "orange\r\nbanana\r\napple"]);
     }
+
+    /**
+     * @return void
+     */
     public function testSelectMultipleHtml()
     {
-        return $this->_testSelectMultiple(ValueType::HTML, collect(static::SELECT_VALUE_MULTIPLE)->implode(exmtrans('common.separate_word')), ["select_item" => "orange\r\nbanana\r\napple"]);
+        $this->_testSelectMultiple(ValueType::HTML, collect(static::SELECT_VALUE_MULTIPLE)->implode(exmtrans('common.separate_word')), ["select_item" => "orange\r\nbanana\r\napple"]);
     }
 
 
 
 
-    
+
     // SELECT_VALTEXT ----------------------------------------------------
-    const SELECT_VALTEXT_VALUE = 'orange';
-    const SELECT_VALTEXT_TEXT = 'Orange';
+    public const SELECT_VALTEXT_VALUE = 'orange';
+    public const SELECT_VALTEXT_TEXT = 'Orange';
+
+    /**
+     * @param mixed $value_type
+     * @param mixed $matchedValue
+     * @param array<mixed> $options
+     * @return void
+     */
     public function _testSelectValText($value_type, $matchedValue, $options = [])
     {
         $custom_column = $this->getCustomColumnModel(ColumnType::SELECT_VALTEXT, $options);
@@ -523,22 +886,41 @@ class CustomColumnTest extends UnitTestBase
         $v = $column_item->{$value_type}();
         $this->assertMatch($v, $matchedValue);
     }
+
+    /**
+     * @return void
+     */
     public function testSelectValTextValue()
     {
-        return $this->_testSelectValText(ValueType::VALUE, static::SELECT_VALTEXT_VALUE, ["select_item_valtext" => "orange,Orange\r\nbanana,Banana\r\napple,Apple"]);
+        $this->_testSelectValText(ValueType::VALUE, static::SELECT_VALTEXT_VALUE, ["select_item_valtext" => "orange,Orange\r\nbanana,Banana\r\napple,Apple"]);
     }
+
+    /**
+     * @return void
+     */
     public function testSelectValTextText()
     {
-        return $this->_testSelectValText(ValueType::TEXT, static::SELECT_VALTEXT_TEXT, ["select_item_valtext" => "orange,Orange\r\nbanana,Banana\r\napple,Apple"]);
+        $this->_testSelectValText(ValueType::TEXT, static::SELECT_VALTEXT_TEXT, ["select_item_valtext" => "orange,Orange\r\nbanana,Banana\r\napple,Apple"]);
     }
+
+    /**
+     * @return void
+     */
     public function testSelectValTextHtml()
     {
-        return $this->_testSelectValText(ValueType::HTML, static::SELECT_VALTEXT_TEXT, ["select_item_valtext" => "orange,Orange\r\nbanana,Banana\r\napple,Apple"]);
+        $this->_testSelectValText(ValueType::HTML, static::SELECT_VALTEXT_TEXT, ["select_item_valtext" => "orange,Orange\r\nbanana,Banana\r\napple,Apple"]);
     }
 
     // SELECT_VALTEXT(multiple) ----------------------------------------------------
-    const SELECT_VALTEXT_VALUE_MULTIPLE = ['orange', 'banana'];
-    const SELECT_VALTEXT_TEXT_MULTIPLE = ['Orange', 'Banana'];
+    public const SELECT_VALTEXT_VALUE_MULTIPLE = ['orange', 'banana'];
+    public const SELECT_VALTEXT_TEXT_MULTIPLE = ['Orange', 'Banana'];
+
+    /**
+     * @param mixed $value_type
+     * @param mixed $matchedValue
+     * @param array<mixed> $options
+     * @return void
+     */
     public function _testSelectValTextMultiple($value_type, $matchedValue, $options = [])
     {
         $custom_column = $this->getCustomColumnModel(ColumnType::SELECT_VALTEXT, $options);
@@ -547,23 +929,42 @@ class CustomColumnTest extends UnitTestBase
         $v = $column_item->{$value_type}();
         $this->assertMatch($v, $matchedValue);
     }
+
+    /**
+     * @return void
+     */
     public function testSelectValTextMultipleValue()
     {
-        return $this->_testSelectValTextMultiple(ValueType::VALUE, static::SELECT_VALTEXT_VALUE_MULTIPLE, ["select_item_valtext" => "orange,Orange\r\nbanana,Banana\r\napple,Apple"]);
+        $this->_testSelectValTextMultiple(ValueType::VALUE, static::SELECT_VALTEXT_VALUE_MULTIPLE, ["select_item_valtext" => "orange,Orange\r\nbanana,Banana\r\napple,Apple"]);
     }
+
+    /**
+     * @return void
+     */
     public function testSelectValTextMultipleText()
     {
-        return $this->_testSelectValTextMultiple(ValueType::TEXT, collect(static::SELECT_VALTEXT_TEXT_MULTIPLE)->implode(exmtrans('common.separate_word')), ["select_item_valtext" => "orange,Orange\r\nbanana,Banana\r\napple,Apple"]);
+        $this->_testSelectValTextMultiple(ValueType::TEXT, collect(static::SELECT_VALTEXT_TEXT_MULTIPLE)->implode(exmtrans('common.separate_word')), ["select_item_valtext" => "orange,Orange\r\nbanana,Banana\r\napple,Apple"]);
     }
+
+    /**
+     * @return void
+     */
     public function testSelectValTextMultipleHtml()
     {
-        return $this->_testSelectValTextMultiple(ValueType::HTML, collect(static::SELECT_VALTEXT_TEXT_MULTIPLE)->implode(exmtrans('common.separate_word')), ["select_item_valtext" => "orange,Orange\r\nbanana,Banana\r\napple,Apple"]);
+        $this->_testSelectValTextMultiple(ValueType::HTML, collect(static::SELECT_VALTEXT_TEXT_MULTIPLE)->implode(exmtrans('common.separate_word')), ["select_item_valtext" => "orange,Orange\r\nbanana,Banana\r\napple,Apple"]);
     }
 
 
 
-    
+
     // SELECT_TABLE ----------------------------------------------------
+
+    /**
+     * @param mixed $value_type
+     * @param mixed $matchedValue
+     * @param array<mixed> $options
+     * @return void
+     */
     public function _testSelectTable($value_type, $matchedValue, $options = [])
     {
         $options['select_target_table'] = CustomTable::getEloquent('information')->id;
@@ -574,20 +975,39 @@ class CustomColumnTest extends UnitTestBase
         $v = $column_item->{$value_type}();
         $this->assertMatch($v, $matchedValue);
     }
+
+    /**
+     * @return void
+     */
     public function testSelectTableValue()
     {
-        return $this->_testSelectTable(ValueType::VALUE, CustomTable::getEloquent('information')->getValueModel(1));
+        $this->_testSelectTable(ValueType::VALUE, CustomTable::getEloquent('information')->getValueModel(1));
     }
+
+    /**
+     * @return void
+     */
     public function testSelectTableText()
     {
-        return $this->_testSelectTable(ValueType::TEXT, CustomTable::getEloquent('information')->getValueModel(1)->getLabel());
+        $this->_testSelectTable(ValueType::TEXT, CustomTable::getEloquent('information')->getValueModel(1)->getLabel());
     }
+
+    /**
+     * @return void
+     */
     public function testSelectTableHtml()
     {
-        return $this->_testSelectTable(ValueType::HTML, CustomTable::getEloquent('information')->getValueModel(1)->getUrl(true));
+        $this->_testSelectTable(ValueType::HTML, CustomTable::getEloquent('information')->getValueModel(1)->getUrl(true));
     }
 
     // SELECT_TABLE(multiple) ----------------------------------------------------
+
+    /**
+     * @param mixed $value_type
+     * @param mixed $matchedValue
+     * @param array<mixed> $options
+     * @return void
+     */
     public function _testSelectTableMultiple($value_type, $matchedValue, $options = [])
     {
         $options['select_target_table'] = CustomTable::getEloquent('information')->id;
@@ -598,27 +1018,46 @@ class CustomColumnTest extends UnitTestBase
         $v = $column_item->{$value_type}();
         $this->assertMatch($v, $matchedValue);
     }
+
+    /**
+     * @return void
+     */
     public function testSelectTableMultipleValue()
     {
         $custom_table = CustomTable::getEloquent('information');
-        return $this->_testSelectTableMultiple(ValueType::VALUE, [$custom_table->getValueModel(1), $custom_table->getValueModel(2)]);
+        $this->_testSelectTableMultiple(ValueType::VALUE, [$custom_table->getValueModel(1), $custom_table->getValueModel(2)]);
     }
+
+    /**
+     * @return void
+     */
     public function testSelectTableMultipleText()
     {
         $custom_table = CustomTable::getEloquent('information');
-        return $this->_testSelectTableMultiple(ValueType::TEXT, collect([$custom_table->getValueModel(1)->getLabel(), $custom_table->getValueModel(2)->getLabel()])->implode(exmtrans('common.separate_word')));
+        $this->_testSelectTableMultiple(ValueType::TEXT, collect([$custom_table->getValueModel(1)->getLabel(), $custom_table->getValueModel(2)->getLabel()])->implode(exmtrans('common.separate_word')));
     }
+
+    /**
+     * @return void
+     */
     public function testSelectTableMultipleHtml()
     {
         $custom_table = CustomTable::getEloquent('information');
-        return $this->_testSelectTableMultiple(ValueType::HTML, collect([$custom_table->getValueModel(1)->getUrl(true), $custom_table->getValueModel(2)->getUrl(true)])->implode(exmtrans('common.separate_word')));
+        $this->_testSelectTableMultiple(ValueType::HTML, collect([$custom_table->getValueModel(1)->getUrl(true), $custom_table->getValueModel(2)->getUrl(true)])->implode(exmtrans('common.separate_word')));
     }
 
 
 
 
-    
+
     // USER ----------------------------------------------------
+
+    /**
+     * @param mixed $value_type
+     * @param mixed $matchedValue
+     * @param array<mixed> $options
+     * @return void
+     */
     public function _testUser($value_type, $matchedValue, $options = [])
     {
         $custom_column = $this->getCustomColumnModel(ColumnType::USER, $options);
@@ -627,25 +1066,43 @@ class CustomColumnTest extends UnitTestBase
         $v = $column_item->{$value_type}();
         $this->assertMatch($v, $matchedValue);
     }
+
+    /**
+     * @return void
+     */
     public function testUserValue()
     {
-        return $this->_testUser(ValueType::VALUE, CustomTable::getEloquent(SystemTableName::USER)->getValueModel(1));
+        $this->_testUser(ValueType::VALUE, CustomTable::getEloquent(SystemTableName::USER)->getValueModel(1));
     }
+
+    /**
+     * @return void
+     */
     public function testUserText()
     {
-        return $this->_testUser(ValueType::TEXT, CustomTable::getEloquent(SystemTableName::USER)->getValueModel(1)->getLabel());
+        $this->_testUser(ValueType::TEXT, CustomTable::getEloquent(SystemTableName::USER)->getValueModel(1)->getLabel());
     }
+
+    /**
+     * @return void
+     */
     public function testUserHtml()
     {
-        return $this->_testUser(ValueType::HTML, CustomTable::getEloquent(SystemTableName::USER)->getValueModel(1)->getUrl(true));
+        $this->_testUser(ValueType::HTML, CustomTable::getEloquent(SystemTableName::USER)->getValueModel(1)->getUrl(true));
     }
 
 
 
 
 
-    
+
     // ORGANIZATION ----------------------------------------------------
+    /**
+     * @param mixed $value_type
+     * @param mixed $matchedValue
+     * @param array<mixed> $options
+     * @return void
+     */
     public function _testOrganization($value_type, $matchedValue, $options = [])
     {
         $custom_column = $this->getCustomColumnModel(ColumnType::ORGANIZATION, $options);
@@ -654,24 +1111,40 @@ class CustomColumnTest extends UnitTestBase
         $v = $column_item->{$value_type}();
         $this->assertMatch($v, $matchedValue);
     }
+
+    /**
+     * @return void
+     */
     public function testOrganizationValue()
     {
-        return $this->_testOrganization(ValueType::VALUE, CustomTable::getEloquent(SystemTableName::ORGANIZATION)->getValueModel(1));
+        $this->_testOrganization(ValueType::VALUE, CustomTable::getEloquent(SystemTableName::ORGANIZATION)->getValueModel(1));
     }
+    /**
+     * @return void
+     */
     public function testOrganizationText()
     {
-        return $this->_testOrganization(ValueType::TEXT, CustomTable::getEloquent(SystemTableName::ORGANIZATION)->getValueModel(1)->getLabel());
+        $this->_testOrganization(ValueType::TEXT, CustomTable::getEloquent(SystemTableName::ORGANIZATION)->getValueModel(1)->getLabel());
     }
+    /**
+     * @return void
+     */
     public function testOrganizationHtml()
     {
-        return $this->_testOrganization(ValueType::HTML, CustomTable::getEloquent(SystemTableName::ORGANIZATION)->getValueModel(1)->getUrl(true));
+        $this->_testOrganization(ValueType::HTML, CustomTable::getEloquent(SystemTableName::ORGANIZATION)->getValueModel(1)->getUrl(true));
     }
 
 
 
-    
+
     // YESNO ----------------------------------------------------
-    const YESNO_VALUE = 1;
+    public const YESNO_VALUE = 1;
+    /**
+     * @param mixed $value_type
+     * @param mixed $matchedValue
+     * @param array<mixed> $options
+     * @return void
+     */
     public function _testYesNo($value_type, $matchedValue, $options = [])
     {
         $custom_column = $this->getCustomColumnModel(ColumnType::YESNO, $options);
@@ -680,26 +1153,44 @@ class CustomColumnTest extends UnitTestBase
         $v = $column_item->{$value_type}();
         $this->assertMatch($v, $matchedValue);
     }
+
+    /**
+     * @return void
+     */
     public function testYesNoValue()
     {
-        return $this->_testYesNo(ValueType::VALUE, static::YESNO_VALUE);
+        $this->_testYesNo(ValueType::VALUE, static::YESNO_VALUE);
     }
+
+    /**
+     * @return void
+     */
     public function testYesNoText()
     {
-        return $this->_testYesNo(ValueType::TEXT, 'YES');
+        $this->_testYesNo(ValueType::TEXT, 'YES');
     }
+
+    /**
+     * @return void
+     */
     public function testYesNoHtml()
     {
-        return $this->_testYesNo(ValueType::HTML, 'YES');
+        $this->_testYesNo(ValueType::HTML, 'YES');
     }
 
 
 
 
-    
+
     // BOOLEAN ----------------------------------------------------
-    const BOOLEAN_VALUE = 'man';
-    const BOOLEAN_TEXT = 'MAN';
+    public const BOOLEAN_VALUE = 'man';
+    public const BOOLEAN_TEXT = 'MAN';
+    /**
+     * @param mixed $value_type
+     * @param mixed $matchedValue
+     * @param array<mixed> $options
+     * @return void
+     */
     public function _testBoolean($value_type, $matchedValue, $options = [])
     {
         $custom_column = $this->getCustomColumnModel(ColumnType::BOOLEAN, $options);
@@ -708,17 +1199,29 @@ class CustomColumnTest extends UnitTestBase
         $v = $column_item->{$value_type}();
         $this->assertMatch($v, $matchedValue);
     }
+
+    /**
+     * @return void
+     */
     public function testBooleanValue()
     {
-        return $this->_testBoolean(ValueType::VALUE, static::BOOLEAN_VALUE, ['true_value' => 'man', 'true_label' => 'MAN', 'false_value' => 'woman', 'false_label' => 'WOMAN']);
+        $this->_testBoolean(ValueType::VALUE, static::BOOLEAN_VALUE, ['true_value' => 'man', 'true_label' => 'MAN', 'false_value' => 'woman', 'false_label' => 'WOMAN']);
     }
+
+    /**
+     * @return void
+     */
     public function testBooleanText()
     {
-        return $this->_testBoolean(ValueType::TEXT, static::BOOLEAN_TEXT, ['true_value' => 'man', 'true_label' => 'MAN', 'false_value' => 'woman', 'false_label' => 'WOMAN']);
+        $this->_testBoolean(ValueType::TEXT, static::BOOLEAN_TEXT, ['true_value' => 'man', 'true_label' => 'MAN', 'false_value' => 'woman', 'false_label' => 'WOMAN']);
     }
+
+    /**
+     * @return void
+     */
     public function testBooleanHtml()
     {
-        return $this->_testBoolean(ValueType::HTML, static::BOOLEAN_TEXT, ['true_value' => 'man', 'true_label' => 'MAN', 'false_value' => 'woman', 'false_label' => 'WOMAN']);
+        $this->_testBoolean(ValueType::HTML, static::BOOLEAN_TEXT, ['true_value' => 'man', 'true_label' => 'MAN', 'false_value' => 'woman', 'false_label' => 'WOMAN']);
     }
 
 

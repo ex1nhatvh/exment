@@ -3,6 +3,7 @@
 namespace Exceedone\Exment\Notifications\Mail;
 
 use Exceedone\Exment\Enums\SystemTableName;
+use Exceedone\Exment\Jobs\MailSendJob;
 use Exceedone\Exment\Model\Define;
 use Exceedone\Exment\Services\ZipService;
 use Illuminate\Notifications\Notification;
@@ -20,6 +21,7 @@ class MailChannel
      */
     public function send($notifiable, Notification $notification)
     {
+        /** @var MailSendJob $notification */
         $mailMessage = $notification->toMail($notifiable);
         $this->sendMail($mailMessage);
 
@@ -36,7 +38,7 @@ class MailChannel
             \Mail::send([], [], function (Message $message) use ($mailMessage, &$tmpZipPath) {
                 $subject = $mailMessage->getSubject();
                 $body = $mailMessage->getBody();
-    
+
                 $message
                     ->from($mailMessage->getFrom(), $mailMessage->getFromName())
                     ->to($mailMessage->getTo())
@@ -49,7 +51,7 @@ class MailChannel
                 } else {
                     $message->html($mailMessage->getBody());
                 }
-                
+
                 $this->setAttachments($message, $mailMessage, $tmpZipPath);
             });
         } finally {
@@ -96,12 +98,12 @@ class MailChannel
         $files = collect($mailMessage->getAttachments())->map(function ($attachment) {
             return $attachment->path;
         })->toArray();
-        
+
         ZipService::createPasswordZip($files, $zippath, $tmpFolderPath, $password, Define::DISKNAME_ADMIN);
 
         return [$zippath, $filename];
     }
-    
+
 
     /**
      * Save mail template history
@@ -116,7 +118,7 @@ class MailChannel
         }
 
         $modelname = getModelName(SystemTableName::MAIL_SEND_LOG);
-        $model = new $modelname;
+        $model = new $modelname();
 
         // set mail info
         $model->setValue([

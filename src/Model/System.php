@@ -12,68 +12,71 @@ use Cache;
 /**
  * System definition.
  *
-* @method static boolean|void initialized($arg = null)
-* @method static string|void site_name($arg = null)
-* @method static string|void site_name_short($arg = null)
-* @method static string|void site_logo($arg = null)
-* @method static string|void site_logo_mini($arg = null)
-* @method static string|void site_favicon($arg = null)
-* @method static string|void site_skin($arg = null)
-* @method static string|void site_layout($arg = null)
-* @method static boolean|void api_available($arg = null)
-* @method static boolean|void outside_api($arg = null)
-* @method static boolean|void permission_available($arg = null)
-* @method static boolean|void organization_available($arg = null)
-* @method static string|void filter_search_type($arg = null)
-* @method static string|void system_mail_host($arg = null)
-* @method static string|void system_mail_port($arg = null)
-* @method static string|void system_mail_username($arg = null)
-* @method static string|void system_mail_password($arg = null)
-* @method static string|void system_mail_encryption($arg = null)
-* @method static string|void system_mail_from($arg = null)
-* @method static string|void system_mail_body_type($arg = null)
-* @method static string|void system_mail_from_view_name($arg = null)
-* @method static boolean|void userview_available($arg = null)
-* @method static boolean|void userdashboard_available($arg = null)
-* @method static string|void default_date_format($arg = null)
-* @method static int|void grid_pager_count($arg = null)
-* @method static int|void datalist_pager_count($arg = null)
-* @method static array|void grid_filter_disable_flg($arg = null)
-* @method static string|void system_values_pos($arg = null)
-* @method static string|void data_submit_redirect($arg = null)
-* @method static array|void header_user_info($arg = null)
-* @method static boolean|void complex_password($arg = null)
-* @method static int|void password_expiration_days($arg = null)
-* @method static boolean|void first_change_password($arg = null)
-* @method static int|void password_history_cnt($arg = null)
-* @method static string|void login_background_color($arg = null)
-* @method static string|void login_page_image($arg = null)
-* @method static string|void login_page_image_type($arg = null)
-* @method static string|void web_ip_filters($arg = null)
-* @method static string|void api_ip_filters($arg = null)
-* @method static int|void org_joined_type_role_group($arg = null)
-* @method static int|void org_joined_type_custom_value($arg = null)
-* @method static int|void filter_multi_user($arg = null)
-* @method static int|void custom_value_save_autoshare($arg = null)
-* @method static boolean|void backup_enable_automatic($arg = null)
-* @method static int|void backup_automatic_term($arg = null)
-* @method static int|void backup_automatic_hour($arg = null)
-* @method static array|void backup_target($arg = null)
-* @method static Carbon|void backup_automatic_executed($arg = null)
-* @method static int|void backup_history_files($arg = null)
-* @method static boolean|void login_use_2factor($arg = null)
-* @method static string|void login_2factor_provider($arg = null)
-* @method static array|void system_admin_users($arg = null)
-* @method static boolean|void show_default_login_provider($arg = null)
-* @method static boolean|void sso_redirect_force($arg = null)
-* @method static boolean|void sso_jit($arg = null)
-* @method static string|void sso_accept_mail_domain($arg = null)
-* @method static array|void jit_rolegroups($arg = null)
-* @method static string|void system_slack_user_column($arg = null)
-* @method static bool|void publicform_available($arg = null)
-* @method static string|void recaptcha_site_key($arg = null)
-* @method static string|void recaptcha_secret_key($arg = null)
-* @method static string|void recaptcha_type($arg = null)
+ * @property mixed $system_value
+ * @method static boolean|void initialized($arg = null)
+ * @method static string|void site_name($arg = null)
+ * @method static string|void site_name_short($arg = null)
+ * @method static string|void site_logo($arg = null)
+ * @method static string|void site_logo_mini($arg = null)
+ * @method static string|void site_favicon($arg = null)
+ * @method static string|void site_skin($arg = null)
+ * @method static string|void site_layout($arg = null)
+ * @method static boolean|void api_available($arg = null)
+ * @method static boolean|void outside_api($arg = null)
+ * @method static boolean|void permission_available($arg = null)
+ * @method static boolean|void organization_available($arg = null)
+ * @method static boolean|void logging_toggle_available($arg = null)
+ * @method static string|void filter_search_type($arg = null)
+ * @method static string|void system_mail_host($arg = null)
+ * @method static string|void system_mail_port($arg = null)
+ * @method static string|void system_mail_username($arg = null)
+ * @method static string|void system_mail_password($arg = null)
+ * @method static string|void system_mail_encryption($arg = null)
+ * @method static string|void system_mail_from($arg = null)
+ * @method static string|void system_mail_body_type($arg = null)
+ * @method static string|void system_mail_from_view_name($arg = null)
+ * @method static boolean|void userview_available($arg = null)
+ * @method static boolean|void userdashboard_available($arg = null)
+ * @method static string|void default_date_format($arg = null)
+ * @method static int|void grid_pager_count($arg = null)
+ * @method static int|void datalist_pager_count($arg = null)
+ * @method static array|void grid_filter_disable_flg($arg = null)
+ * @method static string|void system_values_pos($arg = null)
+ * @method static string|void data_submit_redirect($arg = null)
+ * @method static array|void header_user_info($arg = null)
+ * @method static boolean|void complex_password($arg = null)
+ * @method static int|void password_expiration_days($arg = null)
+ * @method static boolean|void first_change_password($arg = null)
+ * @method static int|void password_history_cnt($arg = null)
+ * @method static string|void login_background_color($arg = null)
+ * @method static string|void login_page_image($arg = null)
+ * @method static string|void login_page_image_type($arg = null)
+ * @method static string|void web_ip_filters($arg = null)
+ * @method static string|void api_ip_filters($arg = null)
+ * @method static int|void org_joined_type_role_group($arg = null)
+ * @method static int|void org_joined_type_custom_value($arg = null)
+ * @method static int|void filter_multi_user($arg = null)
+ * @method static int|void custom_value_save_autoshare($arg = null)
+ * @method static boolean|void backup_enable_automatic($arg = null)
+ * @method static int|void backup_automatic_term($arg = null)
+ * @method static int|void backup_automatic_hour($arg = null)
+ * @method static array|void backup_target($arg = null)
+ * @method static Carbon|void backup_automatic_executed($arg = null)
+ * @method static int|void backup_history_files($arg = null)
+ * @method static boolean|void login_use_2factor($arg = null)
+ * @method static string|void login_2factor_provider($arg = null)
+ * @method static array|void system_admin_users($arg = null)
+ * @method static boolean|void show_default_login_provider($arg = null)
+ * @method static boolean|void sso_redirect_force($arg = null)
+ * @method static boolean|void sso_jit($arg = null)
+ * @method static string|void sso_accept_mail_domain($arg = null)
+ * @method static array|void jit_rolegroups($arg = null)
+ * @method static string|void system_slack_user_column($arg = null)
+ * @method static bool|void publicform_available($arg = null)
+ * @method static string|void recaptcha_site_key($arg = null)
+ * @method static string|void recaptcha_secret_key($arg = null)
+ * @method static string|void recaptcha_type($arg = null)
+ * @phpstan-consistent-constructor
  */
 class System extends ModelBase
 {
@@ -101,7 +104,7 @@ class System extends ModelBase
      *
      * @param string $key key name.
      * @param mixed $value setting value.
-     * @return mixed
+     * @return mixed|null
      */
     public static function requestSession($key, $value = null)
     {
@@ -123,10 +126,11 @@ class System extends ModelBase
             return $val;
         }
         static::setRequestSession($key, $value);
+        return null;
     }
 
     /**
-     * Set Request Settion.
+     * Set Request Session.
      *
      * @param string $key
      * @param mixed $value
@@ -165,7 +169,7 @@ class System extends ModelBase
      *
      * @return \Illuminate\Support\Collection
      */
-    public static function getRequestSessionKeys() : \Illuminate\Support\Collection
+    public static function getRequestSessionKeys(): \Illuminate\Support\Collection
     {
         $result = collect();
         foreach (static::$requestSession as $key => $value) {
@@ -201,7 +205,7 @@ class System extends ModelBase
             if (!is_null($val = static::requestSession($key))) {
                 return $val;
             }
-            
+
             if (boolval(config('exment.use_cache', false)) && Cache::has($key)) {
                 $val = Cache::get($key);
                 static::setRequestSession($key, $val);
@@ -282,7 +286,7 @@ class System extends ModelBase
         foreach (static::get_system_keys($group) as $k) {
             $array[$k] = static::{$k}();
         }
-        
+
         return $array;
     }
 
@@ -306,7 +310,7 @@ class System extends ModelBase
 
             $type = array_get($setting, 'type');
             $value = null;
-            
+
             // if has data, return setting value or default value
             if (isset($system)) {
                 $value = $system->system_value;
@@ -324,7 +328,7 @@ class System extends ModelBase
             elseif (!is_null(array_get($setting, 'default'))) {
                 $value = array_get($setting, 'default');
             }
-    
+
             if ($type == 'boolean') {
                 $value = boolval($value);
             } elseif ($type == 'int') {
@@ -383,7 +387,7 @@ class System extends ModelBase
             $system->system_value = $value;
         }
         $system->saveOrFail();
-        
+
         return $system;
     }
 
@@ -397,7 +401,7 @@ class System extends ModelBase
             return;
         }
         $old_value = $system->system_value;
-        
+
         // change set value by type
         $setting = Define::SYSTEM_SETTING_NAME_VALUE[$name];
         $type = array_get($setting, 'type');
@@ -410,7 +414,7 @@ class System extends ModelBase
         }
         $system->system_value = null;
         $system->save();
-        
+
         return $system;
     }
 

@@ -7,7 +7,8 @@ namespace Exceedone\Exment\Services\Plugin;
  */
 class PluginDashboardBase extends PluginPublicBase
 {
-    use PluginBase, PluginPageTrait;
+    use PluginBase;
+    use PluginPageTrait;
 
     protected $dashboard;
     protected $dashboard_box;
@@ -21,17 +22,17 @@ class PluginDashboardBase extends PluginPublicBase
     /**
      * Get Dashboard Box Header html
      *
-     * @return string
+     * @return string|null
      */
     public function header()
     {
         return null;
     }
-    
+
     /**
      * Get Dashboard Box body html
      *
-     * @return string
+     * @return string|null
      */
     public function body()
     {
@@ -41,13 +42,13 @@ class PluginDashboardBase extends PluginPublicBase
     /**
      * Get Dashboard Box footer html
      *
-     * @return string
+     * @return string|null
      */
     public function footer()
     {
         return null;
     }
-    
+
     /**
      * Get route uri for dashboard
      *

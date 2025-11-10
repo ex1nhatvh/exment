@@ -1,4 +1,5 @@
 <?php
+
 namespace Exceedone\Exment\Validator;
 
 use Illuminate\Contracts\Validation\Rule;
@@ -46,7 +47,7 @@ class ChangeFieldRule implements Rule
 
         return true;
 
-        return preg_match('/^[-]?[\d\s,\.]*$/', $value);
+//        return preg_match('/^[-]?[\d\s,\.]*$/', $value);
     }
 
     /**

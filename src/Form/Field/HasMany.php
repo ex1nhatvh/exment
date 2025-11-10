@@ -17,7 +17,7 @@ class HasMany extends AdminHasMany
      *
      * @throws \Exception
      *
-     * @return \Illuminate\View\View
+     * @return \Illuminate\View\View|string
      */
     public function render()
     {
@@ -45,7 +45,7 @@ class HasMany extends AdminHasMany
             'enableHeader' => $this->enableHeader,
         ]);
     }
-    
+
     /**
      * TODO: I don't know the best way
      * set html and script. It has bug about nested
@@ -53,17 +53,18 @@ class HasMany extends AdminHasMany
     protected function getTemplateHtmlAndScript($form)
     {
         list($template, $script) = $form->getTemplateHtmlAndScript();
+        return [$template, $script];
 
-        // re-set $script
-        $scripts = [];
-        foreach ($form->fields() as $field) {
-            // when NestedEmbeds item, get NestedEmbeds's getScript()
-            if (method_exists($field, 'getScript')) {
-                $scripts[] = $field->getScript();
-            }
-        }
+        // // re-set $script
+        // $scripts = [];
+        // foreach ($form->fields() as $field) {
+        //     // when NestedEmbeds item, get NestedEmbeds's getScript()
+        //     if (method_exists($field, 'getScript')) {
+        //         $scripts[] = $field->getScript();
+        //     }
+        // }
 
-        return [$template, implode("\r\n", $scripts)];
+        // return [$template, implode("\r\n", $scripts)];
     }
 
     /**
@@ -117,7 +118,7 @@ $("button[type='submit']").click(function(){
         return true;
     }
     var cnt = $('#has-many-{$this->column} .has-many-{$this->column}-forms > .fields-group').filter(':visible').length;
-    if (cnt == 0) { 
+    if (cnt == 0) {
         swal("$errortitle", "$requiremessage", "error");
         return false;
     };
@@ -199,18 +200,18 @@ EOT;
                 if (!$fieldRules = $field->getRules()) {
                     continue;
                 }
-    
+
                 if (is_array($column)) {
                     foreach ($column as $key => $name) {
                         $rules[$name.$key] = ['hasmany' => false, 'rules' => $fieldRules];
                     }
-    
+
                     $this->resetInputKey($input, $column);
                 } else {
                     $rules[$column] = ['hasmany' => false, 'rules' => $fieldRules];
                 }
             }
-            
+
             $attributes = array_merge(
                 $attributes,
                 $this->formatValidationAttribute($input, $field->label(), $column)
@@ -265,6 +266,7 @@ EOT;
         }
 
         if (!empty($v = $this->getOld())) {
+            /** @phpstan-ignore-next-line Parameter #1 $value of function count expects array|Countable, string given. need to fix laravel-admin */
             return count($v);
         }
 

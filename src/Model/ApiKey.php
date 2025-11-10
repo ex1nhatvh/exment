@@ -3,10 +3,12 @@
 namespace Exceedone\Exment\Model;
 
 use Illuminate\Database\Eloquent\Model;
+use Laravel\Passport\Client;
 use Laravel\Passport\Passport;
 
 /**
  * For API auth "api_key"
+ * @property Client $client
  */
 class ApiKey extends Model
 {
@@ -15,11 +17,11 @@ class ApiKey extends Model
     protected $table = 'oauth_api_keys';
 
     public $timestamps = false;
-    
+
     protected $primary_key = 'key';
 
     protected $keyType = 'string';
-    
+
     public $incrementing = false;
 
 

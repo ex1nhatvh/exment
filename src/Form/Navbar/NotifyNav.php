@@ -9,9 +9,9 @@ class NotifyNav implements Renderable
     public function render()
     {
         if (config('exment.notify_navbar', true) === false) {
-            return;
+            return '';
         }
-        
+
         $no_newitem = exmtrans('notify_navbar.message.no_newitem');
         $list = trans('admin.list');
         $list_url = admin_url('notify_navbar');

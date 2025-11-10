@@ -2,6 +2,17 @@
 
 namespace Exceedone\Exment\ColumnItems;
 
+use Exceedone\Exment\Model\CustomForm;
+
+/**
+ * @method mixed getTableColumn()
+ * @method mixed setOtherFormColumns(array $other_form_columns)
+ * @method mixed setFormColumnOptions($form_column_options)
+ * @method mixed setCustomForm(CustomForm $custom_form)
+ * @method mixed isMultipleEnabled()
+ * @method string getCastWrapTableColumn(?string $column_name = null)
+ * @method mixed isDateTime()
+ */
 interface ItemInterface
 {
     /**
@@ -48,7 +59,7 @@ interface ItemInterface
      * get or set value's id.
      */
     public function id($id = null);
-    
+
     /**
      * get or set header label.
      */
@@ -83,7 +94,7 @@ interface ItemInterface
      * get view filter type
      */
     public function getViewFilterType();
-    
+
     /**
      * Convert filter value.
      * Ex. If value is decimal and Column Type is decimal, return floatval.

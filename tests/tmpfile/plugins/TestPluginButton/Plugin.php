@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Plugins\TestPluginButton;
 
 use Exceedone\Exment\Services\Plugin\PluginButtonBase;
@@ -7,6 +8,8 @@ class Plugin extends PluginButtonBase
 {
     /**
      * Plugin Button
+     *
+     * @return array<string, mixed>
      */
     public function execute()
     {

@@ -19,7 +19,7 @@ class CustomTableAction implements ActionInterface
      * custom_table's relations
      */
     protected $relations;
-    
+
     /**
      * import data filter
      */
@@ -54,13 +54,13 @@ class CustomTableAction implements ActionInterface
             if ($table_name == Define::SETTING_SHEET_NAME) {
                 continue;
             }
-            
+
             // get setting info
             if (array_has($datalist, Define::SETTING_SHEET_NAME)) {
                 $settings = $this->getImportTableSetting($datalist[Define::SETTING_SHEET_NAME], $table_name);
                 $options['setting'] = $settings;
             }
- 
+
             $provider = $this->getProvider($table_name);
             if (!isset($provider)) {
                 continue;
@@ -79,7 +79,9 @@ class CustomTableAction implements ActionInterface
                         'command.import.file_row_info',
                         $options['file_name'] ?? null,
                         $table_name,
+                        /** @phpstan-ignore-next-line Offset 'row_start' on non-empty-array on left side of ?? always exists and is not nullable. */
                         $options['row_start'] ?? null,
+                        /** @phpstan-ignore-next-line Offset 'row_start' on non-empty-array on left side of ?? always exists and is not nullable. */
                         $options['row_end'] ?? null
                     ));
                 }
@@ -90,10 +92,10 @@ class CustomTableAction implements ActionInterface
                 if (empty($dataObject)) {
                     break;
                 }
-                
+
                 // validate data
                 list($data_import, $error_data) = $provider->validateImportData($dataObject);
-        
+
                 // if has error data, return error data
                 if (is_array($error_data) && count($error_data) > 0) {
                     $error_msg = [];
@@ -105,7 +107,7 @@ class CustomTableAction implements ActionInterface
                     }
                     $error_msg[] = exmtrans('command.import.error_info');
                     $error_msg[] = implode("\r\n", $error_data);
-                    
+
                     // execute command
                     if (isset($options['command'])) {
                         $options['command']->error(exmtrans(
@@ -117,7 +119,7 @@ class CustomTableAction implements ActionInterface
                             implode("\r\n", $error_msg)
                         ));
                     }
-                
+
                     return [
                         'result' => false,
                     ];
@@ -145,7 +147,7 @@ class CustomTableAction implements ActionInterface
                 }
             }
         }
-        
+
         return [
             'result' => true,
             'data_import_cnt' => $data_import_cnt,
@@ -161,13 +163,13 @@ class CustomTableAction implements ActionInterface
             if ($table_name == Define::SETTING_SHEET_NAME) {
                 continue;
             }
-            
+
             // get setting info
             if (array_has($datalist, Define::SETTING_SHEET_NAME)) {
                 $settings = $this->getImportTableSetting($datalist[Define::SETTING_SHEET_NAME], $table_name);
                 $options['setting'] = $settings;
             }
- 
+
             //$target_table = $data['custom_table'];
             $provider = $this->getProvider($table_name);
             if (!isset($provider)) {
@@ -178,7 +180,7 @@ class CustomTableAction implements ActionInterface
 
             // validate data
             list($data_import, $error_data) = $provider->validateImportData($dataObject);
-        
+
             // if has error data, return error data
             if (is_array($error_data) && count($error_data) > 0) {
                 return response([
@@ -233,7 +235,7 @@ class CustomTableAction implements ActionInterface
             return in_array($keyname, $table_names);
         })->toArray();
     }
-    
+
     /**
      * get provider
      */
@@ -266,7 +268,7 @@ class CustomTableAction implements ActionInterface
             }
         }
     }
-    
+
     // Import Modal --------------------------------------------------
 
     /**
@@ -281,7 +283,7 @@ class CustomTableAction implements ActionInterface
     {
         return $this->custom_table->table_view_name;
     }
-    
+
     /**
      * get primary key list.
      */
@@ -307,7 +309,7 @@ class CustomTableAction implements ActionInterface
 
         return $keys;
     }
-    
+
     /**
      * set_import_modal_items. it sets at form footer
      */
@@ -335,6 +337,10 @@ class CustomTableAction implements ActionInterface
 
         $items = [];
         foreach ($bodies as $body) {
+            $null_merge_array = collect(range(1, count($headers)))->map(function () {
+                return null;
+            })->toArray();
+            $body = $body + $null_merge_array;
             $items[] = array_combine($headers, $body);
         }
 

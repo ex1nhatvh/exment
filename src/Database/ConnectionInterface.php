@@ -9,23 +9,22 @@ interface ConnectionInterface
      *
      * @return string
      */
-    public function getDatabaseDriverName() : string;
+    public function getDatabaseDriverName(): string;
 
     /**
      * Check execute backup database
      *
      * @return bool
-     * @throws BackupRestoreCheckException
      */
-    public function checkBackup() : bool;
+    public function checkBackup(): bool;
 
     /**
      * Whether use unicode if search multiple column
      *
      * @return boolean
      */
-    public function isUseUnicodeMultipleColumn() : bool;
-    
+    public function isUseUnicodeMultipleColumn(): bool;
+
     /**
      * Restore database
      *
@@ -33,7 +32,7 @@ interface ConnectionInterface
      * @return void
      */
     public function backupDatabase($tempDir);
-    
+
 
     /**
      * Restore database
@@ -42,7 +41,7 @@ interface ConnectionInterface
      * @return void
      */
     public function restoreDatabase($dirFullPath);
-    
+
     /**
      * insert table data from backup tsv files.
      *

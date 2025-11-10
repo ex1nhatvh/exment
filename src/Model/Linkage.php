@@ -3,6 +3,7 @@
 namespace Exceedone\Exment\Model;
 
 use Exceedone\Exment\Enums\SearchType;
+use Illuminate\Support\Collection;
 
 /**
  * Linkage item for Select table in form
@@ -29,7 +30,7 @@ class Linkage
         return isset($this->child_column) ? $this->child_column->custom_table_cache : null;
     }
 
-    
+
     /**
      * get Select table's relation columns.
      * If there are two or more select_tables in the same table and they are in a parent-child relationship, parent-child relationship information is acquired.
@@ -42,7 +43,7 @@ class Linkage
 
         // Get select table columns in custom table.
         $parent_columns = $custom_table->getSelectTableColumns();
-        
+
         ///// re-loop for relation
         // $checkedSelectTableIds = [];
         foreach ($parent_columns as $parent_column) {
@@ -65,7 +66,7 @@ class Linkage
 
             // get RelationTable children tables
             $relations = $select_target_table->getRelationTables($checkPermission, ['search_enabled_only' => false]);
-          
+
             // if not exists, continue
             if (!$relations) {
                 continue;
@@ -73,7 +74,7 @@ class Linkage
 
             foreach ($relations as $relation) {
                 $child_custom_table = $relation->table;
-                
+
                 collect($parent_columns)->filter(function ($child_column) use ($child_custom_table) {
                     return $child_column->select_target_table && $child_column->select_target_table->id == $child_custom_table->id;
                 })
@@ -104,10 +105,13 @@ class Linkage
         $child_custom_column = CustomColumn::getEloquent($child_custom_column);
 
         if (is_nullorempty($child_custom_column)) {
-            return collect();
+            /** @var Collection $collection */
+            $collection = collect();
+            return $collection;
         }
 
-        return collect(static::getSelectTableLinkages($child_custom_column->custom_table_cache, false))
+        /** @var Collection $collection */
+        $collection =  collect(static::getSelectTableLinkages($child_custom_column->custom_table_cache, false))
             ->filter(function ($relationColumn) use ($parent_custom_column, $child_custom_column) {
                 if (isset($parent_custom_column)) {
                     if ($parent_custom_column->id != array_get($relationColumn, 'parent_column')->id) {
@@ -118,6 +122,7 @@ class Linkage
             })->map(function ($relationColumn) {
                 return new self($relationColumn);
             });
+        return $collection;
     }
 
     /**

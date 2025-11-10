@@ -2,8 +2,19 @@
 
 namespace Exceedone\Exment\Model;
 
+use Exceedone\Exment\Database\Eloquent\ExtendedBuilder;
 use Exceedone\Exment\Enums\ConditionType;
 
+/**
+ * @property mixed $view_column_target_id
+ * @property mixed $view_column_table_id
+ * @property mixed $suuid
+ * @property mixed $custom_view_id
+ * @property mixed $sort
+ * @property mixed $priority
+ * @method static ExtendedBuilder create(array $attributes = [])
+ * @phpstan-consistent-constructor
+ */
 class CustomViewSort extends ModelBase
 {
     use Traits\CustomViewColumnTrait;
@@ -58,11 +69,11 @@ class CustomViewSort extends ModelBase
     {
         return static::getEloquentDefault($id, $withs);
     }
-    
+
     protected static function boot()
     {
         parent::boot();
-        
+
         static::saving(function ($model) {
             $model->prepareJson('options');
         });
@@ -79,7 +90,7 @@ class CustomViewSort extends ModelBase
     {
         return $this->setViewPivotIdTrait('view_pivot_column_id', $view_pivot_column_id);
     }
-    
+
     public function getViewPivotTableIdAttribute()
     {
         return $this->getViewPivotIdTrait('view_pivot_table_id');

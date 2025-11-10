@@ -2,16 +2,37 @@
 
 namespace Exceedone\Exment\Model;
 
+use Exceedone\Exment\Database\Eloquent\ExtendedBuilder;
 use Exceedone\Exment\Enums\SystemColumn;
 use Exceedone\Exment\Enums\ConditionType;
 use Exceedone\Exment\ConditionItems\ConditionItemBase;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * @phpstan-consistent-constructor
+ * @property mixed $view_pivot_column_id
+ * @property mixed $view_pivot_table_id
+ * @property mixed $view_column_type
+ * @property mixed $view_column_target_id
+ * @property mixed $view_column_table_id
+ * @property mixed $to_column_type
+ * @property mixed $to_column_target_id
+ * @property mixed $to_column_table_id
+ * @property mixed $suuid
+ * @property mixed $from_column_type
+ * @property mixed $from_column_target_id
+ * @property mixed $from_column_table_id
+ * @property mixed $custom_view_id
+ * @property mixed $copy_column_type
+ * @method static int count($columns = '*')
+ * @method static ExtendedBuilder create(array $attributes = [])
+ */
 class CustomCopyColumn extends ModelBase implements Interfaces\TemplateImporterInterface
 {
-    protected $appends = ['from_column_target', 'to_column_target'];
     use Traits\UseRequestSessionTrait;
     use Traits\CustomViewColumnTrait;
     use Traits\TemplateTrait;
+    protected $appends = ['from_column_target', 'to_column_target'];
 
     public static $templateItems = [
         //'excepts' => ['custom_copy_id', 'from_custom_column', 'to_custom_column', 'from_column_target', 'to_column_target', 'from_column_target_id', 'to_column_target_id', 'from_column_table_id', 'to_column_table_id'],
@@ -52,31 +73,31 @@ class CustomCopyColumn extends ModelBase implements Interfaces\TemplateImporterI
         ]
     ];
 
-    public function custom_copy()
+    public function custom_copy(): BelongsTo
     {
         return $this->belongsTo(CustomCopy::class, 'custom_copy_id');
     }
-    
-    public function from_custom_column()
+
+    public function from_custom_column(): BelongsTo
     {
         return $this->belongsTo(CustomColumn::class, 'from_column_target_id');
     }
-    
-    public function to_custom_column()
+
+    public function to_custom_column(): BelongsTo
     {
         return $this->belongsTo(CustomColumn::class, 'to_column_target_id');
     }
-    
-    public function from_custom_table()
+
+    public function from_custom_table(): BelongsTo
     {
         return $this->belongsTo(CustomTable::class, 'from_column_table_id');
     }
-    
-    public function to_custom_table()
+
+    public function to_custom_table(): BelongsTo
     {
         return $this->belongsTo(CustomTable::class, 'to_column_table_id');
     }
-    
+
     public function getFromCustomTableCacheAttribute()
     {
         return CustomTable::getEloquent($this->from_column_table_id);
@@ -95,7 +116,7 @@ class CustomCopyColumn extends ModelBase implements Interfaces\TemplateImporterI
     {
         return $this->getViewColumnTarget('from_column_table_id', 'from_column_type', 'from_column_target_id');
     }
-    
+
     /**
      * set CopyColumnTarget.
      * * we have to convert int if view_column_type is system for custom view form-display*
@@ -113,7 +134,7 @@ class CustomCopyColumn extends ModelBase implements Interfaces\TemplateImporterI
     {
         return $this->getViewColumnTarget('to_column_table_id', 'to_column_type', 'to_column_target_id');
     }
-    
+
     /**
      * set ViewColumnTarget.
      * * we have to convert int if view_column_type is system for custom view form-display*
@@ -122,7 +143,7 @@ class CustomCopyColumn extends ModelBase implements Interfaces\TemplateImporterI
     {
         $this->setViewColumnTarget($copy_column_target, 'custom_copy', 'to_column_table_id', 'to_column_type', 'to_column_target_id');
     }
-    
+
     /**
      * get Table And Column Name
      */
@@ -138,11 +159,9 @@ class CustomCopyColumn extends ModelBase implements Interfaces\TemplateImporterI
     {
         return $this->getCopyColumnUniqueKeyValues('to_custom_table', 'to_custom_column', 'to_column_type', 'to_column_target_id');
     }
-    
+
     /**
      * getConditionTypeFromItemAttribute
-     *
-     * @return void
      */
     public function getFromConditionItemAttribute()
     {
@@ -151,8 +170,6 @@ class CustomCopyColumn extends ModelBase implements Interfaces\TemplateImporterI
 
     /**
      * getConditionTypeFromItemAttribute
-     *
-     * @return void
      */
     public function getToConditionItemAttribute()
     {
@@ -185,7 +202,7 @@ class CustomCopyColumn extends ModelBase implements Interfaces\TemplateImporterI
                     'table_name' => $table_name,
                     'column_name' => SystemColumn::getOption(['id' => $this->{$column_target_id_key}])['name'],
                 ];
-            
+
             case ConditionType::PARENT_ID:
                 return [
                     'table_name' => $table_name,

@@ -33,7 +33,12 @@ class LoginUserProvider extends ProviderBase
     {
         $headers = $this->getHeaders();
 
-        $bodies = $this->getBodies($this->getRecords());
+        // if only template, output only headers
+        if ($this->template) {
+            $bodies = [];
+        } else {
+            $bodies = $this->getBodies($this->getRecords());
+        }
         // get output items
         $outputs = array_merge($headers, $bodies);
 
@@ -84,15 +89,15 @@ class LoginUserProvider extends ProviderBase
     /**
      * get target chunk records
      */
-    public function getRecords() : Collection
+    public function getRecords(): Collection
     {
-        $records = new Collection;
+        $records = new Collection();
         $this->grid->model()->chunk(function ($data) use (&$records) {
             if (is_nullorempty($records)) {
-                $records = new Collection;
+                $records = new Collection();
             }
             $records = $records->merge($data);
-        }) ?? new Collection;
+        }) ?? new Collection();
 
         $this->count = count($records);
         return $records;
@@ -106,7 +111,7 @@ class LoginUserProvider extends ProviderBase
         if (!isset($records)) {
             return [];
         }
-        
+
         $bodies = [];
 
         foreach ($records as $record) {

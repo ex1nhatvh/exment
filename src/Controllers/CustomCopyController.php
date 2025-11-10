@@ -22,7 +22,7 @@ class CustomCopyController extends AdminControllerTableBase
     public function __construct(?CustomTable $custom_table, Request $request)
     {
         parent::__construct($custom_table, $request);
-        
+
         $title = exmtrans("custom_copy.header") . ' : ' . ($custom_table ? $custom_table->table_view_name : null);
         $this->setPageInfo($title, $title, exmtrans("custom_copy.description"), 'fa-copy');
     }
@@ -30,7 +30,7 @@ class CustomCopyController extends AdminControllerTableBase
     /**
      * Index interface.
      *
-     * @return Content
+     * @return Content|void
      */
     public function index(Request $request, Content $content)
     {
@@ -41,15 +41,15 @@ class CustomCopyController extends AdminControllerTableBase
         return parent::index($request, $content);
     }
 
-    
+
     /**
      * Edit
      *
      * @param Request $request
      * @param Content $content
-     * @param string $tableKey
-     * @param string|int|null $id
-     * @return void|Response
+     * @param $tableKey
+     * @param $id
+     * @return Content|void
      */
     public function edit(Request $request, Content $content, $tableKey, $id)
     {
@@ -66,7 +66,9 @@ class CustomCopyController extends AdminControllerTableBase
     /**
      * Create interface.
      *
-     * @return Content
+     * @param Request $request
+     * @param Content $content
+     * @return Content|void
      */
     public function create(Request $request, Content $content)
     {
@@ -84,31 +86,33 @@ class CustomCopyController extends AdminControllerTableBase
      */
     protected function grid()
     {
-        $grid = new Grid(new CustomCopy);
+        $grid = new Grid(new CustomCopy());
         $grid->column('from_custom_table.table_view_name', exmtrans("custom_copy.from_custom_table_view_name"))->sortable();
         $grid->column('to_custom_table.table_view_name', exmtrans("custom_copy.to_custom_table_view_name"))->sortable();
         $grid->column('label', exmtrans("plugin.options.label"))->sortable()->display(function ($value) {
+            /** @phpstan-ignore-next-line array_get expects array|ArrayAccess, $this(Exceedone\Exment\Controllers\CustomCopyController) given  */
             return array_get($this, 'options.label');
         });
-        
+
         if (isset($this->custom_table)) {
             $grid->model()->where('from_custom_table_id', $this->custom_table->id);
         }
-        
+
         $grid->disableCreateButton();
         $grid->tools(function (Grid\Tools $tools) {
             $tools->append(view('exment::custom-value.new-button-copy', [
                 'url' => admin_urls('copy', $this->custom_table->table_name, 'newModal')
             ]));
             //$tools->append($this->createNewModal());
+            /** @phpstan-ignore-next-line append() expects Encore\Admin\Grid\Tools\AbstractTool|string, Exceedone\Exment\Form\Tools\CustomTableMenuButton given */
             $tools->append(new Tools\CustomTableMenuButton('copy', $this->custom_table));
         });
-        
+
         $grid->disableExport();
         $grid->actions(function ($actions) {
             $actions->disableView();
         });
-        
+
         // filter
         $grid->filter(function ($filter) {
             $filter->disableIdFilter();
@@ -128,7 +132,7 @@ class CustomCopyController extends AdminControllerTableBase
     /**
      * get child table copy options.
      *
-     * @return array child copy options
+     * @return array|null child copy options
      */
     protected function getChildCopyOptions($to_table)
     {
@@ -150,6 +154,7 @@ class CustomCopyController extends AdminControllerTableBase
                   )];
               })->toArray();
         }
+        return null;
     }
 
     /**
@@ -159,7 +164,7 @@ class CustomCopyController extends AdminControllerTableBase
      */
     protected function form($id = null)
     {
-        $form = new Form(new CustomCopy);
+        $form = new Form(new CustomCopy());
         $form->internal('from_custom_table_id')->default($this->custom_table->id);
         $form->display('from_custom_table.table_view_name', exmtrans("custom_copy.from_custom_table_view_name"))->default($this->custom_table->table_view_name);
 
@@ -229,6 +234,7 @@ class CustomCopyController extends AdminControllerTableBase
         ->descriptionHtml(exmtrans("custom_copy.input_column_description"));
 
         $form->tools(function (Form\Tools $tools) use ($custom_table) {
+            /** @phpstan-ignore-next-line add() expects string, Exceedone\Exment\Form\Tools\CustomTableMenuButton given */
             $tools->add(new Tools\CustomTableMenuButton('copy', $custom_table));
         });
 
@@ -273,7 +279,7 @@ class CustomCopyController extends AdminControllerTableBase
         $table_name = $this->custom_table->table_name;
         $path = admin_urls('copy', $table_name, 'create');
         // create form fields
-        $form = new ModalForm;
+        $form = new ModalForm();
         $form->action($path);
         $form->method('GET');
         $form->modalHeader(trans('admin.setting'));
@@ -285,14 +291,14 @@ class CustomCopyController extends AdminControllerTableBase
             ->setWidth(8, 3)
             ->required()
             ->help(exmtrans('custom_copy.help.to_custom_table_view_name'));
-        
+
         return getAjaxResponse([
             'body'  => $form->render(),
             'script' => $form->getScript(),
             'title' => trans('admin.setting')
         ]);
 
-        // add button
-        return $form->render()->render();
+        // add button unreachable statement
+//        return $form->render()->render();
     }
 }

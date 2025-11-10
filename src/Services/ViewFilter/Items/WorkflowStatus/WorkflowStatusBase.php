@@ -1,4 +1,5 @@
 <?php
+
 namespace Exceedone\Exment\Services\ViewFilter\Items\WorkflowStatus;
 
 use Exceedone\Exment\Services\ViewFilter\ViewFilterBase;
@@ -24,6 +25,13 @@ abstract class WorkflowStatusBase extends ViewFilterBase
     protected static $isAppendDatabaseTable = false;
 
 
+    /**
+     * @param $query
+     * @param $method_name
+     * @param $query_column
+     * @param $query_value
+     * @return \Illuminate\Database\Query\Builder|\Illuminate\Database\Schema\Builder|void
+     */
     protected function _setFilter($query, $method_name, $query_column, $query_value)
     {
         // if $status is start
@@ -42,7 +50,7 @@ abstract class WorkflowStatusBase extends ViewFilterBase
             $include_start = true;
         }
 
-        $func = $or_option ? 'orWhere': 'where';
+        $func = $or_option ? 'orWhere' : 'where';
         $query->{$func}(function ($query) use ($condition, $status, $include_start) {
             if ($condition == FilterOption::WORKFLOW_NE_STATUS) {
                 if (!empty($status)) {
@@ -71,7 +79,7 @@ abstract class WorkflowStatusBase extends ViewFilterBase
 
         return $query;
     }
-    
+
 
     /**
      * compare 2 value
@@ -80,7 +88,7 @@ abstract class WorkflowStatusBase extends ViewFilterBase
      * @param mixed $conditionValue condition value. Sometimes, this value is not set(Ex. check value is not null)
      * @return boolean is match, return true
      */
-    protected function _compareValue($value, $conditionValue) : bool
+    protected function _compareValue($value, $conditionValue): bool
     {
         $workflow_status = array_get($value, 'workflow_status');
         // if start, $workflow_status set as null
@@ -99,6 +107,6 @@ abstract class WorkflowStatusBase extends ViewFilterBase
 
         return isMatchString($workflow_status, $conditionValue) === $this->isExists();
     }
-        
-    abstract protected function isExists() : bool;
+
+    abstract protected function isExists(): bool;
 }

@@ -22,14 +22,14 @@ abstract class FormBase
      * @var boolean
      */
     protected $disableSavingButton = false;
-    
+
     /**
      * If true, disableSavedRedirectCheck
      *
      * @var boolean
      */
     protected $disableSavedRedirectCheck = false;
-    
+
     /**
      * If true, disableDefaultSavedRedirect.
      *
@@ -43,7 +43,7 @@ abstract class FormBase
      * @var boolean
      */
     protected $enableDefaultQuery = false;
-    
+
     /**
      * If true, This form is as confirm.
      *
@@ -56,6 +56,8 @@ abstract class FormBase
     {
         list($custom_table, $custom_form) = $args + [null, null];
 
+        /** Unsafe usage of new static(). */
+        /** @phpstan-ignore-next-line */
         return new static($custom_table, $custom_form);
     }
 
@@ -134,7 +136,7 @@ abstract class FormBase
 
         return $this;
     }
-    
+
     abstract public function form();
 
     /**

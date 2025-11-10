@@ -1,4 +1,5 @@
 <?php
+
 namespace Exceedone\Exment\Services;
 
 /**
@@ -59,6 +60,7 @@ class PartialCrudService
         return static::getItem($custom_table, function ($item) use (&$form, $id) {
             $result = $item->saving($form, $id);
 
+            /** @phpstan-ignore-next-line Instanceof between *NEVER* and Illuminate\Http\Response will always evaluate to false. */
             if ($result instanceof \Symfony\Component\HttpFoundation\Response || $result instanceof \Illuminate\Http\Response) {
                 return $result;
             }
@@ -69,7 +71,8 @@ class PartialCrudService
     {
         return static::getItem($custom_table, function ($item) use (&$form, $id) {
             $result = $item->saved($form, $id);
-            
+
+            /** @phpstan-ignore-next-line Instanceof between *NEVER* and Illuminate\Http\Response will always evaluate to false. */
             if ($result instanceof \Symfony\Component\HttpFoundation\Response || $result instanceof \Illuminate\Http\Response) {
                 return $result;
             }
@@ -87,7 +90,7 @@ class PartialCrudService
             $item = $classname::getItem($custom_table);
 
             $result = $callback($item);
-            
+
             if ($result instanceof \Symfony\Component\HttpFoundation\Response) {
                 return $result;
             }

@@ -28,7 +28,7 @@ class ConditionHasManyTable
     /**
      * Linkage url
      *
-     * @var string
+     * @var string|null
      */
     protected $linkage;
     protected $targetOptions;
@@ -67,7 +67,7 @@ class ConditionHasManyTable
      * @var string
      */
     protected $condition_value_name = 'condition_value';
-    
+
     /**
      * Condition target label.
      *
@@ -88,13 +88,13 @@ class ConditionHasManyTable
      * @var string
      */
     protected $condition_value_label;
-    
+
     protected $condition_join_name = 'condition_join';
 
     /**
      * This condition's type.
      *
-     * @var FilterKind
+     * @var string
      */
     protected $filterKind = FilterKind::VIEW;
 
@@ -108,14 +108,14 @@ class ConditionHasManyTable
     /**
      * callback about closure.
      *
-     * @var \Closure
+     * @var \Closure|null
      */
     protected $conditionCallback = null;
 
     /**
      * callback about value closure.
      *
-     * @var \Closure
+     * @var \Closure|null
      */
     protected $valueCallback = null;
 
@@ -242,7 +242,7 @@ class ConditionHasManyTable
 
         return $this;
     }
-    
+
     /**
      * @return string
      */

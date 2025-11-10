@@ -4,7 +4,15 @@ namespace Exceedone\Exment\Model;
 
 use Exceedone\Exment\Enums\SystemTableName;
 use Exceedone\Exment\Enums\JoinedOrgFilterType;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
+/**
+ * @property mixed $role_group_view_name
+ * @property mixed $role_group_order
+ * @property mixed $role_group_name
+ * @property mixed $description
+ * @phpstan-consistent-constructor
+ */
 class RoleGroup extends ModelBase
 {
     use Traits\TemplateTrait;
@@ -23,23 +31,23 @@ class RoleGroup extends ModelBase
         ],
     ];
 
-    public function role_group_permissions()
+    public function role_group_permissions(): HasMany
     {
         return $this->hasMany(RoleGroupPermission::class, 'role_group_id');
     }
 
-    public function role_group_user_organizations()
+    public function role_group_user_organizations(): HasMany
     {
         return $this->hasMany(RoleGroupUserOrganization::class, 'role_group_id');
     }
-    
-    public function role_group_users()
+
+    public function role_group_users(): HasMany
     {
         return $this->hasMany(RoleGroupUserOrganization::class, 'role_group_id')
             ->where('role_group_user_org_type', 'user');
     }
 
-    public function role_group_organizations()
+    public function role_group_organizations(): HasMany
     {
         return $this->hasMany(RoleGroupUserOrganization::class, 'role_group_id')
             ->where('role_group_user_org_type', 'organization');
@@ -75,7 +83,8 @@ class RoleGroup extends ModelBase
                         foreach ((array)$organization_ids as $organization_id) {
                             // ge check contains parent and child organizaions.
                             $org = CustomTable::getEloquent(SystemTableName::ORGANIZATION)->getValueModel($organization_id);
-                            
+
+                            /** @phpstan-ignore-next-line  $org uses OrganizationTrait */
                             $targetOrgIds = $org->getOrganizationIdsForQuery($enum);
                             if (in_array($organization_id, $targetOrgIds)) {
                                 return true;
@@ -96,11 +105,15 @@ class RoleGroup extends ModelBase
     protected static function boot()
     {
         parent::boot();
-        
+
         // delete event
         static::deleting(function ($model) {
             $model->role_group_permissions()->delete();
             $model->role_group_user_organizations()->delete();
         });
+
+        if (config('exment.sort_role_group_by_order', false)) {
+            static::addGlobalScope(new OrderScope('role_group_order'));
+        }
     }
 }

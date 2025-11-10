@@ -88,12 +88,13 @@ class AuthController extends \Encore\Admin\Controllers\AuthController
         return $this->executeLogin($request, $credentials);
     }
 
-    
     /**
      * Execute login(for Default, LDAP)
      *
      * @param Request $request
-     * @return \Illuminate\Http\Response
+     * @param array $credentials
+     * @param LoginSetting|null $login_setting
+     * @return \Illuminate\Contracts\Foundation\Application|\Illuminate\Http\RedirectResponse|\Illuminate\Routing\Redirector
      */
     protected function executeLogin(Request $request, array $credentials, ?LoginSetting $login_setting = null)
     {
@@ -117,12 +118,12 @@ class AuthController extends \Encore\Admin\Controllers\AuthController
                 $this->postVerifyEmail2factor();
                 return $this->sendLoginResponse($request);
             }
-    
+
             // If the login attempt was unsuccessful we will increment the number of attempts
             // to login and redirect the user back to the login form. Of course, when this
             // user surpasses their maximum number of attempts they will get locked out.
             $this->incrementLoginAttempts($request);
-    
+
             return back()->withInput()->withErrors([
                 $this->username() => $this->getFailedLoginMessage(),
             ]);
@@ -188,7 +189,7 @@ class AuthController extends \Encore\Admin\Controllers\AuthController
         if (is_null($last_history)) {
             return true;
         }
-    
+
         // calc diff days
         $diff_days = $last_history->created_at->diffInDays(Carbon::now());
 
@@ -202,7 +203,7 @@ class AuthController extends \Encore\Admin\Controllers\AuthController
     /**
      * User logout.
      *
-     * @return \Illuminate\Routing\Redirector|\Illuminate\Http\RedirectResponse
+     * @return \Illuminate\Routing\Redirector|\Illuminate\Http\RedirectResponse|\Illuminate\Support\Facades\Redirect
      */
     public function getLogout(Request $request)
     {
@@ -243,13 +244,13 @@ class AuthController extends \Encore\Admin\Controllers\AuthController
         ExmentFile::deleteFileInfo($loginUser->avatar);
         $loginUser->avatar = null;
         $loginUser->save();
-        
+
         return getAjaxResponse([
             'result'  => true,
             'message' => trans('admin.delete_succeeded'),
         ]);
     }
-    
+
     /**
      * Model-form for user setting.
      *
@@ -261,7 +262,7 @@ class AuthController extends \Encore\Admin\Controllers\AuthController
         return $login_user::form(function (Form $form) {
             // $form->display('base_user.value.user_code', exmtrans('user.user_code'));
             // $form->display('base_user.value.email', exmtrans('user.email'));
-            
+
             // $form->text('base_user.value.user_name', exmtrans('user.user_name'));
 
             $user_table = CustomTable::getEloquent(SystemTableName::USER);
@@ -310,7 +311,7 @@ class AuthController extends \Encore\Admin\Controllers\AuthController
                 });
 
             if (\Exment::user()->login_type == LoginType::PURE) {
-                $form->password('current_password', exmtrans('user.current_password'))->rules(['required_with:password', new ExmentValidator\CurrentPasswordRule])->help(exmtrans('user.help.change_only'));
+                $form->password('current_password', exmtrans('user.current_password'))->rules(['required_with:password', new ExmentValidator\CurrentPasswordRule()])->help(exmtrans('user.help.change_only'));
                 $form->password('password', exmtrans('user.new_password'))->rules(get_password_rule(false, \Exment::user()))->help(exmtrans('user.help.change_only') . \Exment::get_password_help());
                 $form->password('password_confirmation', exmtrans('user.new_password_confirmation'));
             }
@@ -349,15 +350,15 @@ class AuthController extends \Encore\Admin\Controllers\AuthController
                     request()->get('login_2factor_provider')
                 );
             });
-            
+
             $form->saved(function ($form) {
                 admin_toastr(trans('admin.update_succeeded'));
-    
+
                 return redirect(admin_url('auth/setting'));
             });
         });
     }
-    
+
     /**
      * @return string|\Symfony\Component\Translation\TranslatorInterface
      */

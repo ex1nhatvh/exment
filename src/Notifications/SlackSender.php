@@ -11,12 +11,12 @@ class SlackSender extends SenderBase
 {
     use Notifiable;
     use WebhookTrait;
-    
+
     protected $name;
     protected $icon;
     protected $mention_here = false;
     protected $mention_users = [];
-    
+
     /**
      * Create a new notification instance.
      *
@@ -41,7 +41,7 @@ class SlackSender extends SenderBase
      * @param string $body
      * @return SlackSender
      */
-    public static function make($webhook_url, $subject, $body, $options) : SlackSender
+    public static function make($webhook_url, $subject, $body, $options): SlackSender
     {
         return new self($webhook_url, $subject, $body, $options);
     }
@@ -88,6 +88,7 @@ class SlackSender extends SenderBase
 
         preg_match_all(Define::RULES_REGEX_LINK_FORMAT, $content, $matches);
 
+        // @phpstan-ignore-next-line
         if (isset($matches)) {
             for ($i = 0; $i < count($matches[1]); $i++) {
                 $match = $matches[1][$i];

@@ -13,6 +13,8 @@ class FNotifyTest extends ExmentKitTestCase
 {
     /**
      * pre-excecute process before test.
+     *
+     * @return void
      */
     protected function setUp(): void
     {
@@ -22,11 +24,14 @@ class FNotifyTest extends ExmentKitTestCase
 
     /**
      * test notify button html
+     *
+     * @return void
      */
     public function testNotifyButtonHtml()
     {
         // get value
         $custom_table = Model\CustomTable::getEloquent(TestDefine::TESTDATA_TABLE_NAME_EDIT);
+        /** @var CustomValue $custom_value */
         $custom_value = $custom_table->getValueModel()->first();
 
         // get notify info
@@ -42,10 +47,12 @@ class FNotifyTest extends ExmentKitTestCase
 
         $this->assertTrue($result, 'Not has notify form');
     }
-    
-    
+
+
     /**
      * test notify button test html, and attachment
+     *
+     * @return void
      */
     public function testNotifyButtonHtmlAttachment()
     {
@@ -75,6 +82,8 @@ class FNotifyTest extends ExmentKitTestCase
 
     /**
      * test notify button test post
+     *
+     * @return void
      */
     public function testNotifyButtonPost()
     {
@@ -83,12 +92,14 @@ class FNotifyTest extends ExmentKitTestCase
 
         // get value
         $custom_table = Model\CustomTable::getEloquent(TestDefine::TESTDATA_TABLE_NAME_EDIT);
+        /** @var CustomValue $custom_value */
         $custom_value = $custom_table->getValueModel()->first();
 
         // get notify info
         $notify = $this->getNotify($custom_table, '_notify_button_single');
         $url = admin_urls('data', $custom_table->table_name, $custom_value->id, 'sendMail');
 
+        /** @var CustomValue $mail_template */
         $mail_template = Model\CustomTable::getEloquent(Enums\SystemTableName::MAIL_TEMPLATE)
             ->getValueModel()
             ->where('value->mail_key_name', 'test_template_1')
@@ -118,9 +129,13 @@ class FNotifyTest extends ExmentKitTestCase
             $this->assertTrue(array_get($json, 'result', false), 'Post submit error, message is : ' . json_encode($json['errors']));
         }
     }
-    
 
 
+    /**
+     * @param CustomTable $custom_table
+     * @param string $suffix
+     * @return mixed
+     */
     protected function getNotify(CustomTable $custom_table, string $suffix)
     {
         // get notify info
@@ -128,9 +143,15 @@ class FNotifyTest extends ExmentKitTestCase
             ->where('notify_trigger', Enums\NotifyTrigger::BUTTON)
             ->where('notify_view_name', $custom_table->table_name . $suffix)
             ->first()
-            ;
+        ;
     }
 
+    /**
+     * @param CustomTable $custom_table
+     * @param CustomValue $custom_value
+     * @param Notify $notify
+     * @return string
+     */
     protected function getNotifyUrl(CustomTable $custom_table, CustomValue $custom_value, Notify $notify)
     {
         return admin_urls_query('data', $custom_table->table_name, $custom_value->id, 'notifyClick', [
@@ -140,7 +161,12 @@ class FNotifyTest extends ExmentKitTestCase
     }
 
 
-    protected function getDomDocument(string $url) : \DOMDocument
+    /**
+     * @param string $url
+     * @return \DOMDocument
+     * @throws \Exception
+     */
+    protected function getDomDocument(string $url): \DOMDocument
     {
         // check config update
         $response = $this->get($url);
@@ -156,17 +182,23 @@ class FNotifyTest extends ExmentKitTestCase
         } else {
             $html = $content;
         }
-        
+
         $domDocument = new \DOMDocument();
         libxml_use_internal_errors(true);
-        $domDocument->loadHTML(mb_convert_encoding($html, 'HTML-ENTITIES', 'UTF-8'));
+        $domDocument->loadHTML($html);
         libxml_clear_errors();
 
         return $domDocument;
     }
 
-    
-    protected function hasContainsHtml(\DOMDocument $domDocument, string $tagName, \Closure $callback) : bool
+
+    /**
+     * @param \DOMDocument $domDocument
+     * @param string $tagName
+     * @param \Closure $callback
+     * @return bool
+     */
+    protected function hasContainsHtml(\DOMDocument $domDocument, string $tagName, \Closure $callback): bool
     {
         $selects = $domDocument->getElementsByTagName($tagName);
         if ($selects->length == 0) {

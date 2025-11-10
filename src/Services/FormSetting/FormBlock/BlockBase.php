@@ -1,4 +1,5 @@
 <?php
+
 namespace Exceedone\Exment\Services\FormSetting\FormBlock;
 
 use Exceedone\Exment\Model\CustomFormBlock;
@@ -48,7 +49,7 @@ abstract class BlockBase
         $this->custom_form_column_items = collect();
     }
 
-    public static function make(CustomFormBlock $custom_form_block, CustomTable $custom_table) : BlockBase
+    public static function make(CustomFormBlock $custom_form_block, CustomTable $custom_table): ?BlockBase
     {
         switch (array_get($custom_form_block, 'form_block_type', FormBlockType::DEFAULT)) {
             case FormBlockType::DEFAULT:
@@ -61,7 +62,7 @@ abstract class BlockBase
 
         return null;
     }
-    
+
 
 
     /**
@@ -69,9 +70,9 @@ abstract class BlockBase
      *
      * @return self
      */
-    public static function makeByParams($form_block_type, $form_block_target_table_id) : BlockBase
+    public static function makeByParams($form_block_type, $form_block_target_table_id): BlockBase
     {
-        $form_block = new CustomFormBlock;
+        $form_block = new CustomFormBlock();
         $form_block->form_block_type = $form_block_type;
         $form_block->form_block_target_table_id = $form_block_target_table_id;
 
@@ -116,7 +117,7 @@ abstract class BlockBase
      *
      * @return array
      */
-    public function getItemsForDisplay() : array
+    public function getItemsForDisplay(): array
     {
         return [
             'id' => $this->custom_form_block->id ?? null,
@@ -128,7 +129,8 @@ abstract class BlockBase
             'header_name' => $this->getHtmlHeaderName(),
             'suggests' => $this->getSuggestItems(),
             'custom_form_rows' => $this->getCustomFormRows(),
-            'hasmany_type' => $this->custom_form_block->getOption('hasmany_type')
+            'hasmany_type' => $this->custom_form_block->getOption('hasmany_type'),
+            'form_block_order' => $this->custom_form_block->getOption('form_block_order')
         ];
     }
 
@@ -145,7 +147,7 @@ abstract class BlockBase
         // get columns by form_block_target_table_id.
         $custom_columns = $this->target_table->custom_columns_cache;
         $custom_form_columns = [];
-        
+
         // get array items
         $form_column_type = FormColumnType::COLUMN;
         // loop each column
@@ -164,7 +166,7 @@ abstract class BlockBase
             'form_column_type' => FormColumnType::COLUMN,
         ]);
 
-        
+
         // set free html
         $custom_form_columns  = [];
         foreach (FormColumnType::getOptions() as $id => $type) {
@@ -189,7 +191,7 @@ abstract class BlockBase
      *
      * @return Collection
      */
-    public function getFormColumns() : Collection
+    public function getFormColumns(): Collection
     {
         // get custom_form_blocks from request
         $req_custom_form_blocks = old('custom_form_blocks');
@@ -224,27 +226,27 @@ abstract class BlockBase
         $key = $this->custom_form_block['id'] ?? $this->custom_form_block->request_key ?? 'NEW__'.make_uuid();
         return "custom_form_blocks[{$key}]";
     }
-    
+
 
     /**
      * Set formColumn list
      *
-     * @param  Collection  $custom_form_column_items    FormColumn list
+     * @param  Collection|\Tightenco\Collect\Support\Collection  $custom_form_column_items    FormColumn list
      *
      * @return  self
      */
-    public function setCustomFormColumnItems(Collection $custom_form_column_items)
+    public function setCustomFormColumnItems(Collection|\Tightenco\Collect\Support\Collection $custom_form_column_items)
     {
         $this->custom_form_column_items = $custom_form_column_items;
 
         return $this;
     }
-    
+
 
     /**
      * get Custom Form Boxes using custom_form_column_items. Contains row_no, column_no, width.
      *
-     * @return  array
+     * @return Collection|\Tightenco\Collect\Support\Collection
      */
     public function getCustomFormRows()
     {

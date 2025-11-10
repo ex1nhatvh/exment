@@ -1,4 +1,6 @@
-<?php namespace Exceedone\Exment\Revisionable;
+<?php
+
+namespace Exceedone\Exment\Revisionable;
 
 /*
  * This file is part of the Revisionable package by Venture Craft
@@ -33,17 +35,17 @@ trait RevisionableTrait
     private $updating = false;
 
     /**
-     * @var array
+     * @var array|null
      */
     private $dontKeep = array();
 
     /**
-     * @var array
+     * @var array|null
      */
     private $doKeep = array();
 
     /**
-     * @var array
+     * @var array|null
      */
     private $doKeepTrigger = array();
 
@@ -57,7 +59,7 @@ trait RevisionableTrait
     /**
      * Remove old revisions (works only when used with $historyLimit)
      *
-     * @var boolean
+     * @var boolean|null
      */
     protected $revisionCleanup = true;
 
@@ -125,8 +127,6 @@ trait RevisionableTrait
 
     /**
     * Invoked before a model is saved. Return false to abort the operation.
-    *
-    * @return bool
     */
     public function preSave()
     {
@@ -397,11 +397,10 @@ trait RevisionableTrait
     {
         foreach ($revisions as $revision) {
             // get revision_no
-            $exists_revision_no = Revision
-                ::where('revisionable_type', array_get($revision, 'revisionable_type'))
+            $exists_revision_no = Revision::where('revisionable_type', array_get($revision, 'revisionable_type'))
                 ->where('revisionable_id', array_get($revision, 'revisionable_id'))
                 ->max('revision_no') + 1;
-            $obj_revision = new Revision;
+            $obj_revision = new Revision();
             $obj_revision->revision_no = $exists_revision_no;
             foreach ($revision as $key => $r) {
                 $obj_revision->{$key} = $r;
@@ -413,8 +412,7 @@ trait RevisionableTrait
     protected function forceDeleteData($revisions)
     {
         foreach ($revisions as $revision) {
-            Revision
-                ::where('revisionable_type', array_get($revision, 'revisionable_type'))
+            Revision::where('revisionable_type', array_get($revision, 'revisionable_type'))
                 ->where('revisionable_id', array_get($revision, 'revisionable_id'))
                 ->forceDelete();
         }
@@ -484,7 +482,7 @@ trait RevisionableTrait
         if (isset($this->doKeepTrigger) && array_has($this->doKeepTrigger, $key)) {
             return true;
         }
-        
+
         return false;
     }
 
@@ -496,11 +494,13 @@ trait RevisionableTrait
     private function isSoftDelete()
     {
         // check flag variable used in laravel 4.2+
+        /** @phpstan-ignore-next-line Property Exceedone\Exment\Model\CustomValue::$forceDeleting (bool) in isset() is not nullable. */
         if (isset($this->forceDeleting)) {
             return !$this->forceDeleting;
         }
 
         // otherwise, look for flag used in older versions
+        /** @phpstan-ignore-next-line Unreachable statement - code above always terminates. */
         if (isset($this->softDelete)) {
             return $this->softDelete;
         }
@@ -590,8 +590,8 @@ trait RevisionableTrait
             unset($donts);
         }
     }
-    
-    
+
+
     /**
      * get sorted jon object
      *

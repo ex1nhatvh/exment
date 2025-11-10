@@ -20,7 +20,7 @@ class ApiSettingController extends AdminControllerBase
     {
         $this->setPageInfo(exmtrans("api.header"), exmtrans("api.header"), exmtrans("api.description"), 'fa-code-fork');
     }
-    
+
     /**
      * Make a grid builder.
      *
@@ -28,7 +28,7 @@ class ApiSettingController extends AdminControllerBase
      */
     protected function grid()
     {
-        $grid = new Grid(new ApiClient);
+        $grid = new Grid(new ApiClient());
         $grid->column('client_type_text', exmtrans('api.client_type_text'));
         $grid->column('name', exmtrans('api.app_name'));
         $grid->column('id', exmtrans('api.client_id'));
@@ -36,7 +36,7 @@ class ApiSettingController extends AdminControllerBase
         $grid->column('user_id', exmtrans('common.created_user'))->display(function ($user_id) {
             return getUserName($user_id, true);
         })->escape(false);
-        
+
         $grid->filter(function ($filter) {
             $filter->disableIdFilter();
 
@@ -73,17 +73,18 @@ class ApiSettingController extends AdminControllerBase
     /**
      * Make a form builder.
      *
-     * @return Form
+     * @param $id
+     * @return Form|false
      */
     protected function form($id = null)
     {
-        $form = new Form(new ApiClient);
+        $form = new Form(new ApiClient());
         $client = ApiClient::find($id);
         if (isset($id) && !isset($client)) {
             Checker::notFoundOrDeny();
             return false;
         }
-        
+
         $form->descriptionHtml(exmtrans('common.help.more_help'));
 
         if (!isset($id)) {
@@ -96,7 +97,7 @@ class ApiSettingController extends AdminControllerBase
             $form->display('client_type_text', exmtrans('api.client_type_text'));
             $form->hidden('client_type');
         }
-        
+
         $form->text('name', exmtrans('api.app_name'))->required();
 
         ///// toggle showing redirect
@@ -146,9 +147,9 @@ class ApiSettingController extends AdminControllerBase
     }
 
     /**
-     * @param int $id
-     *
-     * @return \Illuminate\Http\Response
+     * @param $id
+     * @return Response
+     * @throws \Exception
      */
     public function update($id)
     {
@@ -158,20 +159,23 @@ class ApiSettingController extends AdminControllerBase
     /**
      * create or update data
      *
-     * @param string $id
-     * @return Response
+     * @param $id
+     * @return \Illuminate\Contracts\Foundation\Application|\Illuminate\Http\RedirectResponse|\Illuminate\Routing\Redirector|true
+     * @throws \Psr\Container\ContainerExceptionInterface
+     * @throws \Psr\Container\NotFoundExceptionInterface
+     * @throws \Throwable
      */
     protected function saveData($id = null)
     {
         $request = request();
-        
+
         // validation
         $form = $this->form($id);
         if (($response = $form->validateRedirect($request->all())) instanceof \Illuminate\Http\RedirectResponse) {
             return $response;
         }
 
-        $clientRepository = new ApiClientRepository;
+        $clientRepository = new ApiClientRepository();
         DB::beginTransaction();
         try {
             $client = null;

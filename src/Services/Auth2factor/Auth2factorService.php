@@ -8,6 +8,7 @@ use Exceedone\Exment\Model\CustomValue;
 use Exceedone\Exment\Enums\SystemTableName;
 use Exceedone\Exment\Enums\UserSetting;
 use Exceedone\Exment\Enums\Login2FactorProviderType;
+use Symfony\Component\Mailer\Exception\TransportExceptionInterface;
 
 /**
  * For login 2 factor
@@ -43,7 +44,7 @@ class Auth2factorService
             throw new \Exception("Login 2factor provider [$provider] does not exist.");
         }
 
-        return new static::$providers[$provider];
+        return new static::$providers[$provider]();
     }
 
     /**
@@ -52,7 +53,7 @@ class Auth2factorService
      * @param string $verify_type
      * @param string $verify_code
      * @param bool $matchDelete if true, remove match records
-     * @return bool
+     * @return mixed|bool
      */
     public static function verifyCode($verify_type, $verify_code, $matchDelete = false)
     {
@@ -87,7 +88,7 @@ class Auth2factorService
      * Add database and Send verify
      *
      * @param string $verify_type
-     * @param string $verify_code
+     * @param string|int $verify_code
      * @param \Carbon\Carbon $valid_period_datetime
      * @param string|CustomValue $mail_template
      * @param array $mail_prms
@@ -104,12 +105,12 @@ class Auth2factorService
             return true;
         }
         // throw mailsend Exception
-        catch (\Swift_TransportException $ex) {
+        catch (TransportExceptionInterface $ex) {
             \Log::error($ex);
             return false;
         }
     }
-    
+
     /**
      * Add database
      *
@@ -136,7 +137,7 @@ class Auth2factorService
 
         return true;
     }
-    
+
     /**
      * Send verify
      *
@@ -144,7 +145,7 @@ class Auth2factorService
      * @param array $mail_prms
      * @return MailSender
      */
-    protected static function sendVerify($mail_template, $mail_prms = []) : MailSender
+    protected static function sendVerify($mail_template, $mail_prms = []): MailSender
     {
         $loginuser = \Admin::user();
 

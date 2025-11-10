@@ -16,10 +16,12 @@ use Exceedone\Exment\Model\CustomTable;
  * (c) Venture Craft <http://www.venturecraft.com.au>
  */
 
-/*
+/**
  * Customized for Exment
+ * @property mixed $revision_no
+ * @property mixed $revisionable_id
+ * @property mixed $revisionable_type
  */
-
 class Revision extends Eloquent
 {
     use \Exceedone\Exment\Model\Traits\AutoSUuidTrait;
@@ -54,10 +56,9 @@ class Revision extends Eloquent
 
     /**
      * Revisionable.
-     *
      * Grab the revision history for the model that is calling
      *
-     * @return array revision history
+     * @return \Illuminate\Database\Eloquent\Relations\MorphTo
      */
     public function revisionable()
     {
@@ -70,7 +71,7 @@ class Revision extends Eloquent
      * Returns the field that was updated, in the case that it's a foreign key
      * denoted by a suffix of "_id", then "_id" is simply stripped
      *
-     * @return string field
+     * @return array|bool|Revision|string|string[]
      */
     public function fieldName()
     {
@@ -95,7 +96,7 @@ class Revision extends Eloquent
     private function formatFieldName($key)
     {
         $related_model = $this->revisionable_type;
-        $related_model = new $related_model;
+        $related_model = new $related_model();
         $revisionFormattedFieldNames = $related_model->getRevisionFormattedFieldNames();
 
         if (isset($revisionFormattedFieldNames[$key])) {
@@ -149,7 +150,7 @@ class Revision extends Eloquent
         $main_model = $this->revisionable_type;
         // Load it, WITH the related model
         if (class_exists($main_model)) {
-            $main_model = new $main_model;
+            $main_model = new $main_model();
 
             try {
                 if ($this->isRelated()) {
@@ -169,12 +170,12 @@ class Revision extends Eloquent
                     $item = $related_class::find($this->$which_value);
 
                     if (is_null($this->$which_value) || $this->$which_value == '') {
-                        $item = new $related_class;
+                        $item = new $related_class();
 
                         return $item->getRevisionNullString();
                     }
                     if (!$item) {
-                        $item = new $related_class;
+                        $item = new $related_class();
 
                         return $this->format($this->key, $item->getRevisionUnknownString());
                     }
@@ -302,7 +303,7 @@ class Revision extends Eloquent
     public function format($key, $value)
     {
         $related_model = $this->revisionable_type;
-        $related_model = new $related_model;
+        $related_model = new $related_model();
         $revisionFormattedFields = $related_model->getRevisionFormattedFields();
 
         if (isset($revisionFormattedFields[$key])) {
@@ -311,7 +312,7 @@ class Revision extends Eloquent
             return $value;
         }
     }
-    
+
     /**
      * get user from id
      */

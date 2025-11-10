@@ -4,9 +4,9 @@ namespace Exceedone\Exment\Controllers;
 
 use App\Http\Controllers\Controller;
 use Encore\Admin\Facades\Admin;
-use Encore\Admin\Form;
 use Encore\Admin\Grid;
 use Encore\Admin\Grid\Linker;
+use Encore\Admin\Form;
 use Encore\Admin\Widgets\Form as WidgetForm;
 use Encore\Admin\Widgets\Box;
 use Encore\Admin\Layout\Content;
@@ -42,7 +42,7 @@ class CustomFormController extends AdminControllerTableBase
     public function __construct(?CustomTable $custom_table, Request $request)
     {
         parent::__construct($custom_table, $request);
-        
+
         $title = exmtrans("custom_form.header") . ' : ' . ($custom_table ? $custom_table->table_view_name : null);
         $this->setPageInfo($title, $title, exmtrans("custom_form.description"), 'fa-keyboard-o');
     }
@@ -50,7 +50,9 @@ class CustomFormController extends AdminControllerTableBase
     /**
      * Index interface.
      *
-     * @return Content
+     * @param Request $request
+     * @param Content $content
+     * @return Content|void
      */
     public function index(Request $request, Content $content)
     {
@@ -65,7 +67,7 @@ class CustomFormController extends AdminControllerTableBase
         if ($this->custom_table->hasPermission(Permission::EDIT_CUSTOM_FORM)) {
             $content->row($this->setFormPriorities());
         }
-        
+
         // public form
         if ($this->enablePublicForm()) {
             $content->row($this->setFormPublics());
@@ -81,7 +83,7 @@ class CustomFormController extends AdminControllerTableBase
      */
     protected function setFormPriorities()
     {
-        $grid = new Grid(new CustomFormPriority);
+        $grid = new Grid(new CustomFormPriority());
         $grid->setName('custom_form_priproties');
         $grid->model()->orderBy('order');
         $grid->setTitle(exmtrans("custom_form.priority.title"));
@@ -96,13 +98,13 @@ class CustomFormController extends AdminControllerTableBase
                 ->join('custom_forms', 'custom_forms.id', '=', 'custom_form_priorities.custom_form_id')
                 ->where('custom_forms.custom_table_id', $this->custom_table->id);
         }
-        
+
         $grid->tools(function (Grid\Tools $tools) {
             $tools->batch(function (Grid\Tools\BatchActions $actions) {
                 $actions->disableDelete();
             });
         });
-        
+
         $grid->disableExport();
         $grid->disableRowSelector();
         $grid->disableFilter();
@@ -110,7 +112,7 @@ class CustomFormController extends AdminControllerTableBase
             $actions->disableView();
             // $actions->disableDelete();
         });
-        
+
         return $grid;
     }
 
@@ -122,11 +124,11 @@ class CustomFormController extends AdminControllerTableBase
      */
     protected function setFormPublics()
     {
-        $grid = new Grid(new PublicForm);
+        $grid = new Grid(new PublicForm());
         $grid->setName('public_forms');
         $grid->setTitle(exmtrans("custom_form.public_form.title"));
         $grid->setResource(admin_urls('formpublic', $this->custom_table->table_name));
-        
+
         $grid->column('form_view_name', exmtrans("custom_form_public.custom_form_id"));
         $grid->column('public_form_view_name', exmtrans("custom_form_public.public_form_view_name"));
         $grid->column('active_flg', exmtrans("plugin.active_flg"))->display(function ($val) {
@@ -151,7 +153,7 @@ class CustomFormController extends AdminControllerTableBase
                 ->join('custom_forms', 'custom_forms.id', '=', 'public_forms.custom_form_id')
                 ->where('custom_forms.custom_table_id', $this->custom_table->id);
         }
-        
+
         $grid->tools(function (Grid\Tools $tools) {
             $tools->batch(function (Grid\Tools\BatchActions $actions) {
                 $actions->disableDelete();
@@ -164,7 +166,7 @@ class CustomFormController extends AdminControllerTableBase
                 'label' => exmtrans('custom_form_public.create_template'),
             ]));
         });
-        
+
         $grid->disableExport();
         $grid->disableRowSelector();
         $grid->disableFilter();
@@ -172,7 +174,7 @@ class CustomFormController extends AdminControllerTableBase
             $actions->disableView();
             // $actions->disableDelete();
         });
-        
+
         return $grid;
     }
 
@@ -193,23 +195,22 @@ class CustomFormController extends AdminControllerTableBase
             $custom_form_priority = CustomFormPriority::find($id);
             $custom_form_priority->order = $column_value;
             $result = $custom_form_priority->save();
-    
+
             if ($result) {
                 admin_toastr(trans('admin.save_succeeded'));
             }
             //            return back()->withInput();
         }
     }
-    
 
     /**
      * Edit
      *
      * @param Request $request
      * @param Content $content
-     * @param string $tableKey
-     * @param string|int|null $id
-     * @return void|Response
+     * @param $tableKey
+     * @param $id
+     * @return Content|void
      */
     public function edit(Request $request, Content $content, $tableKey, $id)
     {
@@ -225,12 +226,11 @@ class CustomFormController extends AdminControllerTableBase
         return $content;
     }
 
-    
     /**
      * Showing preview
      *
      * @param Request $request
-     * @return void
+     * @return Content
      */
     public function preview(Request $request)
     {
@@ -254,28 +254,26 @@ class CustomFormController extends AdminControllerTableBase
         return $this->getPreviewContent($request, $custom_form);
     }
 
-    
-
     /**
      * Preview error. (If called as GET request)
      *
      * @param Request $request
-     * @return void
+     * @return Content
      */
     public function previewError(Request $request)
     {
-        $content = new Content;
+        $content = new Content();
         $content->withError(exmtrans('common.error'), exmtrans('common.message.preview_error'));
         return $content;
     }
 
-    
     /**
      * Showing preview by id
      *
      * @param Request $request
+     * @param string $tableKey
      * @param string $suuid
-     * @return void
+     * @return Content
      */
     public function previewBySuuid(Request $request, string $tableKey, string $suuid)
     {
@@ -284,27 +282,32 @@ class CustomFormController extends AdminControllerTableBase
     }
 
 
+    /**
+     * @param Request $request
+     * @param CustomForm $custom_form
+     * @return Content
+     */
     protected function getPreviewContent(Request $request, CustomForm $custom_form)
     {
         $form_item = $custom_form->form_item;
         $form = $form_item->disableToolsButton()->disableSavingButton()->form();
 
-        $content = new Content;
+        $content = new Content();
         $this->setPageInfo($this->custom_table->table_view_name, $this->custom_table->table_view_name, $this->custom_table->description, $this->custom_table->getOption('icon'));
         $this->AdminContent($content);
         $content->row($form);
-        
+
         admin_info(exmtrans('common.preview'), exmtrans('common.message.preview'));
 
         return $content;
     }
 
-
-
     /**
      * Create interface.
      *
-     * @return Content
+     * @param Request $request
+     * @param Content $content
+     * @return Content|void
      */
     public function create(Request $request, Content $content)
     {
@@ -323,9 +326,11 @@ class CustomFormController extends AdminControllerTableBase
     /**
      * Update the specified resource in storage.
      *
-     * @param int $id
-     *
-     * @return \Illuminate\Http\Response
+     * @param Request $request
+     * @param $tableKey
+     * @param $id
+     * @return \Illuminate\Contracts\Foundation\Application|\Illuminate\Http\RedirectResponse|\Illuminate\Routing\Redirector|null
+     * @throws \Exception
      */
     public function update(Request $request, $tableKey, $id)
     {
@@ -348,7 +353,9 @@ class CustomFormController extends AdminControllerTableBase
     /**
      * Store a newly created resource in storage.
      *
-     * @return \Illuminate\Http\Response
+     * @param Request $request
+     * @return \Illuminate\Contracts\Foundation\Application|\Illuminate\Http\RedirectResponse|\Illuminate\Routing\Redirector|null
+     * @throws \Exception
      */
     public function store(Request $request)
     {
@@ -377,7 +384,7 @@ class CustomFormController extends AdminControllerTableBase
      */
     protected function grid()
     {
-        $grid = new Grid(new CustomForm);
+        $grid = new Grid(new CustomForm());
         $grid->setName('custom_forms');
         $grid->column('custom_table.table_name', exmtrans("custom_table.table_name"))->sortable();
         $grid->column('custom_table.table_view_name', exmtrans("custom_table.table_view_name"))->sortable();
@@ -389,9 +396,10 @@ class CustomFormController extends AdminControllerTableBase
         if (isset($this->custom_table)) {
             $grid->model()->where('custom_table_id', $this->custom_table->id);
         }
-        
+
         $custom_table = $this->custom_table;
         $grid->tools(function (Grid\Tools $tools) {
+            /**@phpstan-ignore-next-line append() expects Encore\Admin\Grid\Tools\AbstractTool|string, Exceedone\Exment\Form\Tools\CustomTableMenuButton given */
             $tools->append(new Tools\CustomTableMenuButton('form', $this->custom_table));
             $tools->batch(function (Grid\Tools\BatchActions $actions) {
                 $actions->disableDelete();
@@ -400,9 +408,8 @@ class CustomFormController extends AdminControllerTableBase
 
         $grid->disableExport();
         $grid->disableRowSelector();
-        
-        if ($custom_table->hasPermission(Permission::EDIT_CUSTOM_FORM)) {
-        } else {
+
+        if (!$custom_table->hasPermission(Permission::EDIT_CUSTOM_FORM)) {
             $grid->disableCreateButton();
         }
 
@@ -410,7 +417,7 @@ class CustomFormController extends AdminControllerTableBase
             $actions->disableView();
 
             // append preview
-            $linker = (new Linker)
+            $linker = (new Linker())
                     ->url(admin_urls('form', $custom_table->table_name, "preview", $actions->row->suuid))
                     ->icon('fa-check-circle')
                     ->linkattributes(['target' => '_blank'])
@@ -419,7 +426,7 @@ class CustomFormController extends AdminControllerTableBase
 
             // checking edit permission
             if ($custom_table->hasPermission(Permission::EDIT_CUSTOM_FORM)) {
-                $linker = (new Linker)
+                $linker = (new Linker())
                     ->url(admin_urls('form', $custom_table->table_name, "create?copy_id={$actions->row->id}"))
                     ->icon('fa-copy')
                     ->tooltip(exmtrans('common.copy_item', exmtrans('custom_form.default_form_name')));
@@ -429,7 +436,7 @@ class CustomFormController extends AdminControllerTableBase
                 $actions->disableEdit();
             }
         });
-        
+
         // filter
         $grid->filter(function ($filter) {
             // Remove the default id filter
@@ -437,18 +444,22 @@ class CustomFormController extends AdminControllerTableBase
 
             // Add a column filter
             $filter->like('form_view_name', exmtrans("custom_form.form_view_name"));
-            
+
             $filter->equal('default_flg', exmtrans("custom_form.default_flg"))->radio(\Exment::getYesNoAllOption());
         });
 
         return $grid;
     }
-    
+
     /**
-     *
      * Make a form
      *
-     * @return Form
+     * @param $content
+     * @param $id
+     * @param $copy_id
+     * @return void
+     * @throws \Psr\Container\ContainerExceptionInterface
+     * @throws \Psr\Container\NotFoundExceptionInterface
      */
     protected function createForm($content, $id = null, $copy_id = null)
     {
@@ -460,7 +471,7 @@ class CustomFormController extends AdminControllerTableBase
                 $form->form_view_name = '';
                 $form->default_flg = '0';
             } else {
-                $form = new CustomForm;
+                $form = new CustomForm();
             }
         }
         $form->append(['show_grid_type', 'form_label_type']);
@@ -485,16 +496,17 @@ class CustomFormController extends AdminControllerTableBase
         ]));
     }
 
-
     /**
      * Get header box ex. view name, label, default flg....
      *
      * @param CustomForm|null $custom_form
+     * @param string $formroot
      * @return Box
      */
     protected function getHeaderBox(?CustomForm $custom_form, string $formroot)
     {
         ///// set default setting
+        /** @phpstan-ignore-next-line constructor expects array, Exceedone\Exment\Model\CustomForm|null given */
         $form = new WidgetForm($custom_form);
         $form->disableSubmit()->disableReset()->onlyRenderFields();
 
@@ -507,17 +519,17 @@ class CustomFormController extends AdminControllerTableBase
         $form->switchbool('default_flg', exmtrans('custom_form.default_flg'))
             ->default(false);
 
-        
+
         $form->radio('show_grid_type', exmtrans('custom_form.show_grid_type'))
             ->help(exmtrans('custom_form.help.show_grid_type'))
             ->default(ShowGridType::GRID)
             ->options(ShowGridType::transArray('custom_form.show_grid_type_options'));
-        
+
         $form->radio('form_label_type', exmtrans('custom_form.form_label_type'))
             ->help(exmtrans('custom_form.help.form_label_type'))
             ->default(FormLabelType::HORIZONTAL)
             ->options(FormLabelType::transArrayFilter('custom_form.form_label_type_options', FormLabelType::getFormLabelTypes()));
-         
+        /** @phpstan-ignore-next-line  constructor expects string, Encore\Admin\Widgets\Form given */
         $box = new Box(exmtrans('custom_form.header_basic_setting'), $form);
         $box->tools(view('exment::tools.button', [
             'href' => 'javascript:void(0);',
@@ -532,7 +544,7 @@ class CustomFormController extends AdminControllerTableBase
             'btn_class' => 'btn-default',
         ])->render());
         $box->tools((new Tools\CustomTableMenuButton('form', $this->custom_table))->render());
-        
+
         return $box;
     }
 
@@ -565,7 +577,7 @@ class CustomFormController extends AdminControllerTableBase
         // "many-to-many tables" have only use or not use relation.
         // define relation tables
         $relations = $this->custom_table->custom_relations;
-            
+
         // check relation define.if not exists in custom_form_blocks, add define.
         foreach ($relations as $relation) {
             if (!collect($custom_form_block_items)->first(function ($custom_form_block_item) use ($relation) {
@@ -592,7 +604,9 @@ class CustomFormController extends AdminControllerTableBase
         $req_custom_form_blocks = old('custom_form_blocks');
         if (!isset($req_custom_form_blocks)
         ) {
-            return $form->custom_form_blocks;
+            return $form->custom_form_blocks->sortBy(function ($item, $key) {
+                return $item->getOption('form_block_order')?? 0;
+            });
         }
 
         return collect($req_custom_form_blocks)->map(function ($req_custom_form_block, $key) {
@@ -646,7 +660,7 @@ class CustomFormController extends AdminControllerTableBase
         // }
 
         return \Validator::make($request->all(), [
-            'custom_form_blocks.*.custom_form_columns.*.options.image' => ['nullable', new \Exceedone\Exment\Validator\ImageRule],
+            'custom_form_blocks.*.custom_form_columns.*.options.image' => ['nullable', new \Exceedone\Exment\Validator\ImageRule()],
         ]);
     }
 
@@ -713,7 +727,7 @@ class CustomFormController extends AdminControllerTableBase
      *     'deletes' => [(column_ids)],
      * ]
      */
-    protected function getModelFromRequest(Request $request, $id = null, $isPrepareOptions = true) : array
+    protected function getModelFromRequest(Request $request, $id = null, $isPrepareOptions = true): array
     {
         $result = [
             'custom_form_blocks' => [],
@@ -723,7 +737,7 @@ class CustomFormController extends AdminControllerTableBase
 
         // create form (if new form) --------------------------------------------------
         if (!isset($id)) {
-            $form = new CustomForm;
+            $form = new CustomForm();
             $form->custom_table_id = $this->custom_table->id;
             $is_new = true;
         } else {
@@ -742,7 +756,7 @@ class CustomFormController extends AdminControllerTableBase
             // create blocks --------------------------------------------------
             // if key is "NEW_", create new block
             if (starts_with($key, 'NEW_') || $is_new) {
-                $block = new CustomFormBlock;
+                $block = new CustomFormBlock();
                 $block->custom_form_id = $id;
                 $block->form_block_type = array_get($value, 'form_block_type');
                 $block->form_block_target_table_id = array_get($value, 'form_block_target_table_id');
@@ -752,7 +766,7 @@ class CustomFormController extends AdminControllerTableBase
             $block->available = array_get($value, 'available') ?? 0;
             $block->form_block_view_name = array_get($value, 'form_block_view_name');
             $block->options = array_get($value, 'options', []);
-            
+
             // create columns --------------------------------------------------
             $order = 1;
 
@@ -776,7 +790,7 @@ class CustomFormController extends AdminControllerTableBase
                     }
                     continue;
                 } elseif ($new_column) {
-                    $column = new CustomFormColumn;
+                    $column = new CustomFormColumn();
                     $column->custom_form_block_id = $block->id;
                     $column->form_column_type = array_get($column_value, 'form_column_type');
                     if (is_null(array_get($column_value, 'form_column_target_id'))) {
@@ -823,7 +837,7 @@ class CustomFormController extends AdminControllerTableBase
                     $new_columns[$column_key] = $column;
                 }
             }
-            
+
             $result_block['custom_form_block'] = $block;
             $result['custom_form_blocks'][] = $result_block;
         }
@@ -843,12 +857,11 @@ class CustomFormController extends AdminControllerTableBase
         });
     }
 
-    
     /**
      * Get setting modal
      *
      * @param Request $request
-     * @return void
+     * @return Response
      */
     public function settingModal(Request $request)
     {
@@ -871,6 +884,7 @@ class CustomFormController extends AdminControllerTableBase
 
         return getAjaxResponse([
             'body'  => $form->render(),
+            /** @phpstan-ignore-next-line Result of method Encore\Admin\Widgets\Form::getScript() (void) is used. need to fix laravel-admin */
             'script' => $form->getScript(),
             'title' => trans('admin.setting'),
             'modalSize' => 'modal-xl',
@@ -880,7 +894,6 @@ class CustomFormController extends AdminControllerTableBase
             'showReset' => true,
         ]);
     }
-
 
     /**
      * Save attachment and get column name
@@ -924,7 +937,7 @@ class CustomFormController extends AdminControllerTableBase
     }
 
 
-    protected function enablePublicForm() : bool
+    protected function enablePublicForm(): bool
     {
         if (!System::publicform_available()) {
             return false;

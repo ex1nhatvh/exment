@@ -41,7 +41,7 @@ class RefreshDataCommand extends Command
     /**
      * Execute the console command.
      *
-     * @return int
+     * @return int|void
      */
     public function handle()
     {
@@ -50,7 +50,7 @@ class RefreshDataCommand extends Command
         }
 
         RefreshDataService::refresh();
-        
+
         return 0;
     }
 }

@@ -2,15 +2,26 @@
 
 namespace Exceedone\Exment\Model;
 
+use Exceedone\Exment\Database\Eloquent\ExtendedBuilder;
 use Exceedone\Exment\Enums\CopyColumnType;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
+/**
+ * @phpstan-consistent-constructor
+ * @property mixed $from_custom_table_id
+ * @method static int count($columns = '*')
+ * @method static ExtendedBuilder whereIn($column, $values, $boolean = 'and', $not = false)
+ * @method static ExtendedBuilder orderBy($column, $direction = 'asc')
+ * @method static ExtendedBuilder create(array $attributes = [])
+ */
 class CustomCopy extends ModelBase implements Interfaces\TemplateImporterInterface
 {
     use Traits\UseRequestSessionTrait;
     use Traits\AutoSUuidTrait;
     use Traits\DatabaseJsonOptionTrait;
     use Traits\TemplateTrait;
-    
+
     protected $casts = ['options' => 'json'];
 
     public static $templateItems = [
@@ -44,29 +55,29 @@ class CustomCopy extends ModelBase implements Interfaces\TemplateImporterInterfa
             'custom_copy_input_columns' => CustomCopyColumn::class,
         ],
     ];
-    
-    public function from_custom_table()
+
+    public function from_custom_table(): BelongsTo
     {
         return $this->belongsTo(CustomTable::class, 'from_custom_table_id');
     }
 
-    public function to_custom_table()
+    public function to_custom_table(): BelongsTo
     {
         return $this->belongsTo(CustomTable::class, 'to_custom_table_id');
     }
 
-    public function custom_copy_columns()
+    public function custom_copy_columns(): HasMany
     {
         return $this->hasMany(CustomCopyColumn::class, 'custom_copy_id')
         ->where('copy_column_type', CopyColumnType::DEFAULT);
     }
 
-    public function custom_copy_input_columns()
+    public function custom_copy_input_columns(): HasMany
     {
         return $this->hasMany(CustomCopyColumn::class, 'custom_copy_id')
         ->where('copy_column_type', CopyColumnType::INPUT);
     }
-    
+
     /**
      * execute data copy with request parameter
      */
@@ -74,7 +85,7 @@ class CustomCopy extends ModelBase implements Interfaces\TemplateImporterInterfa
     {
         return $this->execute($from_custom_value, $request->all());
     }
-    
+
     /**
      * execute data copy
      */
@@ -92,6 +103,7 @@ class CustomCopy extends ModelBase implements Interfaces\TemplateImporterInterfa
 
             $child_copy_id = $this->getOption('child_copy');
             if (isset($child_copy_id)) {
+                /** @var CustomCopy $child_copy */
                 $child_copy = static::find($child_copy_id);
 
                 // get from-children values
@@ -116,7 +128,7 @@ class CustomCopy extends ModelBase implements Interfaces\TemplateImporterInterfa
 
             return true;
         });
-        
+
         return [
             'result'  => true,
             'toastr' => sprintf(exmtrans('common.message.success_execute')),
@@ -135,7 +147,7 @@ class CustomCopy extends ModelBase implements Interfaces\TemplateImporterInterfa
     ) {
         // get to_custom_value model
         $to_modelname = getModelName($to_custom_table);
-        $to_custom_value = new $to_modelname;
+        $to_custom_value = new $to_modelname();
 
         // set system column
         $to_custom_value->parent_id = $from_custom_value->parent_id;
@@ -159,7 +171,7 @@ class CustomCopy extends ModelBase implements Interfaces\TemplateImporterInterfa
             if ($skipParent && $tokeys == Define::PARENT_ID_NAME) {
                 continue;
             }
-    
+
             $tokeys = explode('.', $tokeys);
             if (count($tokeys) > 1 && $tokeys[0] == 'value') {
                 $to_custom_value->setValue($tokeys[1], $val);
@@ -183,12 +195,12 @@ class CustomCopy extends ModelBase implements Interfaces\TemplateImporterInterfa
         $to_custom_value->saveOrFail();
         return $to_custom_value;
     }
-    
+
     protected static function getColumnValueKey($condition_item, $column_type_target, $custom_column)
     {
         return $condition_item ? $condition_item->getColumnValueKey($column_type_target, $custom_column) : null;
     }
-    
+
     /**
      * get eloquent using request settion.
      * now only support only id.
@@ -197,7 +209,7 @@ class CustomCopy extends ModelBase implements Interfaces\TemplateImporterInterfa
     {
         return static::getEloquentDefault($id, $withs);
     }
-        
+
     public function deletingChildren()
     {
         $this->custom_copy_columns()->delete();
@@ -207,7 +219,7 @@ class CustomCopy extends ModelBase implements Interfaces\TemplateImporterInterfa
     protected static function boot()
     {
         parent::boot();
-        
+
         static::deleting(function ($model) {
             $model->deletingChildren();
         });

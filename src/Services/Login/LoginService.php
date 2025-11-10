@@ -1,4 +1,5 @@
 <?php
+
 namespace Exceedone\Exment\Services\Login;
 
 use Exceedone\Exment\Exceptions\SsoLoginErrorException;
@@ -16,8 +17,10 @@ use Exceedone\Exment\Enums\SsoLoginErrorType;
 use Exceedone\Exment\Enums\FileType;
 use Exceedone\Exment\Form\Tools;
 use Exceedone\Exment\Form\Widgets\ModalForm;
+use Exceedone\Exment\Services\Login\OAuth\OAuthUser;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
+use Symfony\Component\Mailer\Exception\TransportExceptionInterface;
 
 /**
  * LoginService
@@ -29,7 +32,8 @@ class LoginService
      *
      * @param LoginUser|CustomValue $user CustomValue(user) or login user
      * @param array $options
-     * @return void
+     * @return \Illuminate\Http\RedirectResponse|void
+     * @throws \Exception
      */
     public static function resetPassword($user, array $options = [])
     {
@@ -38,7 +42,7 @@ class LoginService
             'password_reset_flg' => false,  // whether reset password flg first login.
             'password' => null, // password string.
         ], $options);
-        
+
         $send_password = $options['send_password'];
         $password_reset_flg = $options['password_reset_flg'];
         $password = $options['password'];
@@ -66,7 +70,7 @@ class LoginService
                     $login_user->sendPassword($password);
                 }
                 // throw mailsend Exception
-                catch (\Swift_TransportException $ex) {
+                catch (TransportExceptionInterface $ex) {
                     \Log::error($ex);
                     admin_error(exmtrans('error.header'), exmtrans('error.mailsend_failed'));
                     return back()->withInput();
@@ -120,7 +124,7 @@ class LoginService
     {
         return static::getToken()['access_token'];
     }
-    
+
     /**
      * Get refresh token
      *
@@ -193,7 +197,7 @@ class LoginService
         array_walk($errors, function ($x) use (&$res) {
             $res=array_merge($res, $x);
         });
-        
+
         return $res;
     }
 
@@ -214,7 +218,7 @@ class LoginService
         // In other cases, no validation will be performed and an empty array will be returned.
         return [];
     }
-    
+
     /**
      * check if need validate user data.
      *
@@ -282,7 +286,7 @@ class LoginService
                 'user_name',
                 'email',
             ];
-    
+
             foreach ($keys as $key) {
                 $message[] = exmtrans("user.$key") . ' : ' . $custom_login_user->mapping_values[$key];
             }
@@ -329,7 +333,7 @@ class LoginService
 
         return $form;
     }
-    
+
     public static function appendActivateSwalButtonSso($tools, LoginSetting $login_setting)
     {
         if (!$login_setting->active_flg) {
@@ -365,7 +369,7 @@ class LoginService
      * @param \Exceedone\Exment\Auth\ProviderAvatar $socialiteProvider
      * @return LoginUser|null
      */
-    public static function executeLogin(Request $request, CustomLoginUserBase $custom_login_user, $socialiteProvider = null) : ?LoginUser
+    public static function executeLogin(Request $request, CustomLoginUserBase $custom_login_user, $socialiteProvider = null): ?LoginUser
     {
         // if not accept domain, return error.
         if (!static::isAcceptFromDomain($custom_login_user)) {
@@ -382,7 +386,7 @@ class LoginService
         }
 
         $login_user = static::getLoginUser($custom_login_user, $exment_user, $socialiteProvider);
-        
+
         // Set custom_login_user to request session
         System::setRequestSession(Define::SYSTEM_KEY_SESSION_CUSTOM_LOGIN_USER, $custom_login_user);
 
@@ -413,7 +417,7 @@ class LoginService
 
         return false;
     }
-    
+
     /**
      * get exment user from users table
      *
@@ -422,8 +426,7 @@ class LoginService
      */
     public static function getExmentUser(CustomLoginUserBase $custom_login_user, bool $isUpdate = true)
     {
-        $exment_user = getModelName(SystemTableName::USER)
-            ::where("value->{$custom_login_user->mapping_user_column}", $custom_login_user->login_id)
+        $exment_user = getModelName(SystemTableName::USER)::where("value->{$custom_login_user->mapping_user_column}", $custom_login_user->login_id)
             ->first();
         if (!isset($exment_user)) {
             return false;
@@ -453,7 +456,7 @@ class LoginService
      * @param CustomLoginUserBase $custom_login_user
      * @return ?CustomValue user model
      */
-    public static function createExmentUser(CustomLoginUserBase $custom_login_user) : ?CustomValue
+    public static function createExmentUser(CustomLoginUserBase $custom_login_user): ?CustomValue
     {
         if (!boolval($custom_login_user->login_setting->getOption('sso_jit'))) {
             throw new SsoLoginErrorException(SsoLoginErrorType::NOT_EXISTS_EXMENT_USER, exmtrans('login.noexists_user'));
@@ -470,7 +473,7 @@ class LoginService
 
             $exment_user->setValue($values);
             $exment_user->save();
-    
+
             // Set roles
             if (!is_nullorempty($jit_rolegroups = $custom_login_user->login_setting->getOption('jit_rolegroups'))) {
                 $jit_rolegroups = collect($jit_rolegroups)->map(function ($sso_rolegroup) use ($exment_user) {
@@ -480,7 +483,7 @@ class LoginService
                         'role_group_target_id' => $exment_user->id,
                     ];
                 })->toArray();
-                    
+
                 \DB::table(SystemTableName::ROLE_GROUP_USER_ORGANIZATION)->insert($jit_rolegroups);
             }
         });
@@ -488,7 +491,7 @@ class LoginService
         return $exment_user;
     }
 
-    
+
     /**
      * get login_user from login_users table
      *
@@ -497,7 +500,7 @@ class LoginService
      * @param \Exceedone\Exment\Auth\ProviderAvatar $socialiteProvider
      * @return LoginUser
      */
-    public static function getLoginUser(CustomLoginUserBase $custom_login_user, $exment_user, $socialiteProvider = null) : LoginUser
+    public static function getLoginUser(CustomLoginUserBase $custom_login_user, $exment_user, $socialiteProvider = null): LoginUser
     {
         $hasLoginUser = false;
         // get login_user
@@ -509,8 +512,9 @@ class LoginService
                 'login_type' => $custom_login_user->login_type,
             ]
         );
-        
+
         // if don't has, create loginuser or match email
+        /** @phpstan-ignore-next-line $hasLoginUser Negated boolean expression is always true. */
         if (!$hasLoginUser) {
             $login_user = LoginUser::firstOrNew([
                 'base_user_id' => $exment_user->getUserId(),
@@ -523,6 +527,7 @@ class LoginService
         }
 
         // get avatar
+        /** @phpstan-ignore-next-line $hasLoginUser Negated boolean expression is always true. */
         if (!$hasLoginUser || boolval($custom_login_user->login_setting->getOption('update_user_info'))) {
             $avatar  = static::getAvatar($custom_login_user, $socialiteProvider = null);
             if (isset($avatar)) {
@@ -539,6 +544,7 @@ class LoginService
         try {
             // if socialiteProvider implements ProviderAvatar, call getAvatar
             if (isset($socialiteProvider) && is_subclass_of($socialiteProvider, \Exceedone\Exment\Auth\ProviderAvatar::class)) {
+                /** @var OAuthUser $custom_login_user */
                 $stream = $socialiteProvider->getAvatar($custom_login_user->token);
             }
             // if user obj has avatar, download avatar.
@@ -565,11 +571,11 @@ class LoginService
     {
         return CustomTable::getEloquent(SystemTableName::USER)->custom_columns_cache;
     }
-    
+
     /**
      * Get the guard to be used during authentication.
      *
-     * @return \Illuminate\Contracts\Auth\StatefulGuard
+     * @return mixed
      */
     protected static function guard()
     {

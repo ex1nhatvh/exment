@@ -32,14 +32,14 @@ class InitTestCommand extends Command
     public function __construct()
     {
         parent::__construct();
-        
+
         $this->initExmentCommand();
     }
 
     /**
      * Execute the console command.
      *
-     * @return int
+     * @return int|void
      */
     public function handle()
     {
@@ -48,14 +48,14 @@ class InitTestCommand extends Command
         }
 
         $this->call('cache:clear');
-        
+
         $this->call('migrate:reset');
 
         System::clearCache();
         $this->call('exment:install');
 
         System::clearCache();
-        
+
         $this->call('db:seed', ['--class' => Seeder\TestDataSeeder::class]);
         $this->call('db:seed', ['--class' => Seeder\WorkflowTestDataSeeder::class]);
         return 0;

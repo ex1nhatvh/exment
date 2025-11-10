@@ -9,6 +9,7 @@ use Encore\Admin\Widgets\Box;
 use Exceedone\Exment\Model\Define;
 use Exceedone\Exment\Model\Plugin;
 use Exceedone\Exment\Enums\Permission;
+use Illuminate\Contracts\Filesystem\FileNotFoundException;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Validator;
@@ -16,7 +17,7 @@ use Validator;
 class PluginCodeController extends AdminControllerBase
 {
     use CodeTreeTrait;
-    
+
     protected $plugin;
 
     protected const node_key = Define::SYSTEM_KEY_SESSION_FILE_NODELIST;
@@ -35,8 +36,8 @@ class PluginCodeController extends AdminControllerBase
      *
      * @param Request $request
      * @param Content $content
-     * @param int $id
-     * @return Content
+     * @param $id
+     * @return Content|false
      */
     public function edit(Request $request, Content $content, $id)
     {
@@ -87,8 +88,8 @@ class PluginCodeController extends AdminControllerBase
      * Get file tree data
      *
      * @param Request $request
-     * @param int $id
-     * @return Response
+     * @param $id
+     * @return false|\Illuminate\Http\JsonResponse
      */
     public function getTreeData(Request $request, $id)
     {
@@ -100,13 +101,12 @@ class PluginCodeController extends AdminControllerBase
 
         return response()->json($this->getTreeDataJson($request));
     }
-    
+
     /**
      * Get file tree data
      *
      * @param Request $request
-     * @param int $id
-     * @return Response
+     * @return array|\Illuminate\Contracts\Foundation\Application|\Illuminate\Session\SessionManager|\Illuminate\Session\Store|mixed
      */
     protected function getTreeDataJson(Request $request)
     {
@@ -116,7 +116,7 @@ class PluginCodeController extends AdminControllerBase
 
         $json = [];
         $this->setDirectoryNodes('/', '#', $json, true);
-        
+
         // set session
         session([static::node_key => $json]);
         return $json;
@@ -126,18 +126,19 @@ class PluginCodeController extends AdminControllerBase
      * Upload file to target folder
      *
      * @param Request $request
-     * @param int $id
-     * @return Response
+     * @param $id
+     * @return false|\Illuminate\Http\RedirectResponse
+     * @throws FileNotFoundException
      */
     public function fileupload(Request $request, $id)
     {
         $this->plugin = Plugin::getEloquent($id);
-        
+
         if (!$this->plugin->hasPermission(Permission::PLUGIN_SETTING)) {
             Checker::error();
             return false;
         }
-        
+
         $validator = \Validator::make($request->all(), [
             'nodeid' => 'required',
         ]);
@@ -148,7 +149,7 @@ class PluginCodeController extends AdminControllerBase
         if ($request->hasfile('fileUpload')) {
             $nodeid = $request->get('nodeid');
             $folder_path = $this->getNodePath($nodeid);
-            
+
             $upload_files = $request->file('fileUpload');
 
             foreach ($upload_files as $upload_file) {
@@ -156,7 +157,7 @@ class PluginCodeController extends AdminControllerBase
 
                 $this->plugin->putAsPluginFile($folder_path, $filename, $upload_file);
             }
-            
+
             $this->updatePluginDatetime();
             admin_toastr(exmtrans('common.message.success_execute'));
             return back();
@@ -169,13 +170,14 @@ class PluginCodeController extends AdminControllerBase
      * Get child form html for selected file
      *
      * @param Request $request
-     * @param int $id
+     * @param $id
      * @return array
+     * @throws \Exception
      */
     public function getFileEditForm(Request $request, $id)
     {
         $this->plugin = Plugin::getEloquent($id);
-        
+
         list($view, $isBox) = $this->getFileEditFormView($request, $id);
 
         if ($isBox) {
@@ -187,13 +189,13 @@ class PluginCodeController extends AdminControllerBase
         ];
     }
 
-    
     /**
      * Get child form html for selected file
      *
      * @param Request $request
-     * @param int $id
-     * @return array
+     * @param $id
+     * @return array|void
+     * @throws \Exception
      */
     protected function getFileEditFormView(Request $request, $id)
     {
@@ -254,7 +256,7 @@ class PluginCodeController extends AdminControllerBase
                 'can_delete' => $can_delete,
                 'message' => $message
             ]), false];
-        } catch (\League\Flysystem\FileNotFoundException $ex) {
+        } catch (FileNotFoundException $ex) {
             //Todo:FileNotFoundException
         }
     }
@@ -309,8 +311,9 @@ class PluginCodeController extends AdminControllerBase
      * delete target file from plugin folder
      *
      * @param Request $request
-     * @param int $id
-     * @return Response
+     * @param $id
+     * @return false|Response
+     * @throws FileNotFoundException
      */
     public function delete(Request $request, $id)
     {
@@ -319,7 +322,7 @@ class PluginCodeController extends AdminControllerBase
             Checker::error();
             return false;
         }
-        
+
         $validator = Validator::make($request->all(), [
             'nodeid' => 'required',
         ]);
@@ -350,8 +353,9 @@ class PluginCodeController extends AdminControllerBase
      * update file in plugin folder
      *
      * @param Request $request
-     * @param int $id
-     * @return Response
+     * @param $id
+     * @return false|Response
+     * @throws FileNotFoundException
      */
     public function store(Request $request, $id)
     {
@@ -360,7 +364,7 @@ class PluginCodeController extends AdminControllerBase
             Checker::error();
             return false;
         }
-        
+
         $validator = Validator::make($request->all(), [
             'nodeid' => 'required',
             'edit_file' => 'required',
@@ -389,7 +393,7 @@ class PluginCodeController extends AdminControllerBase
         ]);
     }
 
-    
+
     /**
      * Update plugin's updated_at. Because sync files from crowd.
      *

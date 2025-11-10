@@ -19,23 +19,28 @@ class ExportImportButton extends ModalTileMenuButton
     protected $export_flg;
     protected $import_flg;
     protected $view_flg;
+    // todo 通常ビューの場合のみプラグインエクスポートを有効にするための修正です
+    protected $plugin_flg;
     protected $base_key = 'custom_value';
 
     /**
      * custom table if from custom value
      *
-     * @var CustomTable
+     * @var CustomTable|null
      */
     protected $custom_table;
 
-    public function __construct($endpoint, $grid, $view_flg = false, $export_flg = true, $import_flg = true)
+    // todo 通常ビューの場合のみプラグインエクスポートを有効にするための修正です
+    public function __construct($endpoint, $grid, $view_flg = false, $export_flg = true, $import_flg = true, $plugin_flg = false)
     {
         $this->grid = $grid;
         $this->endpoint = $endpoint;
         $this->export_flg = !boolval(config('exment.export_disabled', false)) && $export_flg;
         $this->import_flg = !boolval(config('exment.import_disabled', false)) && $import_flg;
         $this->view_flg = !boolval(config('exment.export_view_disabled', false)) && $view_flg;
-        
+        // todo 通常ビューの場合のみプラグインエクスポートを有効にするための修正です
+        $this->plugin_flg = $plugin_flg;
+
         // switch label
         $this->total_export_flg = $this->export_flg || $this->view_flg;
 
@@ -55,7 +60,7 @@ class ExportImportButton extends ModalTileMenuButton
             'button_class' => 'btn-twitter',
         ]);
     }
-    
+
     /**
      * Set parent grid.
      *
@@ -83,7 +88,7 @@ class ExportImportButton extends ModalTileMenuButton
 
         return $this;
     }
-    
+
     /**
      * Set base_key.
      *
@@ -108,13 +113,11 @@ class ExportImportButton extends ModalTileMenuButton
 
     /**
      * Render Export button.
-     *
-     * @return string
      */
     public function render()
     {
         if ($this->disabledButton()) {
-            return;
+            return null;
         }
 
         $page = request('page', 1);
@@ -199,7 +202,8 @@ class ExportImportButton extends ModalTileMenuButton
         }
 
         $plugins = $this->getPluginExports();
-        if ($this->total_export_flg && !is_nullorempty($plugins)) {
+        // todo 通常ビューの場合のみプラグインエクスポートを有効にするための修正です
+        if ($this->total_export_flg && $this->plugin_flg && !is_nullorempty($plugins)) {
             foreach ($plugins as $plugin) {
                 $button = [
                     'label' => exmtrans('custom_value.export'),

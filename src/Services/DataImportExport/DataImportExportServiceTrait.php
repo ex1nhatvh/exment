@@ -2,6 +2,7 @@
 
 namespace Exceedone\Exment\Services\DataImportExport;
 
+use Exceedone\Exment\Model\CustomColumn;
 use Exceedone\Exment\Model\Define;
 use Exceedone\Exment\Model\Plugin;
 use Exceedone\Exment\Model\CustomTable;
@@ -11,6 +12,8 @@ use Exceedone\Exment\Enums\ExportImportLibrary;
 use Exceedone\Exment\ColumnItems\ParentItem;
 use Exceedone\Exment\Form\Widgets\ModalForm;
 use Exceedone\Exment\Services\DataImportExport\Formats\FormatBase;
+use Exceedone\Exment\Services\DataImportExport\Formats\SpOut\SpOut;
+use Exceedone\Exment\Services\DataImportExport\Formats\SpOut\Xlsx;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
 use Validator;
@@ -20,17 +23,17 @@ use Validator;
 trait DataImportExportServiceTrait
 {
     public static $queryName = '_export_';
-    
+
     /**
      * csv or excel format string (xlsx, csv)
      */
     protected $format;
-    
+
     /**
      * file base name
      */
     protected $filebasename;
-    
+
     /**
      * import action.
      */
@@ -54,7 +57,7 @@ trait DataImportExportServiceTrait
     public function __construct($args = [])
     {
         $this->format = static::getFormat($args);
-        
+
         if (array_has($args, 'grid')) {
             $this->setGrid(array_get($args, 'grid'));
         }
@@ -82,12 +85,12 @@ trait DataImportExportServiceTrait
         return $this;
     }
 
-    protected static function getFormat($args = []) : string
+    protected static function getFormat($args = []): string
     {
         if ($args instanceof FormatBase) {
             return $args->getFormat();
         }
-        
+
         if ($args instanceof UploadedFile) {
             $format = $args->extension();
             if ($args->getClientMimeType() === "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet") {
@@ -107,8 +110,8 @@ trait DataImportExportServiceTrait
 
         return $format;
     }
-    
-    protected function getFormatClass(string $library, bool $isExport) : FormatBase
+
+    protected function getFormatClass(string $library, bool $isExport): FormatBase
     {
         if ($isExport) {
             if ($this->exportAction && method_exists($this->exportAction, 'getFormatClass')) {
@@ -129,28 +132,28 @@ trait DataImportExportServiceTrait
 
         return $this;
     }
-    
+
     public function exportAction($exportAction)
     {
         $this->exportAction = $exportAction;
 
         return $this;
     }
-    
+
     public function viewExportAction($viewExportAction)
     {
         $this->viewExportAction = $viewExportAction;
 
         return $this;
     }
-    
+
     public function pluginExportAction($pluginExportAction)
     {
         $this->pluginExportAction = $pluginExportAction;
 
         return $this;
     }
-    
+
     /**
      * execute export
      */
@@ -175,12 +178,13 @@ trait DataImportExportServiceTrait
 
         $files = $formatObj
             ->datalist($datalist)
-            ->filebasename($this->exportAction->filebasename())
+            ->filebasename(convert_to_valid_filename($this->exportAction->filebasename()))
             ->createFile();
-        
+
+        /** @phpstan-ignore-next-line  */
         $formatObj->sendResponse($files);
     }
-    
+
     /**
      * @param Request $request
      * @return mixed|void error message or success message etc...
@@ -189,6 +193,7 @@ trait DataImportExportServiceTrait
     {
         \Exment::setTimeLimitLong();
 
+        /** @var Xlsx $formatObj */
         $formatObj = $this->getFormatClass(ExportImportLibrary::SP_OUT, false);
 
         // validate request
@@ -225,7 +230,7 @@ trait DataImportExportServiceTrait
 
         // filter data
         $datalist = $this->importAction->filterDatalist($datalist);
-        
+
         if (count($datalist) == 0 || (count($datalist) == 1 && array_has($datalist, Define::SETTING_SHEET_NAME))) {
             return [
                 'result' => false,
@@ -239,7 +244,7 @@ trait DataImportExportServiceTrait
         return $response;
     }
 
-    
+
     /**
      * @param string $file_path
      * @param array  $options
@@ -259,6 +264,7 @@ trait DataImportExportServiceTrait
         $options['command'] = $command;
 
         // get table data
+        /** @var Xlsx $formatObj */
         $datalist = $formatObj->getDataTable($file_path, $options);
         // filter data
         $datalist = $this->importAction->filterDatalist($datalist);
@@ -271,7 +277,7 @@ trait DataImportExportServiceTrait
         }
 
         $result = $this->importAction->importChunk($datalist, $options);
-        
+
         if (boolval(array_get($result, 'result'))) {
             return [
                 'result' => true,
@@ -283,7 +289,7 @@ trait DataImportExportServiceTrait
             ];
         }
     }
-    
+
     /**
      * execute export background
      */
@@ -308,7 +314,8 @@ trait DataImportExportServiceTrait
                 'message' => exmtrans('common.message.notfound'),
             ];
         }
-    
+
+        /** @phpstan-ignore-next-line */
         $formatObj->saveAsFile($options['dirpath'], $files);
 
         return [
@@ -350,10 +357,9 @@ trait DataImportExportServiceTrait
         }
     }
 
-    
     /**
      * @param Request $request
-     * @return bool
+     * @return array|boolean
      */
     public function validateRequest($request)
     {
@@ -391,6 +397,7 @@ trait DataImportExportServiceTrait
         );
         if ($validator->fails()) {
             // return errors as custom_table_file.
+            /** @phpstan-ignore-next-line */
             return $validator->getMessages();
         }
 
@@ -401,7 +408,7 @@ trait DataImportExportServiceTrait
      * Import Modal
      *
      * @param array $pluginlist
-     * @return array
+     * @return \Symfony\Component\HttpFoundation\Response
      */
     public function getImportModal($pluginlist = null)
     {
@@ -427,12 +434,14 @@ trait DataImportExportServiceTrait
             $formats['excel'] = 'xlsx';
         }
 
+        /** @phpstan-ignore-next-line */
         $form->descriptionHtml('<span class="red">' . exmtrans('common.help.import_max_row_count', [
             'count' => config('exment.import_max_row_count', 1000),
             'manual' => \getManualUrl('data_bulk_insert')
         ]) . '</span>')
         ->setWidth(8, 3);
-        
+
+        /** @phpstan-ignore-next-line */
         $form->action(admin_urls($this->importAction->getImportEndpoint(), 'import'))
             ->file('custom_table_file', exmtrans('custom_value.import.import_file'))
             ->rules('mimes:' . implode(',', array_keys($formats)))->setWidth(8, 3)->addElementClass('custom_table_file')
@@ -443,7 +452,7 @@ trait DataImportExportServiceTrait
                 return '.' . $format;
             })->implode(',')])
             ->help(exmtrans('custom_value.import.help.custom_table_file', implode(',', array_values($formats))) . array_get($fileOption, 'maxFileSizeHelp'));
-    
+
         // get import primary key list
         $form->select('select_primary_key', exmtrans('custom_value.import.primary_key'))
             ->options($this->importAction->getPrimaryKeys())
@@ -468,7 +477,7 @@ trait DataImportExportServiceTrait
         //     ->setWidth(8, 3)
         //     ->addElementClass('select_action')
         //     ->help(exmtrans('custom_value.import.help.error_flow'));
-    
+
         $form->textarea('import_error_message', exmtrans('custom_value.import.import_error_message'))
             ->attribute(['readonly' => true])
             ->setWidth(8, 3)
@@ -477,14 +486,14 @@ trait DataImportExportServiceTrait
             ->help(exmtrans('custom_value.import.help.import_error_message'));
 
         $this->importAction->setImportModalItems($form);
-        
+
         return getAjaxResponse([
             'body'  => $form->render(),
             'script' => $form->getScript(),
             'title' => exmtrans('common.import') . ' - ' . $this->importAction->getImportHeaderViewName()
         ]);
     }
-    
+
     /**
      * get primary key list.
      *
@@ -529,6 +538,7 @@ trait DataImportExportServiceTrait
             if (boolval(array_get($options, 'onlyValue')) || strpos($key, "value.") !== false) {
                 $new_key = str_replace('value.', '', $key);
                 // get target column
+                /** @var CustomColumn|null $target_column */
                 $target_column = $custom_columns->first(function ($custom_column) use ($new_key) {
                     return array_get($custom_column, 'column_name') == $new_key;
                 });
@@ -570,7 +580,7 @@ trait DataImportExportServiceTrait
         }
         return $data;
     }
-    
+
     /**
      * get column import value. if error, set message
      *

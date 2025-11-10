@@ -9,6 +9,7 @@ use Exceedone\Exment\Model\CustomTable;
 use Exceedone\Exment\Model\CustomColumn;
 use Exceedone\Exment\Model\CustomRelation;
 use Exceedone\Exment\Model\File as ExmentFile;
+use Illuminate\Pagination\LengthAwarePaginator;
 
 class DefaultTableProvider extends ProviderBase
 {
@@ -79,7 +80,7 @@ class DefaultTableProvider extends ProviderBase
         $rows = [];
 
         list($firstColumns, $custom_columns, $lastColumns) = $columnDefines;
-        
+
         // 1st row, column name
         $rows[] = array_merge(
             $firstColumns,
@@ -107,31 +108,35 @@ class DefaultTableProvider extends ProviderBase
     /**
      * get target chunk records
      */
-    public function getRecords() : Collection
+    public function getRecords(): Collection
     {
-        $records = new Collection;
+        $records = new Collection();
         $this->grid->applyQuickSearch();
         if (isset($this->parent_table)) {
-            $this->grid->model()->eloquent()->chunk(100, function ($data) use (&$records) {
+            $func = function ($data) use (&$records) {
                 if (is_nullorempty($records)) {
-                    $records = new Collection;
+                    $records = new Collection();
                 }
                 $records = $records->merge($data);
-            }) ?? new Collection;
+            };
+            if ($this->grid->model()->eloquent() instanceof LengthAwarePaginator) {
+                $this->grid->model()->chunk($func, 100) ?? new Collection();
+            } else {
+                $this->grid->model()->eloquent()->chunk(100, $func) ?? new Collection();
+            }
 
             if ($records->count() > 0) {
-                return getModelName($this->name())
-                    ::whereIn('parent_id', $records->pluck('id'))
+                return getModelName($this->name())::whereIn('parent_id', $records->pluck('id'))
                     ->where('parent_type', $this->parent_table)
                     ->get();
             }
         } else {
             $this->grid->getFilter()->chunk(function ($data) use (&$records) {
                 if (is_nullorempty($records)) {
-                    $records = new Collection;
+                    $records = new Collection();
                 }
                 $records = $records->merge($data);
-            }) ?? new Collection;
+            }) ?? new Collection();
         }
 
         $this->count = count($records);
@@ -146,7 +151,7 @@ class DefaultTableProvider extends ProviderBase
         if (!isset($records)) {
             return [];
         }
-        
+
         $bodies = [];
 
         list($firstColumns, $custom_columns, $lastColumns) = $columnDefines;
@@ -176,7 +181,7 @@ class DefaultTableProvider extends ProviderBase
             } else {
                 $key = (isset($array_header_key) ? $array_header_key : "").$column;
             }
-            
+
             $value = $this->getBodyValue(array_get($record, $key), $column, $view_column_type, $record);
             $body_items[] = $value;
         }
@@ -186,8 +191,11 @@ class DefaultTableProvider extends ProviderBase
     /**
      * Get body value
      *
-     * @param mixed $value
-     * @return string|null
+     * @param $values
+     * @param $column
+     * @param $view_column_type
+     * @param $record
+     * @return int|mixed|string|null
      */
     protected function getBodyValue($values, $column, $view_column_type, $record)
     {
@@ -239,12 +247,12 @@ class DefaultTableProvider extends ProviderBase
         if (is_nullorempty($value)) {
             return $value;
         }
-        
+
         $select_export_column_id = array_get($column, 'options.select_export_column_id');
         if (is_nullorempty($select_export_column_id)) {
             return $value;
         }
-        
+
         $select_target_table = $column->select_target_table;
         if (is_nullorempty($select_target_table)) {
             return $value;
@@ -257,7 +265,7 @@ class DefaultTableProvider extends ProviderBase
 
         return $select_custom_value->getValue($select_export_column_id, true);
     }
-    
+
     /**
      * Get parent target value. Convert to export_column_id
      *
@@ -270,7 +278,7 @@ class DefaultTableProvider extends ProviderBase
         if (is_nullorempty($value) || is_nullorempty($parent_table)) {
             return $value;
         }
-        
+
         // get relation
         $relation = CustomRelation::getRelationByParentChild($parent_table, $this->custom_table);
         if (!isset($relation)) {
@@ -281,7 +289,7 @@ class DefaultTableProvider extends ProviderBase
         if (is_nullorempty($parent_export_column_id)) {
             return $value;
         }
-        
+
         $parent_table = CustomTable::getEloquent($parent_table);
         if (is_nullorempty($parent_table)) {
             return $value;

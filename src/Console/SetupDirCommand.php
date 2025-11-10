@@ -83,7 +83,7 @@ class SetupDirCommand extends AdminInstallCommand
             if (function_exists('posix_getgrgid')) {
                 $current_group = array_get(posix_getgrgid(filegroup(base_path(path_join('public', 'index.php')))), 'name');
             }
-            
+
             $ask = !is_nullorempty($current_group) ? "Please input group name. [{$current_group}]" : "Please input group name.";
             $group = $this->ask($ask);
             if (!$group) {
@@ -120,7 +120,7 @@ class SetupDirCommand extends AdminInstallCommand
 
             static::addPermission('storage', $user, $group);
             static::addPermission('bootstrap/cache', $user, $group);
-            
+
             // If easy install, set permission to dir
             if ($easy) {
                 static::addPermission('app', $user, $group);
@@ -135,8 +135,6 @@ class SetupDirCommand extends AdminInstallCommand
     /**
      * Revert permission
      *
-     * @param string|null $user
-     * @param string|null $group
      * @return void
      */
     public static function revertEasyInstall()
@@ -173,7 +171,7 @@ class SetupDirCommand extends AdminInstallCommand
 
             // Change mod self
             chmod($path, 02775);
-            
+
             $files = \File::allFiles($path, true);
             foreach ($files as $file) {
                 chown($file, $user);
@@ -195,9 +193,6 @@ class SetupDirCommand extends AdminInstallCommand
      * Set all permission
      *
      * @param string $path
-     * @param string|null $user
-     * @param string|null $group
-     * @param bool $isMod is execute chmod
      * @return void
      */
     protected static function revertPermission(string $path)
@@ -212,7 +207,7 @@ class SetupDirCommand extends AdminInstallCommand
 
             // Change mod self
             chmod($path, 02755);
-        
+
             $files = \File::allFiles($path);
             foreach ($files as $file) {
                 chmod($file, 0644);

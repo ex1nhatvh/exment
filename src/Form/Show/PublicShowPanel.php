@@ -3,6 +3,8 @@
 namespace Exceedone\Exment\Form\Show;
 
 use Encore\Admin\Show;
+use Illuminate\Contracts\View\Factory;
+use Illuminate\Contracts\View\View;
 
 /**
  * Public show panel.
@@ -37,7 +39,7 @@ class PublicShowPanel extends \Encore\Admin\Show\Panel
 
         return $this;
     }
-    
+
 
     /**
      * Set the value of confirm_title
@@ -75,14 +77,13 @@ class PublicShowPanel extends \Encore\Admin\Show\Panel
 
         return $this;
     }
-    
+
     /**
      * Render this panel.
-     *
-     * @return string
      */
     public function render()
     {
+        /** @phpstan-ignore-next-line Need laravel-admin php doc. */
         return parent::render()->with([
             'action' => $this->action,
             'back_action' => $this->back_action,

@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Plugins\TestPluginEventNotify;
 
 use Exceedone\Exment\Services\Plugin\PluginEventBase;
@@ -7,6 +8,8 @@ class Plugin extends PluginEventBase
 {
     /**
      * Plugin Event
+     *
+     * @return bool
      */
     public function execute()
     {

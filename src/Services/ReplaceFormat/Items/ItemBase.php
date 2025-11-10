@@ -1,4 +1,5 @@
 <?php
+
 namespace Exceedone\Exment\Services\ReplaceFormat\Items;
 
 use Exceedone\Exment\Enums\SystemTableName;
@@ -50,6 +51,8 @@ abstract class ItemBase
             $classname = UuidValue::class;
         } elseif ($key == "system") {
             $classname = System::class;
+        } elseif ($key == "login_user") {
+            $classname = LoginUser::class;
         } elseif ($key == "now") {
             $classname = Now::class;
         } elseif (in_array($key, ["file", 'documents'])) {

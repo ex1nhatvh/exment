@@ -2,6 +2,7 @@
 
 namespace Exceedone\Exment\DataItems\Form;
 
+use Exceedone\Exment\Model\CustomFormColumn;
 use Symfony\Component\HttpFoundation\Response;
 use Encore\Admin\Facades\Admin;
 use Encore\Admin\Form;
@@ -23,6 +24,7 @@ use Exceedone\Exment\Enums\FormBlockType;
 use Exceedone\Exment\Enums\FormColumnType;
 use Exceedone\Exment\Enums\PluginEventTrigger;
 use Exceedone\Exment\Enums\ShowPositionType;
+use Exceedone\Exment\Enums\DataSubmitRedirectEx;
 use Exceedone\Exment\Services\PartialCrudService;
 use Exceedone\Exment\Services\Calc\CalcService;
 use Exceedone\Exment\ColumnItems\ItemInterface;
@@ -44,9 +46,9 @@ class DefaultForm extends FormBase
     public function form()
     {
         $request = request();
-        
+
         $classname = getModelName($this->custom_table);
-        $form = new Form(new $classname);
+        $form = new Form(new $classname());
 
         $form->setHorizontal(boolval($this->custom_form->getOption('form_label_type') ?? true));
 
@@ -71,10 +73,14 @@ class DefaultForm extends FormBase
         $calc_formula_array = [];
         $changedata_array = [];
         $relatedlinkage_array = [];
-        $this->setCustomFormEvents($calc_formula_array, $changedata_array, $relatedlinkage_array);
+        $force_caculate_column = [];
+        $this->setCustomFormEvents($calc_formula_array, $changedata_array, $relatedlinkage_array, $force_caculate_column);
 
+        $custom_form_blocks = $this->custom_form->custom_form_blocks->sortBy(function ($item, $key) {
+            return $item->getOption('form_block_order')?? -1;
+        });
         // loop for custom form blocks
-        foreach ($this->custom_form->custom_form_blocks as $custom_form_block) {
+        foreach ($custom_form_blocks as $custom_form_block) {
             // if available is false, continue
             if (!$custom_form_block->available) {
                 continue;
@@ -103,7 +109,7 @@ class DefaultForm extends FormBase
                             $relation_name,
                             $block_label,
                             function ($form) use ($custom_form_block, $relation_name) {
-                                $form->nestedEmbeds('value', $this->custom_form->form_view_name, function (Form\EmbeddedForm $form) use ($custom_form_block) {
+                                $form->nestedEmbeds('value', $form->getKey(), $this->custom_form->form_view_name, function (Form\EmbeddedForm $form) use ($custom_form_block) {
                                     $this->setCustomFormColumns($form, $custom_form_block);
                                 })->setRelationName($relation_name);
                             }
@@ -115,7 +121,7 @@ class DefaultForm extends FormBase
                             $relation_name,
                             $block_label,
                             function ($form, $model = null) use ($custom_form_block, $relation, $relation_name) {
-                                $form->nestedEmbeds('value', $this->custom_form->form_view_name, $this->getCustomFormColumns($form, $custom_form_block, $model, $relation))
+                                $form->nestedEmbeds('value', $form->getKey(), $this->custom_form->form_view_name, $this->getCustomFormColumns($form, $custom_form_block, $model, $relation))
                                     ->disableHeader()
                                     ->setRelationName($relation_name)
                                     ->gridEmbeds();
@@ -165,11 +171,14 @@ class DefaultForm extends FormBase
         }
 
         // add calc_formula_array and changedata_array info
+
         if (count($calc_formula_array) > 0) {
             $json = json_encode($calc_formula_array);
+            $columns = json_encode($force_caculate_column);
             $script = <<<EOT
             var json = $json;
-            Exment.CalcEvent.setCalcEvent(json);
+            var columns = $columns;
+            Exment.CalcEvent.setCalcEvent(json, columns);
 EOT;
             Admin::script($script);
         }
@@ -212,6 +221,13 @@ EOT;
     protected function setCustomFormColumns($form, $custom_form_block)
     {
         $custom_form_columns = $custom_form_block->custom_form_columns; // setting fields.
+        // $target_id = $this->id;
+        if (method_exists($form, 'getDataKey')) {
+            $data_key = $form->getDataKey();
+            if (is_numeric($data_key)) {
+                $target_id = $data_key;
+            }
+        }
         foreach ($custom_form_columns as $form_column) {
             // exclusion header and html
             if ($form_column->form_column_type == FormColumnType::OTHER) {
@@ -219,8 +235,8 @@ EOT;
             }
 
             $item = $form_column->column_item;
-            if (isset($this->id)) {
-                $item->id($this->id);
+            if (isset($target_id)) {
+                $item->id($target_id);
             }
             $this->setColumnItemOption($item, $custom_form_columns);
 
@@ -231,11 +247,11 @@ EOT;
     /**
      * set custom form columns
      *
-     * @param Form $form Laravel-admin's form
+     * @param Form $form
      * @param CustomFormBlock $custom_form_block
-     * @param CustomValue|null $target_custom_value target customvalue. if Child block, this arg is child custom value.
-     * @param CustomRelation|null $this form block's relation
-     * @return array
+     * @param CustomValue|number|null $target_custom_value
+     * @param CustomRelation|null $relation
+     * @return \Closure
      */
     protected function getCustomFormColumns($form, $custom_form_block, $target_custom_value = null, ?CustomRelation $relation = null)
     {
@@ -250,22 +266,22 @@ EOT;
                 if (!isset($target_custom_value) && $form_column->form_column_type == FormColumnType::SYSTEM) {
                     continue;
                 }
-    
+
                 $column_item = $form_column->column_item;
                 if (is_null($column_item)) {
                     continue;
                 }
                 $this->setColumnItemOption($column_item, $custom_form_columns);
-    
+
                 $field = $column_item
                     ->setCustomValue($target_custom_value)
                     ->getAdminField($form_column);
-    
+
                 // set $closures using $form_column->column_no
                 if (!isset($field)) {
                     continue;
                 }
-    
+
                 $field->setWidth(8, 2);
                 // push field to form
                 $form->pushFieldAndOption($field, [
@@ -280,14 +296,16 @@ EOT;
     /**
      * set custom form columns
      */
-    protected function setCustomFormEvents(&$calc_formula_array, &$changedata_array, &$relatedlinkage_array)
+    protected function setCustomFormEvents(&$calc_formula_array, &$changedata_array, &$relatedlinkage_array, &$force_caculate_column)
     {
         foreach ($this->custom_form->custom_form_blocks as $custom_form_block) {
             // set calc rule for javascript
             $relation = $custom_form_block->getRelationInfo($this->custom_table)[0];
             $calc_formula_key = $relation ? $relation->getRelationName() : '';
+            $force_caculate_column_key = $relation ? $relation->getRelationName() : 'default';
+            $force_caculate_column[$force_caculate_column_key] = [];
             $calc_formula_array[$calc_formula_key] = CalcService::getCalcFormArray($this->custom_table, $custom_form_block);
-
+            /** @var CustomFormColumn $form_column */
             foreach ($custom_form_block->custom_form_columns as $form_column) {
                 if ($form_column->form_column_type != FormColumnType::COLUMN) {
                     continue;
@@ -295,17 +313,21 @@ EOT;
                 if (!isset($form_column->custom_column)) {
                     continue;
                 }
+                /** @var CustomColumn $column */
                 $column = $form_column->custom_column;
+                if(array_get($column->options, 'force_caculate')) {
+                    $force_caculate_column[$force_caculate_column_key][]  = $column->column_name;
+                }
                 $form_column_options = $form_column->options;
                 $options = $column->options;
-                
+
                 // data changedata
                 // if set form_column_options changedata_target_column_id, and changedata_column_id
                 if (array_key_value_exists('changedata_target_column_id', $form_column_options) && array_key_value_exists('changedata_column_id', $form_column_options)) {
                     ///// set changedata info
                     $this->setChangeDataArray($column, $custom_form_block, $form_column_options, $options, $changedata_array);
                 }
-                    
+
                 // set relatedlinkage_array
                 // if set form_column_options relation_filter_target_column_id
                 if (array_key_value_exists('relation_filter_target_column_id', $form_column_options)) {
@@ -359,7 +381,7 @@ EOT;
                 if (!method_exists($model, $relation_name)) {
                     continue;
                 }
-    
+
                 // get relation value
                 $relation = $model->$relation_name();
                 $keyName = $relation->getRelated()->getKeyName();
@@ -371,7 +393,7 @@ EOT;
                 })->map(function ($val) {
                     return array_get($val, 'id');
                 })->values()->toArray();
-                
+
                 // skip _remove_ flg
                 $relationValues = array_filter($relationValues, function ($val) {
                     if (array_get($val, Form::REMOVE_FLAG_NAME) == 1) {
@@ -387,7 +409,7 @@ EOT;
                     $uniqueCheckSiblings = array_filter($relationValues, function ($relationValue, $key) use ($relationK) {
                         return !isMatchString($relationK, $key);
                     }, ARRAY_FILTER_USE_BOTH);
-                    
+
                     if (is_array($validateResult = $instance->validateSaving($relationV, [
                         'column_name_prefix' => "$relation_name.$relationK.value.",
                         'uniqueCheckSiblings' => array_values($uniqueCheckSiblings),
@@ -399,7 +421,7 @@ EOT;
                 }
             }
         });
-        
+
         // form prepare callback event
         $form->prepareCallback(function ($input) {
             array_forget($input, 'updated_at');
@@ -413,7 +435,7 @@ EOT;
         $form->savedInTransaction(function ($form) {
             PartialCrudService::saved($this->custom_table, $form, $form->model()->id);
         });
-        
+
         if (!$this->disableDefaultSavedRedirect) {
             $form->saved(function ($form) use ($select_parent) {
                 // if $one_record_flg, redirect
@@ -444,6 +466,10 @@ EOT;
     {
         if (!$this->disableSavingButton) {
             if (!$this->disableSavedRedirectCheck) {
+                $data_submit_redirect = $custom_table->getOption('data_submit_redirect');
+                if (empty($data_submit_redirect) || $data_submit_redirect == DataSubmitRedirectEx::INHERIT) {
+                    $data_submit_redirect = System::data_submit_redirect();
+                }
                 $checkboxes = collect([
                     [
                         'key' => 'continue_editing',
@@ -462,10 +488,10 @@ EOT;
                         'value' => 4,
                         'redirect' => admin_urls('data', $this->custom_table->table_name),
                     ],
-                ])->map(function ($checkbox) {
+                ])->map(function ($checkbox) use($data_submit_redirect) {
                     return array_merge([
                         'label' => trans('admin.' . $checkbox['key']),
-                        'default' => isMatchString(System::data_submit_redirect(), $checkbox['value']),
+                        'default' => isMatchString($data_submit_redirect, $checkbox['value']),
                     ], $checkbox);
                 })->each(function ($checkbox) use ($form) {
                     $form->submitRedirect($checkbox);
@@ -491,7 +517,7 @@ EOT;
                 $isButtonCreate = false;
                 $listButtons = Plugin::pluginPreparingButton(PluginEventTrigger::FORM_MENUBUTTON_EDIT, $custom_table);
             }
-            
+
             $tools->disableView(false);
             $tools->setListPath($custom_table->getGridUrl(true));
 
@@ -534,7 +560,7 @@ EOT;
             }
         });
     }
-    
+
 
     /**
      * set change data array.
@@ -583,7 +609,7 @@ EOT;
         } else {
             $to_block_name = null;
         }
-        
+
         //// get from block name.
         // if not match form block's and $changedata_target_table. from block is default
         if (!isMatchString($custom_form_block->form_block_target_table_id, $changedata_target_table->id)) {
@@ -616,7 +642,7 @@ EOT;
             'to_block_form' => is_null($to_block_name) ? null : '.has-many-' . $to_block_name . '-form,.has-many-table-' . $to_block_name.'-form',
         ];
     }
-    
+
     /**
      * set related linkage array.
      * "related linkage": When selecting a value, change the choices of other list. It's for 1:n relation.
@@ -653,7 +679,7 @@ EOT;
 
             $child_column = $linkage->child_column;
             $child_select_table = $child_column->select_target_table;
-                    
+
             // skip same table
             if ($parent_select_table->id == $child_select_table->id) {
                 continue;
@@ -819,7 +845,7 @@ EOT;
      *
      * @return boolean
      */
-    protected function isPublicForm() : bool
+    protected function isPublicForm(): bool
     {
         return $this instanceof PublicFormForm;
     }

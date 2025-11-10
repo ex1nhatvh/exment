@@ -9,15 +9,16 @@ use Exceedone\Exment\Model\System;
 use Exceedone\Exment\Model\CustomTable;
 use Exceedone\Exment\Model\NotifyNavbar as NotifyNavbarModel;
 use Encore\Admin\Widgets\Table as WidgetTable;
+use Illuminate\Support\Collection;
 
 class NotifyNavbar
 {
     protected $dashboard_box;
-    
+
     /**
      * WordPress Page Items
      *
-     * @var array
+     * @var array|Collection
      */
     protected $items = [];
 
@@ -33,7 +34,7 @@ class NotifyNavbar
     {
         return null;
     }
-    
+
     /**
      * get footer
      */
@@ -43,7 +44,7 @@ class NotifyNavbar
         $label = trans('admin.list');
         return "<div style='padding:8px;'><a href='{$link}'>{$label}</a></div>";
     }
-    
+
     /**
      * get html body
      */
@@ -60,7 +61,7 @@ class NotifyNavbar
             trans('admin.action'),
         ];
         $bodies = [];
-        
+
         foreach ($this->items as $item) {
             $body = [];
 
@@ -81,14 +82,14 @@ class NotifyNavbar
             // reference target data
             $html = '';
             if (array_key_value_exists('parent_id', $item)) {
-                $linker = (new Linker)
+                $linker = (new Linker())
                     ->url(admin_url("notify_navbar/rowdetail/{$item->id}"))
                     ->icon('fa-list')
                     ->tooltip(exmtrans('notify_navbar.data_refer'));
                 $html .= $linker->render();
             }
 
-            $linker = (new Linker)
+            $linker = (new Linker())
                 ->url(admin_url("notify_navbar/{$item->id}"))
                 ->icon('fa-eye')
                 ->tooltip(trans('admin.show'));
@@ -103,6 +104,7 @@ class NotifyNavbar
         $widgetTable = new WidgetTable($headers, $bodies);
         $widgetTable->class('table table-hover');
 
+        /** @phpstan-ignore-next-line Expression on left side of ?? is not nullable. */
         return $widgetTable->render() ?? null;
     }
 
@@ -128,7 +130,7 @@ class NotifyNavbar
             \Log::error($ex);
         }
     }
-    
+
     /**
      * set laravel admin embeds option
      */

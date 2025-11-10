@@ -14,7 +14,7 @@ trait BetweenTrait
     /**
      * where null query closure.
      *
-     * @var \Closure
+     * @var \Closure|null
      */
     protected $whereNull;
 
@@ -28,7 +28,7 @@ trait BetweenTrait
 
         $this->setupDefaultPresenter();
     }
-    
+
     /**
      * Set where null query.
      *
@@ -59,9 +59,7 @@ trait BetweenTrait
     /**
      * Get query where null condition from filter.
      *
-     * @param array $inputs
-     *
-     * @return array|mixed|null
+     * @return array|array[]|mixed|null
      */
     public function whereNullCondition()
     {

@@ -4,6 +4,12 @@ namespace Exceedone\Exment\Model;
 
 use Exceedone\Exment\Enums\SystemTableName;
 
+/**
+ * @property mixed $role_group_user_org_type
+ * @property mixed $role_group_target_id
+ * @property mixed $role_group_id
+ * @phpstan-consistent-constructor
+ */
 class RoleGroupUserOrganization extends ModelBase
 {
     use Traits\ClearCacheTrait;
@@ -18,7 +24,7 @@ class RoleGroupUserOrganization extends ModelBase
         $custom_table = $custom_value->custom_table;
         $table_name = $custom_table->table_name;
 
-        
+
         if (!in_array($table_name, [SystemTableName::USER, SystemTableName::ORGANIZATION])) {
             return;
         }

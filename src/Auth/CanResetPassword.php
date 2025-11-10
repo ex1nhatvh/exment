@@ -20,10 +20,10 @@ trait CanResetPassword
     /**
      * Send the password reset notification.
      *
-     * @param  string  $token
-     * @return void
+     * @param string $token
+     * @return MailSender
      */
-    public function sendPasswordResetNotification($token) : MailSender
+    public function sendPasswordResetNotification($token): MailSender
     {
         $sender = MailSender::make(MailKeyName::RESET_PASSWORD, $this->getEmailForPasswordReset())
             ->prms([

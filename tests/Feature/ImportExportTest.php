@@ -18,7 +18,9 @@ use Illuminate\Support\Collection;
 
 class ImportExportTest extends FeatureTestBase
 {
-    use ImportTrait, TestTrait, DatabaseTransactions;
+    use ImportTrait;
+    use TestTrait;
+    use DatabaseTransactions;
 
     /**
      * full path stored export files.
@@ -27,6 +29,11 @@ class ImportExportTest extends FeatureTestBase
      */
     protected $dirpath;
 
+    /**
+     * @param bool $export
+     * @param string|null $target_name
+     * @return void
+     */
     protected function init(bool $export, $target_name = null)
     {
         try {
@@ -53,6 +60,9 @@ class ImportExportTest extends FeatureTestBase
         }
     }
 
+    /**
+     * @return void
+     */
     public function testExportCsv()
     {
         $table_name = TestDefine::TESTDATA_TABLE_NAME_ALL_COLUMNS_FORTEST;
@@ -62,6 +72,9 @@ class ImportExportTest extends FeatureTestBase
         ]);
     }
 
+    /**
+     * @return void
+     */
     public function testExportCsvPage()
     {
         $table_name = TestDefine::TESTDATA_TABLE_NAME_ALL_COLUMNS_FORTEST;
@@ -73,6 +86,9 @@ class ImportExportTest extends FeatureTestBase
         ]);
     }
 
+    /**
+     * @return void
+     */
     public function testExportXlsx()
     {
         $table_name = TestDefine::TESTDATA_TABLE_NAME_ALL_COLUMNS_FORTEST;
@@ -83,6 +99,9 @@ class ImportExportTest extends FeatureTestBase
         ]);
     }
 
+    /**
+     * @return void
+     */
     public function testExportXlsxPage()
     {
         $table_name = TestDefine::TESTDATA_TABLE_NAME_ALL_COLUMNS_FORTEST;
@@ -96,6 +115,9 @@ class ImportExportTest extends FeatureTestBase
         ]);
     }
 
+    /**
+     * @return void
+     */
     public function testExportCsvView()
     {
         $table_name = TestDefine::TESTDATA_TABLE_NAME_ALL_COLUMNS_FORTEST;
@@ -109,6 +131,9 @@ class ImportExportTest extends FeatureTestBase
         ]);
     }
 
+    /**
+     * @return void
+     */
     public function testExportXlsxView()
     {
         $table_name = TestDefine::TESTDATA_TABLE_NAME_ALL_COLUMNS_FORTEST;
@@ -123,6 +148,10 @@ class ImportExportTest extends FeatureTestBase
         ]);
     }
 
+
+    /**
+     * @return void
+     */
     public function testExportCsvViewPage()
     {
         $table_name = TestDefine::TESTDATA_TABLE_NAME_ALL_COLUMNS_FORTEST;
@@ -139,6 +168,9 @@ class ImportExportTest extends FeatureTestBase
         ]);
     }
 
+    /**
+     * @return void
+     */
     public function testExportXlsxViewPage()
     {
         $table_name = TestDefine::TESTDATA_TABLE_NAME_ALL_COLUMNS_FORTEST;
@@ -155,6 +187,9 @@ class ImportExportTest extends FeatureTestBase
         ]);
     }
 
+    /**
+     * @return void
+     */
     public function testExportXlsxWithSetting()
     {
         $table_name = 'custom_value_edit_all';
@@ -168,6 +203,9 @@ class ImportExportTest extends FeatureTestBase
         ]);
     }
 
+    /**
+     * @return void
+     */
     public function testExportXlsxWithRelation()
     {
         $table_name = 'parent_table';
@@ -179,6 +217,9 @@ class ImportExportTest extends FeatureTestBase
         ]);
     }
 
+    /**
+     * @return void
+     */
     public function testChunkExportDefault()
     {
         $table_name = TestDefine::TESTDATA_TABLE_NAME_ALL_COLUMNS_FORTEST;
@@ -188,6 +229,9 @@ class ImportExportTest extends FeatureTestBase
         ]);
     }
 
+    /**
+     * @return void
+     */
     public function testChunkExportRange()
     {
         $table_name = 'custom_value_edit_all';
@@ -202,21 +246,34 @@ class ImportExportTest extends FeatureTestBase
         ]);
     }
 
+    /**
+     * @return void
+     */
     public function testImport()
     {
         $this->_testImport('import_test_1');
     }
 
+    /**
+     * @return void
+     */
     public function testImportMulti()
     {
         $this->_testImport('import_test_2');
     }
 
+    /**
+     * @return void
+     */
     public function testImportError()
     {
         $this->_testImport('import_test_3', false);
     }
 
+    /**
+     * @param array<mixed> $params
+     * @return void
+     */
     protected function _testExport(array $params)
     {
         $this->init(true);
@@ -238,6 +295,12 @@ class ImportExportTest extends FeatureTestBase
         $this->_compareData($file_path, $params);
     }
 
+    /**
+     * @param string $file_path
+     * @param CustomTable $custom_table
+     * @param array<mixed> $params
+     * @return mixed
+     */
     protected function _getFileData(string $file_path, CustomTable $custom_table, array $params)
     {
         $this->assertTrue(\File::exists($file_path));
@@ -260,6 +323,12 @@ class ImportExportTest extends FeatureTestBase
         return $file_array;
     }
 
+    /**
+     * @param CustomTable $custom_table
+     * @param array<mixed> $params
+     * @param int $chunk_no
+     * @return array<mixed>
+     */
     protected function _getTableData(CustomTable $custom_table, array $params, int $chunk_no = -1)
     {
         $pager_count = null;
@@ -274,7 +343,7 @@ class ImportExportTest extends FeatureTestBase
         }
 
         if ($chunk_no > 0) {
-            $count = isset($params['--count'])? $params['--count']: 1000;
+            $count = isset($params['--count']) ? $params['--count'] : 1000;
             if ($chunk_no > 1) {
                 $model = $model->skip(($chunk_no - 1) * $count);
             }
@@ -282,9 +351,9 @@ class ImportExportTest extends FeatureTestBase
         }
 
         if (isset($params['--type']) && $params['--type'] == 'page') {
-            $page = isset($params['--page'])? $params['--page']: 1;
-            $count = isset($params['--count'])? $params['--count']: $pager_count;
-            $count = empty($count)? System::grid_pager_count(): $count;
+            $page = isset($params['--page']) ? $params['--page'] : 1;
+            $count = isset($params['--count']) ? $params['--count'] : $pager_count;
+            $count = empty($count) ? System::grid_pager_count() : $count;
             if ($page > 1) {
                 $model = $model->skip(($page - 1) * $count);
             }
@@ -293,6 +362,12 @@ class ImportExportTest extends FeatureTestBase
         return [$custom_view, $model->get()];
     }
 
+    /**
+     * @param string $file_path
+     * @param array<mixed> $params
+     * @param int $chunk_no
+     * @return bool
+     */
     protected function _compareData(string $file_path, array $params, int $chunk_no = -1)
     {
         $custom_table = CustomTable::getEloquent($params['table_name']);
@@ -315,6 +390,12 @@ class ImportExportTest extends FeatureTestBase
         return true;
     }
 
+    /**
+     * @param mixed $custom_view
+     * @param array<mixed> $file_array
+     * @param Collection<int|string, mixed> $db_array
+     * @return void
+     */
     protected function _compareViewData($custom_view, array $file_array, Collection $db_array)
     {
         foreach ($custom_view->custom_view_columns as $colno => $custom_view_column) {
@@ -327,6 +408,12 @@ class ImportExportTest extends FeatureTestBase
         }
     }
 
+    /**
+     * @param array<mixed> $file_array
+     * @param Collection<int|string, mixed> $db_array
+     * @param CustomTable $custom_table
+     * @return mixed|void|null
+     */
     protected function _compareAllData(array $file_array, Collection $db_array, CustomTable $custom_table)
     {
         $header_array = [];
@@ -355,7 +442,7 @@ class ImportExportTest extends FeatureTestBase
                                 return $file;
                             }
                             return $item;
-                        })->implode(',') ?? null;
+                        })->implode(',');
                     }
                     // if file column, get url
                     elseif (!is_null($file = $this->getFileColumnValue($header, $colvalue, $custom_table))) {
@@ -367,6 +454,10 @@ class ImportExportTest extends FeatureTestBase
         }
     }
 
+    /**
+     * @param array<mixed> $params
+     * @return void
+     */
     protected function _testChunkExport(array $params)
     {
         $this->init(true);
@@ -383,8 +474,8 @@ class ImportExportTest extends FeatureTestBase
 
         $this->assertEquals($result, 0);
 
-        $start = isset($params['--start'])? $params['--start']: 1;
-        $end = isset($params['--end'])? $params['--end']: 1000;
+        $start = isset($params['--start']) ? $params['--start'] : 1;
+        $end = isset($params['--end']) ? $params['--end'] : 1000;
 
         for ($i = $start; $i <= $end; $i++) {
             $num = $i;
@@ -398,6 +489,11 @@ class ImportExportTest extends FeatureTestBase
         }
     }
 
+    /**
+     * @param string $target_name
+     * @param bool $isSuccess
+     * @return void
+     */
     protected function _testImport($target_name, bool $isSuccess = true)
     {
         $this->init(false, $target_name);

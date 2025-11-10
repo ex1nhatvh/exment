@@ -9,14 +9,14 @@ use Exceedone\Exment\Enums\GroupCondition;
 class MySqlGrammar extends BaseGrammar implements GrammarInterface
 {
     use GrammarTrait;
-    
 
-    public function compileUpdateRemovingJsonKey($query, string $key) : string
+
+    public function compileUpdateRemovingJsonKey($query, string $key): string
     {
         $table = $this->wrapTable($query->from);
 
         // Creating json value
-        
+
         $path = explode('->', $key);
 
         $field = $this->wrapValue(array_shift($path));
@@ -47,12 +47,12 @@ class MySqlGrammar extends BaseGrammar implements GrammarInterface
      *
      * @return bool
      */
-    public function isSupportWhereInMultiple() : bool
+    public function isSupportWhereInMultiple(): bool
     {
         return true;
     }
-    
-    
+
+
     /**
      * wherein string.
      * Ex. column is 1,12,23,31 , and want to match 1, getting.
@@ -72,7 +72,7 @@ class MySqlGrammar extends BaseGrammar implements GrammarInterface
         } else {
             $queryStr = "FIND_IN_SET(?, REPLACE(REPLACE(REPLACE(REPLACE($index, '[', ''), ' ', ''), ']', ''), '\\\"', ''))";
         }
-        
+
         if (is_list($values)) {
             $func = $isOr ? 'orWhere' : 'where';
             $builder->{$func}(function ($query) use ($queryStr, $values, $isNot) {
@@ -88,7 +88,7 @@ class MySqlGrammar extends BaseGrammar implements GrammarInterface
 
         return $builder;
     }
-    
+
     /**
      * wherein column.
      * Ex. column is 1,12,23,31 , and want to match 1, getting.
@@ -109,13 +109,13 @@ class MySqlGrammar extends BaseGrammar implements GrammarInterface
         } else {
             $queryStr = "FIND_IN_SET({$baseColumnIndex}, REPLACE(REPLACE(REPLACE(REPLACE($index, '[', ''), ' ', ''), ']', ''), '\\\"', ''))";
         }
-        
+
         $func = $isOr ? 'orWhereRaw' : 'whereRaw';
         $builder->{$func}($queryStr);
 
         return $builder;
     }
-    
+
 
     /**
      * Get cast column string
@@ -189,7 +189,7 @@ class MySqlGrammar extends BaseGrammar implements GrammarInterface
         if (!$addOption) {
             return $cast;
         }
-        
+
         $length = array_get($options, 'length') ?? 50;
 
         switch ($type) {
@@ -197,7 +197,7 @@ class MySqlGrammar extends BaseGrammar implements GrammarInterface
                 $decimal_digit = array_get($options, 'decimal_digit') ?? 2;
                 $cast .= "($length, $decimal_digit)";
                 break;
-                
+
             case DatabaseDataType::TYPE_STRING:
             case DatabaseDataType::TYPE_STRING_MULTIPLE:
                 $cast .= "($length)";
@@ -214,7 +214,7 @@ class MySqlGrammar extends BaseGrammar implements GrammarInterface
      * @param string $column column name
      * @param bool $groupBy if group by query, return true
      *
-     * @return void
+     * @return string|null
      */
     public function getDateFormatString($groupCondition, $column, $groupBy = false, $wrap = true)
     {
@@ -244,14 +244,14 @@ class MySqlGrammar extends BaseGrammar implements GrammarInterface
 
         return null;
     }
-    
+
     /**
      * convert carbon date to date format
      *
      * @param GroupCondition $groupCondition Y, YM, YMD, ...
      * @param \Carbon\Carbon $carbon
      *
-     * @return string
+     * @return string|null
      */
     public function convertCarbonDateFormat($groupCondition, $carbon)
     {
@@ -285,5 +285,17 @@ class MySqlGrammar extends BaseGrammar implements GrammarInterface
     public function wrapJsonUnquote($value, $prefixAlias = false)
     {
         return "json_unquote(" . $this->wrap($value, $prefixAlias) . ")";
+    }
+
+    /**
+     * Wrap and add json_extract if needs
+     *
+     * @param mixed $column
+     * @param string $path
+     * @return string
+     */
+    public function wrapJsonExtract($column, $path = '$')
+    {
+        return "json_extract({$this->wrap($column)}, '{$path}')";
     }
 }

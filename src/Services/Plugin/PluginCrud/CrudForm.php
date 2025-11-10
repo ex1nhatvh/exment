@@ -1,4 +1,5 @@
 <?php
+
 namespace Exceedone\Exment\Services\Plugin\PluginCrud;
 
 use Illuminate\Http\Request;
@@ -17,13 +18,12 @@ class CrudForm extends CrudBase
     /**
      * Create
      *
-     * @param Request $request
-     * @return void
+     * @return mixed
      */
     public function create()
     {
         $content = $this->pluginClass->getContent();
-        
+
         $content->body($this->form(true)->render());
 
         return $content;
@@ -32,65 +32,68 @@ class CrudForm extends CrudBase
     /**
      * Edit
      *
-     * @param mixed $id
-     * @return void
+     * @param $id
+     * @return mixed
      */
     public function edit($id)
     {
         $content = $this->pluginClass->getContent();
-        
+
         $content->body($this->form(false, $id)->render());
 
         return $content;
     }
 
     /**
-     * Store
+     * Stor
      *
-     * @return void
+     * @return \Illuminate\Contracts\Foundation\Application|\Illuminate\Http\RedirectResponse|\Illuminate\Routing\Redirector
      */
     public function store()
     {
         $content = $this->pluginClass->getContent();
-        
+
         return $this->save(true);
     }
 
     /**
      * Update
      *
-     * @return void
+     * @param $id
+     * @return \Illuminate\Contracts\Foundation\Application|\Illuminate\Http\RedirectResponse|\Illuminate\Routing\Redirector
      */
     public function update($id)
     {
         $content = $this->pluginClass->getContent();
-        
+
         return $this->save(false, $id);
     }
 
     /**
      * delete
      *
-     * @return void
+     * @param $id
+     * @return string
      */
     public function delete($id)
     {
         $ids = stringToArray($id);
         $this->pluginClass->deletes($ids);
-        
+
         return $this->getFullUrl();
     }
 
-    
     /**
      * Make a form builder.
      *
-     * @return Form
+     * @param bool $isCreate
+     * @param $id
+     * @return Box
      */
     protected function form(bool $isCreate, $id = null)
     {
         $form = $this->getForm($isCreate, $id);
-
+        /** @phpstan-ignore-next-line constructor expects string, Encore\Admin\Widgets\Form given */
         $box = new Box(trans($isCreate ? 'admin.create' : 'admin.edit'), $form);
         $box->style('info');
         $this->setFormTools($id, $box);
@@ -108,7 +111,9 @@ class CrudForm extends CrudBase
     /**
      * Save value.
      *
-     * @return Form
+     * @param bool $isCreate
+     * @param $id
+     * @return \Illuminate\Contracts\Foundation\Application|\Illuminate\Http\RedirectResponse|\Illuminate\Routing\Redirector
      */
     protected function save(bool $isCreate, $id = null)
     {
@@ -150,7 +155,7 @@ class CrudForm extends CrudBase
      * @param boolean $isCreate
      * @return array
      */
-    protected function filterPostedValue(array $array, bool $isCreate) : array
+    protected function filterPostedValue(array $array, bool $isCreate): array
     {
         $key = $isCreate ? 'create' : 'edit';
         $definitions = collect($this->pluginClass->getFieldDefinitions())
@@ -159,8 +164,8 @@ class CrudForm extends CrudBase
             })->map(function ($item, $key) {
                 return array_get($item, 'key');
             })->toArray();
-            
-        
+
+
         return array_only($array, $definitions);
     }
 
@@ -171,7 +176,7 @@ class CrudForm extends CrudBase
      * @param mixed $id
      * @return WidgetForm
      */
-    protected function getForm(bool $isCreate, $id = null) : WidgetForm
+    protected function getForm(bool $isCreate, $id = null): WidgetForm
     {
         if ($isCreate) {
             $data = [];
@@ -189,11 +194,11 @@ class CrudForm extends CrudBase
         return $form;
     }
 
-
     /**
      * Set form definitions.
      *
-     * @param Form $form
+     * @param bool $isCreate
+     * @param WidgetForm $form
      * @return void
      */
     protected function setFormColumn(bool $isCreate, Form $form)
@@ -207,10 +212,10 @@ class CrudForm extends CrudBase
                 ->filter(function ($d) use ($key) {
                     return array_has($d, $key);
                 })->sortBy($key);
-    
+
             // get primary key
             $primary = $this->pluginClass->getPrimaryKey();
-    
+
             foreach ($definitions as $target) {
                 // if primary key, only show.
                 if ($primary == array_get($target, 'key')) {
@@ -227,7 +232,8 @@ class CrudForm extends CrudBase
     /**
      * Set form tools.
      *
-     * @param Box $Box
+     * @param $id
+     * @param Box $box
      * @return void
      */
     protected function setFormTools($id, Box $box)
@@ -237,7 +243,7 @@ class CrudForm extends CrudBase
         if ($oauthLogoutView) {
             $box->tools($oauthLogoutView->render());
         }
-        
+
         if ($this->pluginClass->enableDelete($id)) {
             $box->tools((new Tools\DeleteButton(admin_url($this->getFullUrl($id))))->render());
         }

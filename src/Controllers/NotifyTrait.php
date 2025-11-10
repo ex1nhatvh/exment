@@ -23,8 +23,6 @@ trait NotifyTrait
 {
     /**
      * Make a grid builder.
-     *
-     * @return Grid
      */
     protected function setBasicGrid($grid)
     {
@@ -38,8 +36,6 @@ trait NotifyTrait
 
     /**
      * Make a grid builder.
-     *
-     * @return Grid
      */
     protected function setFilterGrid($grid, ?\Closure $callback = null)
     {
@@ -95,7 +91,7 @@ trait NotifyTrait
             ->help(exmtrans("notify.help.mention_here"))
             ->attribute(['data-filter' => json_encode(['key' => 'notify_action', 'value' =>  [NotifyAction::SLACK]])
             ]);
-        
+
         $system_slack_user_column = CustomColumn::getEloquent(System::system_slack_user_column());
         $notify_action_target_filter = isset($system_slack_user_column) ? [NotifyAction::EMAIL, NotifyAction::SHOW_PAGE, NotifyAction::SLACK] : [NotifyAction::EMAIL, NotifyAction::SHOW_PAGE];
 
@@ -135,11 +131,18 @@ trait NotifyTrait
                     ['key' => 'notify_action_target', 'value' => [NotifyActionTarget::FIXED_EMAIL]],
                 ])
             ]);
- 
+        $selected_value = [];
+        $form_index = $form->getIndex();
+        if($form_index !== null ) {
+            if(isset($notify->action_settings[$form_index]['target_users'])) {
+                $selected_value = $notify->action_settings[$form_index]['target_users'];
+            }
+        }
         list($users, $ajax) = CustomTable::getEloquent(SystemTableName::USER)->getSelectOptionsAndAjaxUrl([
             'display_table' => $custom_table,
+            'selected_value'=> $selected_value
         ]);
-    
+
         $field = $form->multipleSelect('target_users', exmtrans('notify.target_users'))
             ->options($users)
             ->ajax($ajax)
@@ -157,16 +160,22 @@ trait NotifyTrait
         }
 
         if (System::organization_available()) {
+            if($form_index !== null ) {
+                if(isset($notify->action_settings[$form_index]['target_organizations'])) {
+                    $selected_value = $notify->action_settings[$form_index]['target_organizations'];
+                }
+            }
             list($organizations, $ajax) = CustomTable::getEloquent(SystemTableName::ORGANIZATION)->getSelectOptionsAndAjaxUrl([
                 'display_table' => $custom_table,
+                'selected_value'=> $selected_value
             ]);
-                
+
             $field = $form->multipleSelect('target_organizations', exmtrans('notify.target_organizations'))
                 ->options($organizations)
                 ->ajax($ajax)
                 ->attribute(['data-filter' => json_encode(['key' => 'notify_action_target', 'value' => [NotifyActionTarget::FIXED_ORGANIZATION]])])
             ;
-        
+
             // Set help if has $custom_table
             if ($custom_table) {
                 $field->help(exmtrans('workflow.help.target_user_org', [
@@ -175,7 +184,7 @@ trait NotifyTrait
                 ]));
             }
         }
-                
+
         if (!isset($system_slack_user_column)) {
             $form->display('notify_action_target_text', exmtrans("notify.notify_action_target"))
                 ->displayText(exmtrans('notify.help.slack_user_column_not_setting') . \Exment::getMoreTag('notify_webhook', 'notify.mention_setting_manual_id'))
@@ -247,7 +256,7 @@ trait NotifyTrait
             ->getValueModel()
             ->where('value->mail_key_name', $mailKeyName)
             ->first();
-    
+
         if (!isset($mail_template)) {
             return [$keyName => null];
         }
@@ -278,7 +287,7 @@ trait NotifyTrait
 
         $custom_tables = CustomTable::filterList()->pluck('id')->toArray();
 
-        if (!in_array($notify->custom_table_id, $custom_tables)) {
+        if (!in_array($notify->target_id, $custom_tables)) {
             Checker::error();
             return false;
         }

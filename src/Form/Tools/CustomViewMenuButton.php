@@ -22,7 +22,7 @@ class CustomViewMenuButton extends ModalTileMenuButton
         $this->custom_table = $custom_table;
         $this->current_custom_view = $current_custom_view;
         $this->addMenuList = $addMenuList;
-        
+
         // init as Custom value's menu
         if ($addMenuList) {
             parent::__construct([
@@ -75,18 +75,8 @@ class CustomViewMenuButton extends ModalTileMenuButton
             }
         }
 
-        $compare = function ($a, $b) {
-            $atype = array_get($a, 'view_kind_type');
-            $btype = array_get($b, 'view_kind_type');
-    
-            if ($atype == ViewKindType::ALLDATA) {
-                return -1;
-            } elseif ($btype == ViewKindType::ALLDATA) {
-                return 1;
-            } else {
-                return $atype <=> $btype;
-            }
-        };
+        $sort_options = config('exment.sort_custom_view_options', 0);
+        $compare = $this->getCompare($sort_options);
         usort($userviews, $compare);
         usort($systemviews, $compare);
 
@@ -135,7 +125,7 @@ class CustomViewMenuButton extends ModalTileMenuButton
     public function html()
     {
         $items = $this->getItems();
-        
+
         // if no menu, return
         if (count($items) == 0) {
             return null;
@@ -146,6 +136,52 @@ class CustomViewMenuButton extends ModalTileMenuButton
         ]];
 
         return parent::html();
+    }
+
+
+    protected function getCompare(int $sort_options)
+    {
+        switch ($sort_options) {
+            case 0:
+                return function ($a, $b) {
+                    $atype = array_get($a, 'view_kind_type');
+                    $btype = array_get($b, 'view_kind_type');
+        
+                    if ($atype == ViewKindType::ALLDATA) {
+                        return -1;
+                    } elseif ($btype == ViewKindType::ALLDATA) {
+                        return 1;
+                    } else {
+                        return $atype <=> $btype;
+                    }
+                };
+            case 1:
+                return function ($a, $b) {
+                    $atype = array_get($a, 'view_kind_type');
+                    $btype = array_get($b, 'view_kind_type');
+    
+                    if ($atype == $btype) {
+                        $aorder = array_get($a, 'order');
+                        $border = array_get($b, 'order');
+                        return $aorder <=> $border;
+                    } else {
+                        if ($atype == ViewKindType::ALLDATA) {
+                            return -1;
+                        } elseif ($btype == ViewKindType::ALLDATA) {
+                            return 1;
+                        } else {
+                            return $atype <=> $btype;
+                        }
+                    }
+                };
+            case 2:
+                return function ($a, $b) {
+                    $aorder = array_get($a, 'order');
+                    $border = array_get($b, 'order');
+                    return $aorder <=> $border;
+                };
+                        
+        }
     }
 
 
@@ -170,7 +206,7 @@ class CustomViewMenuButton extends ModalTileMenuButton
                         'icon' => 'fa-cog',
                     ];
                 }
-    
+
                 $items[] = [
                     'href' => admin_urls('view', $this->custom_table->table_name, 'create?from_data=1&copy_id=' . $this->current_custom_view->id),
                     'header' => exmtrans('custom_view.custom_view_menulist.current_view_replicate'),
@@ -197,7 +233,7 @@ class CustomViewMenuButton extends ModalTileMenuButton
                 'description' => exmtrans('custom_view.custom_view_menulist.help.create_calendar'),
                 'icon' => 'fa-calendar',
             ];
-                
+
             if ($this->custom_table->hasSystemViewPermission()) {
                 $items[] = [
                     'href' => admin_urls('view', $this->custom_table->table_name, 'create?view_kind_type=3&from_data=1'),

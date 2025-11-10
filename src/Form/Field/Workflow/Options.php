@@ -16,6 +16,11 @@ class Options extends Select
      */
     protected $column = [];
 
+    /**
+     * @param $column
+     * @param $arguments
+     * @phpstan-ignore-next-line
+     */
     public function __construct($column = '', $arguments = [])
     {
         $this->column['comment_type'] = 'comment_type';
@@ -58,7 +63,7 @@ class Options extends Select
 
         return $value;
     }
-    
+
     public function render()
     {
         $configs = array_merge([
@@ -84,6 +89,7 @@ EOT;
 
         $options = WorkflowCommentType::transArray('workflow.comment_options');
 
+        /** @phpstan-ignore-next-line array_filter expects (callable(mixed): bool)|null, 'strlen' given. */
         $options = array_filter($options, 'strlen');
 
         return parent::render()->with([

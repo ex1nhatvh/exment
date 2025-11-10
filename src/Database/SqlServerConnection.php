@@ -6,6 +6,7 @@ use Exceedone\Exment\Database\Query\Grammars\SqlServerGrammar as QueryGrammar;
 use Exceedone\Exment\Database\Schema\Grammars\SqlServerGrammar as SchemaGrammar;
 use Exceedone\Exment\Database\Schema\SqlServerBuilder;
 use Exceedone\Exment\Database\Query\Processors\SqlServerProcessor;
+use Illuminate\Database\Grammar;
 use Illuminate\Database\SqlServerConnection as BaseConnection;
 use Exceedone\Exment\Exceptions\BackupRestoreCheckException;
 use Exceedone\Exment\Exceptions\BackupRestoreNotSupportedException;
@@ -13,14 +14,15 @@ use Exceedone\Exment\Exceptions\BackupRestoreNotSupportedException;
 class SqlServerConnection extends BaseConnection implements ConnectionInterface
 {
     use ConnectionTrait;
-    
+
     /**
      * Get a schema builder instance for the connection.
      *
-     * @return \Illuminate\Database\Schema\Builder
+     * @return SqlServerBuilder
      */
     public function getSchemaBuilder()
     {
+        /** @phpstan-ignore-next-line Call to function is_null() with Illuminate\Database\Schema\Grammars\Grammar will always evaluate to false. */
         if (is_null($this->schemaGrammar)) {
             $this->useDefaultSchemaGrammar();
         }
@@ -31,21 +33,21 @@ class SqlServerConnection extends BaseConnection implements ConnectionInterface
     /**
      * Get the default schema grammar instance.
      *
-     * @return SchemaGrammar
+     * @return Grammar|SchemaGrammar
      */
     protected function getDefaultSchemaGrammar()
     {
-        return $this->withTablePrefix(new SchemaGrammar);
+        return $this->withTablePrefix(new SchemaGrammar());
     }
 
     /**
      * Get the default query grammar instance.
      *
-     * @return QueryGrammar
+     * @return Grammar|QueryGrammar
      */
     protected function getDefaultQueryGrammar()
     {
-        return $this->withTablePrefix(new QueryGrammar);
+        return $this->withTablePrefix(new QueryGrammar());
     }
 
     /**
@@ -55,11 +57,11 @@ class SqlServerConnection extends BaseConnection implements ConnectionInterface
      */
     protected function getDefaultPostProcessor()
     {
-        return new SqlServerProcessor;
+        return new SqlServerProcessor();
     }
 
 
-    public function getDatabaseDriverName() : string
+    public function getDatabaseDriverName(): string
     {
         return 'SQL Server';
     }
@@ -70,17 +72,17 @@ class SqlServerConnection extends BaseConnection implements ConnectionInterface
      * @return bool
      * @throws BackupRestoreCheckException
      */
-    public function checkBackup() : bool
+    public function checkBackup(): bool
     {
         throw new BackupRestoreNotSupportedException(exmtrans('backup.message.not_support_driver', $this->getDatabaseDriverName()));
     }
-    
+
     /**
      * Whether use unicode if search multiple column
      *
      * @return boolean
      */
-    public function isUseUnicodeMultipleColumn() : bool
+    public function isUseUnicodeMultipleColumn(): bool
     {
         return true;
     }
@@ -88,7 +90,7 @@ class SqlServerConnection extends BaseConnection implements ConnectionInterface
     public function backupDatabase($tempDir)
     {
     }
-    
+
     /**
      * Restore database
      *
@@ -108,7 +110,7 @@ class SqlServerConnection extends BaseConnection implements ConnectionInterface
     {
     }
 
-    
+
     public function createView($viewName, $query)
     {
         $viewName = $this->getQueryGrammar()->wrapTable($viewName);

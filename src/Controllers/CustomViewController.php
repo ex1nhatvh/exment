@@ -29,7 +29,7 @@ class CustomViewController extends AdminControllerTableBase
     public function __construct(?CustomTable $custom_table, Request $request)
     {
         parent::__construct($custom_table, $request);
-        
+
         $title = exmtrans("custom_view.header") . ' : ' . ($custom_table ? $custom_table->table_view_name : null);
         $this->setPageInfo($title, $title, exmtrans("custom_view.description"), 'fa-th-list');
     }
@@ -37,7 +37,9 @@ class CustomViewController extends AdminControllerTableBase
     /**
      * Index interface.
      *
-     * @return Content
+     * @param Request $request
+     * @param Content $content
+     * @return Content|void
      */
     public function index(Request $request, Content $content)
     {
@@ -48,15 +50,14 @@ class CustomViewController extends AdminControllerTableBase
         return parent::index($request, $content);
     }
 
-
     /**
      * Edit interface.
      *
      * @param Request $request
      * @param Content $content
-     * @param string $tableKey
-     * @param string|int|null $id
-     * @return void|bool
+     * @param $tableKey
+     * @param $id
+     * @return Content|false|void
      */
     public function edit(Request $request, Content $content, $tableKey, $id)
     {
@@ -74,14 +75,16 @@ class CustomViewController extends AdminControllerTableBase
             Checker::error();
             return false;
         }
-        
+
         return parent::edit($request, $content, $tableKey, $id);
     }
 
     /**
      * Create interface.
      *
-     * @return Content
+     * @param Request $request
+     * @param Content $content
+     * @return Content|void
      */
     public function create(Request $request, Content $content)
     {
@@ -104,7 +107,7 @@ class CustomViewController extends AdminControllerTableBase
      */
     protected function grid()
     {
-        $grid = new Grid(new CustomView);
+        $grid = new Grid(new CustomView());
         $grid->column('view_view_name', exmtrans("custom_view.view_view_name"))->sortable();
         if ($this->custom_table->hasSystemViewPermission()) {
             $grid->column('view_type', exmtrans("custom_view.view_type"))->sortable()->display(function ($view_type) {
@@ -115,6 +118,9 @@ class CustomViewController extends AdminControllerTableBase
         $grid->column('view_kind_type', exmtrans("custom_view.view_kind_type"))->sortable()->display(function ($view_kind_type) {
             return ViewKindType::getEnum($view_kind_type)->transKey("custom_view.custom_view_kind_type_options");
         });
+        if (config('exment.sort_custom_view_options', 0) > 0) {
+            $grid->column('order', exmtrans("custom_view.order"))->sortable()->editable();
+        }
 
         $grid->model()->where('custom_table_id', $this->custom_table->id);
         $custom_table = $this->custom_table;
@@ -122,20 +128,22 @@ class CustomViewController extends AdminControllerTableBase
         $grid->disableExport();
         $grid->actions(function (Grid\Displayers\Actions $actions) use ($custom_table) {
             $table_name = $custom_table->table_name;
+            /** @phpstan-ignore-next-line Cannot call method hasEditPermission() on stdClass. */
             if (boolval($actions->row->hasEditPermission())) {
                 if (boolval($actions->row->disabled_delete)) {
                     $actions->disableDelete();
                 }
-                if (intval($actions->row->view_kind_type) === Enums\ViewKindType::AGGREGATE ||
-                    intval($actions->row->view_kind_type) === Enums\ViewKindType::CALENDAR) {
-                    $actions->disableEdit();
-                    
-                    $linker = (new Linker)
-                        ->url(admin_urls('view', $table_name, $actions->getKey(), 'edit').'?view_kind_type='.$actions->row->view_kind_type)
-                        ->icon('fa-edit')
-                        ->tooltip(trans('admin.edit'));
-                    $actions->prepend($linker);
-                }
+                // unreachable statement
+//                if (intval($actions->row->view_kind_type) === Enums\ViewKindType::AGGREGATE ||
+//                    intval($actions->row->view_kind_type) === Enums\ViewKindType::CALENDAR) {
+//                    $actions->disableEdit();
+//
+//                    $linker = (new Linker())
+//                        ->url(admin_urls('view', $table_name, $actions->getKey(), 'edit').'?view_kind_type='.$actions->row->view_kind_type)
+//                        ->icon('fa-edit')
+//                        ->tooltip(trans('admin.edit'));
+//                    $actions->prepend($linker);
+//                }
             } else {
                 $actions->disableEdit();
                 $actions->disableDelete();
@@ -146,14 +154,14 @@ class CustomViewController extends AdminControllerTableBase
             $actions->disableView();
 
             if (intval($actions->row->view_kind_type) != Enums\ViewKindType::FILTER) {
-                $linker = (new Linker)
+                $linker = (new Linker())
                 ->url($custom_table->getGridUrl(true, ['view' => $actions->row->suuid]))
                 ->icon('fa-database')
                 ->tooltip(exmtrans('custom_view.view_datalist'));
                 $actions->prepend($linker);
             }
-            
-            $linker = (new Linker)
+
+            $linker = (new Linker())
                 ->url(admin_urls('view', $table_name, "create?copy_id={$actions->row->id}"))
                 ->icon('fa-copy')
                 ->tooltip(exmtrans('common.copy_item', exmtrans('custom_view.custom_view_button_label')));
@@ -162,10 +170,12 @@ class CustomViewController extends AdminControllerTableBase
 
         $grid->disableCreateButton();
         $grid->tools(function (Grid\Tools $tools) {
+            /** @phpstan-ignore-next-line append() expects Encore\Admin\Grid\Tools\AbstractTool|string, Exceedone\Exment\Form\Tools\CustomViewMenuButton given */
             $tools->append(new Tools\CustomViewMenuButton($this->custom_table, null, false));
+            /** @phpstan-ignore-next-line expects Encore\Admin\Grid\Tools\AbstractTool|string, Exceedone\Exment\Form\Tools\CustomTableMenuButton given */
             $tools->append(new Tools\CustomTableMenuButton('view', $this->custom_table));
         });
-        
+
         // filter
         $grid->filter(function ($filter) {
             $filter->disableIdFilter();
@@ -191,8 +201,8 @@ class CustomViewController extends AdminControllerTableBase
         // get request
         $request = Request::capture();
         $copy_custom_view = CustomView::getEloquent($copy_id);
-        
-        $form = new Form(new CustomView);
+
+        $form = new Form(new CustomView());
 
         if (!isset($id)) {
             $id = $form->model()->id;
@@ -208,7 +218,7 @@ class CustomViewController extends AdminControllerTableBase
             $view_type = null;
             $view_kind_type = null;
         }
-        
+
         // get view_kind_type
         if (!is_null($request->input('view_kind_type'))) {
             $view_kind_type = $request->input('view_kind_type');
@@ -223,7 +233,7 @@ class CustomViewController extends AdminControllerTableBase
         } elseif (is_null($view_kind_type)) {
             $view_kind_type = ViewKindType::DEFAULT;
         }
-        
+
         // get from_data
         $from_data = false;
         if ($request->has('from_data')) {
@@ -243,7 +253,7 @@ class CustomViewController extends AdminControllerTableBase
         $form->ignore('from_data');
         $form->hidden('plugin')->default($plugin);
         $form->ignore('plugin');
-        
+
         $form->display('custom_table.table_name', exmtrans("custom_table.table_name"))->default($this->custom_table->table_name);
         $form->display('custom_table.table_view_name', exmtrans("custom_table.table_view_name"))->default($this->custom_table->table_view_name);
         $form->display('view_kind_type', exmtrans("custom_view.view_kind_type"))
@@ -266,10 +276,16 @@ class CustomViewController extends AdminControllerTableBase
                 $form->hidden('view_type')->default(Enums\ViewType::USER);
             }
         }
-        
+
         // remove default
         if (intval($view_kind_type) != Enums\ViewKindType::FILTER) {
             $form->switchbool('default_flg', exmtrans("common.default"))->default(false);
+        }
+
+        if (config('exment.sort_custom_view_options', 0) > 0) {
+            $form->number('order', exmtrans("custom_view.order"))->rules("integer")
+                ->addElementClass(['order', 'view_order'])
+                ->help(sprintf(exmtrans("custom_view.help.order")));
         }
 
         // set column' s form
@@ -282,7 +298,7 @@ class CustomViewController extends AdminControllerTableBase
 
         // append model for getting from options
         $form->editing(function ($form) {
-            $form->model()->append(['use_view_infobox', 'view_infobox_title', 'view_infobox', 'pager_count', 'condition_join', 'header_align']);
+            $form->model()->append(['use_view_infobox', 'view_infobox_title', 'view_infobox', 'pager_count', 'condition_join', 'condition_reverse', 'header_align']);
         });
 
         // check filters and sorts count before save
@@ -309,6 +325,7 @@ class CustomViewController extends AdminControllerTableBase
             if (request()->has('plugin') && !is_null($plugin = request()->get('plugin'))) {
                 $plugin = Plugin::getPluginByUUID($plugin);
                 if (isset($plugin)) {
+                    /** @phpstan-ignore-next-line fix laravel-admin documentation */
                     $form->model()->setOption('plugin_id', $plugin->id);
                 }
             }
@@ -322,7 +339,7 @@ class CustomViewController extends AdminControllerTableBase
             if (boolval($from_data) && $form->model()->view_kind_type != Enums\ViewKindType::FILTER) {
                 // get view suuid
                 $suuid = $form->model()->suuid;
-                
+
                 admin_toastr(trans('admin.save_succeeded'));
 
                 return redirect($custom_table->getGridUrl(true, ['view' => $suuid]));
@@ -330,6 +347,7 @@ class CustomViewController extends AdminControllerTableBase
         });
 
         $form->tools(function (Form\Tools $tools) use ($id, $suuid, $custom_table, $view_type, $view_kind_type) {
+            /** @phpstan-ignore-next-line  add() expects string, Exceedone\Exment\Form\Tools\CustomTableMenuButton given */
             $tools->add((new Tools\CustomTableMenuButton('view', $custom_table)));
 
             if ($view_type == Enums\ViewType::USER) {
@@ -338,7 +356,7 @@ class CustomViewController extends AdminControllerTableBase
                     admin_urls(Enums\ShareTargetType::VIEW()->lowerkey(), $custom_table->table_name, $id, "shareClick")
                 ));
             }
-    
+
             if (isset($suuid) && intval($view_kind_type) != Enums\ViewKindType::FILTER) {
                 $tools->append(view('exment::tools.button', [
                     'href' => $custom_table->getGridUrl(true, ['view' => $suuid]),
@@ -397,7 +415,7 @@ class CustomViewController extends AdminControllerTableBase
         }
         return parent::validateTable($table, $role_name);
     }
-    
+
     /**
      * get filter condition
      */
@@ -409,7 +427,7 @@ class CustomViewController extends AdminControllerTableBase
         }
         return $item->getFilterCondition();
     }
-    
+
     protected function getConditionItem(Request $request, $target)
     {
         $item = ConditionItemBase::getItemByRequest($this->custom_table, $target);
@@ -435,7 +453,7 @@ class CustomViewController extends AdminControllerTableBase
         $custom_view = CustomView::getEloquent($id);
 
         $form = DataShareAuthoritable::getShareDialogForm($custom_view, $tableKey);
-        
+
         return getAjaxResponse([
             'body'  => $form->render(),
             'script' => $form->getScript(),

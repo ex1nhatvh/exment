@@ -14,8 +14,17 @@ class ReCaptcha extends Hidden
      */
     protected $view = 'admin::form.hidden';
 
+    /**
+     * @var string
+     * @phpstan-ignore-next-line Property Exceedone\Exment\Form\Field\ReCaptcha::$rules (array|Closure) does not accept default value of type 'required'.
+     * it need to fix laravel-admin
+     */
     protected $rules = 'required';
 
+    /**
+     * @param $arguments
+     * @phpstan-ignore-next-line
+     */
     public function __construct($arguments = [])
     {
         // if (!\Exment::isAvailableGoogleRecaptcha()) {
@@ -26,7 +35,7 @@ class ReCaptcha extends Hidden
         $this->label = 'Gooele reCaptcha';
     }
 
-    
+
     /**
      * Get field validation rules.
      *
@@ -34,7 +43,7 @@ class ReCaptcha extends Hidden
      */
     protected function getRules()
     {
-        $this->rules([new \Exceedone\Exment\Validator\CaptchaRule]);
+        $this->rules([new \Exceedone\Exment\Validator\CaptchaRule()]);
         return parent::getRules();
     }
 

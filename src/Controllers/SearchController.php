@@ -1,4 +1,5 @@
 <?php
+
 namespace Exceedone\Exment\Controllers;
 
 use Encore\Admin\Facades\Admin;
@@ -18,9 +19,9 @@ class SearchController extends AdminControllerBase
 {
     protected $custom_table;
 
-    
+
     // Search Header ----------------------------------------------------
-    
+
     /**
      * Rendering search header for adminLTE header
      */
@@ -93,10 +94,13 @@ class SearchController extends AdminControllerBase
             return $this->getFreeWord($request, $content);
         }
     }
+
     /**
      * Get free word result page. this function is called when user input word end click enter.
+     *
      * @param Request $request
-     * @return Content
+     * @param Content $content
+     * @return Content|\Illuminate\Contracts\Foundation\Application|\Illuminate\Http\RedirectResponse|\Illuminate\Routing\Redirector
      */
     protected function getFreeWord(Request $request, Content $content)
     {
@@ -107,7 +111,7 @@ class SearchController extends AdminControllerBase
         $content->header(exmtrans('search.header_freeword'));
         $content->description(exmtrans('search.description_freeword'));
         $this->setCommonScript(true);
-        
+
         // add header and description
         $title = sprintf(exmtrans("search.result_label"), $request->input('query'));
         $this->setPageInfo($title, $title, exmtrans("plugin.description"));
@@ -145,7 +149,7 @@ class SearchController extends AdminControllerBase
         return collect($results);
     }
 
-    
+
 
 
     // Search list ----------------------------------------------------
@@ -196,7 +200,7 @@ class SearchController extends AdminControllerBase
         ]);
         $paginate->setPath(admin_urls('search', 'list') . "?query=$q&table_name=$table_name");
         $datalist = $paginate->items();
-        
+
         // Get result HTML.
         if (count($datalist) == 0) {
             return [
@@ -212,7 +216,7 @@ class SearchController extends AdminControllerBase
         list($headers, $bodies, $columnStyles, $columnClasses) = $view->convertDataTable($datalist, [
             'action_callback' => function (&$link, $custom_table, $data) {
                 if (count($custom_table->getRelationTables()) > 0) {
-                    $link .= (new Linker)
+                    $link .= (new Linker())
                     ->url($data->getRelationSearchUrl(true))
                     ->icon('fa-compress')
                     ->tooltip(exmtrans('search.header_relation'));
@@ -235,12 +239,14 @@ class SearchController extends AdminControllerBase
 
 
 
-    
+
     // For relation search  --------------------------------------------------
     /**
      * Get relation search result page. this function is called when user select suggest.
+     *
      * @param Request $request
-     * @return Content
+     * @param Content $content
+     * @return Content|\Illuminate\Contracts\Foundation\Application|\Illuminate\Http\RedirectResponse|\Illuminate\Routing\Redirector|void
      */
     protected function getRelationSearch(Request $request, Content $content)
     {
@@ -251,7 +257,7 @@ class SearchController extends AdminControllerBase
             Checker::notFoundOrDeny();
             return;
         }
-        
+
         // get target tables
         $targetTables = $this->getSearchTargetRelationTable($table);
         // if if only self table, and query "relation"(force showing relation), then redirect show page
@@ -269,7 +275,7 @@ class SearchController extends AdminControllerBase
             'query' => $value,
             'tables' => $this->getSearchTargetRelationTable($table)])
         );
-        
+
         $this->setCommonScript(false);
 
         // add header and description
@@ -321,7 +327,7 @@ class SearchController extends AdminControllerBase
         }
         // set links
         $links = isset($paginate) ? $paginate->links('exment::search.links')->toHtml() : "";
-        
+
         // get headers and bodies
         $view = CustomView::getAllData($search_table);
         // definition action_callback is not $search_type is SELF
@@ -329,7 +335,7 @@ class SearchController extends AdminControllerBase
             $option = [
                 'action_callback' => function (&$link, $custom_table, $data) {
                     if (count($custom_table->getRelationTables()) > 0) {
-                        $link .= (new Linker)
+                        $link .= (new Linker())
                         ->url($data->getRelationSearchUrl(true))
                         ->icon('fa-compress')
                         ->tooltip(exmtrans('search.header_relation'));
@@ -339,7 +345,7 @@ class SearchController extends AdminControllerBase
         } else {
             $option = [];
         }
-        
+
         list($headers, $bodies, $columnStyles, $columnClasses) = $view->convertDataTable($data, $option);
         $table = (new WidgetTable($headers, $bodies))
             ->class('table table-hover')
@@ -411,7 +417,7 @@ class SearchController extends AdminControllerBase
             if (boolval(config('exment.search_list_link_filter', true)) && isset($query)) {
                 $query['view'] = CustomView::getAllData($custom_table)->suuid;
                 $query['execute_filter'] = '1';
-                
+
                 $list_url .= '?' . http_build_query($query);
             }
         }

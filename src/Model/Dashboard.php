@@ -9,7 +9,20 @@ use Exceedone\Exment\Enums\Permission;
 use Exceedone\Exment\Enums\JoinedOrgFilterType;
 use Exceedone\Exment\Enums\SystemTableName;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
+/**
+ * @phpstan-consistent-constructor
+ * @property mixed $suuid
+ * @property mixed $default_flg
+ * @property mixed $dashboard_type
+ * @property mixed $dashboard_name
+ * @property mixed $dashboard_view_name
+ * @property mixed $created_user_id
+ * @property mixed $options
+ * @method static int count($columns = '*')
+ * @method static \Illuminate\Database\Query\Builder orderBy($column, $direction = 'asc')
+ */
 class Dashboard extends ModelBase implements Interfaces\TemplateImporterInterface
 {
     use Traits\AutoSUuidTrait;
@@ -17,7 +30,7 @@ class Dashboard extends ModelBase implements Interfaces\TemplateImporterInterfac
     use Traits\DefaultFlgTrait;
     use Traits\TemplateTrait;
     use Traits\UseRequestSessionTrait;
-    
+
     protected $guarded = ['id'];
     protected $casts = ['options' => 'json'];
 
@@ -42,13 +55,13 @@ class Dashboard extends ModelBase implements Interfaces\TemplateImporterInterfac
         ],
     ];
 
-    public function dashboard_boxes()
+    public function dashboard_boxes(): HasMany
     {
         return $this->hasMany(DashboardBox::class, 'dashboard_id')
         ->orderBy('row_no')
         ->orderBy('column_no');
     }
-    
+
     /**
      * Get dashboard items selecting row
      *
@@ -67,8 +80,8 @@ class Dashboard extends ModelBase implements Interfaces\TemplateImporterInterfac
             return true;
         }, false)->sortBy('column_no');
     }
-        
-    public function data_share_authoritables()
+
+    public function data_share_authoritables(): HasMany
     {
         return $this->hasMany(DataShareAuthoritable::class, 'parent_id')
             ->where('parent_type', '_dashboard');
@@ -109,7 +122,7 @@ class Dashboard extends ModelBase implements Interfaces\TemplateImporterInterfac
 
         // create new dashboard
         if (!isset($dashboard)) {
-            $dashboard = new Dashboard;
+            $dashboard = new Dashboard();
             $dashboard->dashboard_type = DashboardType::SYSTEM;
             $dashboard->dashboard_name = 'system_default_dashboard';
             $dashboard->dashboard_view_name = exmtrans('dashboard.default_dashboard_name');
@@ -119,7 +132,7 @@ class Dashboard extends ModelBase implements Interfaces\TemplateImporterInterfac
 
         return $dashboard;
     }
-    
+
     /**
      * get eloquent using request settion.
      * now only support only id.
@@ -128,18 +141,18 @@ class Dashboard extends ModelBase implements Interfaces\TemplateImporterInterfac
     {
         return static::getEloquentDefault($id, $withs);
     }
-    
+
     protected static function boot()
     {
         parent::boot();
-        
+
         static::creating(function ($model) {
             $model->setDefaultFlg(null, 'setDefaultFlgFilter', 'setDefaultFlgSet');
         });
         static::updating(function ($model) {
             $model->setDefaultFlg(null, 'setDefaultFlgFilter', 'setDefaultFlgSet');
         });
-        
+
         static::created(function ($model) {
             if ($model->dashboard_type == DashboardType::USER) {
                 // save Authoritable
@@ -152,7 +165,7 @@ class Dashboard extends ModelBase implements Interfaces\TemplateImporterInterfac
             // Delete items
             $model->deletingChildren();
         });
-        
+
         // add global scope
         static::addGlobalScope('showableDashboards', function (Builder $builder) {
             static::showableDashboards($builder);
@@ -228,7 +241,7 @@ class Dashboard extends ModelBase implements Interfaces\TemplateImporterInterfac
             return true;
         };
 
-        
+
         // check if editable user exists
         $enum = JoinedOrgFilterType::getEnum(System::org_joined_type_custom_value(), JoinedOrgFilterType::ONLY_JOIN);
         $hasEdit = $this->data_share_authoritables()
@@ -238,12 +251,12 @@ class Dashboard extends ModelBase implements Interfaces\TemplateImporterInterfac
 
         return $hasEdit;
     }
-    
+
     public static function hasSystemPermission()
     {
         return \Admin::user()->hasPermission(Permission::SYSTEM);
     }
-    
+
     public static function hasPermission()
     {
         return System::userdashboard_available() || static::hasSystemPermission();

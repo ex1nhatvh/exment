@@ -1,10 +1,17 @@
 <?php
+
 namespace Exceedone\Exment\Services;
 
 use Exceedone\Exment\Model\CustomTable;
 use Exceedone\Exment\Model\CustomRelation;
 use Exceedone\Exment\Model\Define;
 
+/**
+ * @uses \Exceedone\Exment\Model\Traits\MailTemplateTrait
+ * @uses \Exceedone\Exment\Model\Traits\UserTrait
+ * @uses \Exceedone\Exment\Model\Traits\DocumentTrait
+ * @uses \Exceedone\Exment\Model\Traits\OrganizationTrait
+ */
 class ClassBuilder
 {
     private $isTrait;
@@ -120,17 +127,17 @@ class ClassBuilder
         $properties = array();
         foreach ($this->properties as $property) {
             $scope = empty($property["scope"]) ? "" : $property["scope"];
-            $name  = empty($property["name"])  ? "" : '$'.$property["name"];
-            $default  = empty($property["default"])  ? "" : " = {$property["default"]}";
+            $name  = empty($property["name"]) ? "" : '$'.$property["name"];
+            $default  = empty($property["default"]) ? "" : " = {$property["default"]}";
 
             $properties[] = sprintf("%s %s %s;", $scope, $name, $default);
         }
 
         $methods = array();
         foreach ($this->methods as $method) {
-            $scope     = empty($method["scope"])     ? "" : $method["scope"];
+            $scope     = empty($method["scope"]) ? "" : $method["scope"];
             $signature = empty($method["signature"]) ? "" : $method["signature"];
-            $contents  = empty($method["contents"])  ? "" : $method["contents"];
+            $contents  = empty($method["contents"]) ? "" : $method["contents"];
 
             $methods[] = sprintf(
                 "%s function %s {" .
@@ -186,7 +193,7 @@ class ClassBuilder
                 ->addProperty("protected", 'table', "'".getDBTableName($table)."'")
                 ->addMethod("public", "getCustomTableNameAttribute()", "return '".$table->table_name."';")
                 //->addProperty("public", 'custom_table_name', "'".$table->table_name."'")
-                ;
+        ;
 
         // set revision property
         $revisionEnabled = boolval($table->getOption('revision_flg', true));
@@ -200,21 +207,21 @@ class ClassBuilder
 
         // Create Relationship --------------------------------------------------
         $relations = CustomRelation::getRelationsByParent($table);
-            
+
         // loop children tables
         foreach ($relations as $relation) {
             $function_string = 'return $this->getDynamicRelationValue(' . $relation->id . ', true);';
             $pivot_table_name = $relation->getRelationName();
-            
+
             $builder = $builder->addMethod("public", "{$pivot_table_name}()", $function_string);
         }
-        
+
         $relations = CustomRelation::getRelationsByChild($table);
         // loop children tables
         foreach ($relations as $relation) {
             $function_string = 'return $this->getDynamicRelationValue(' . $relation->id . ', false);';
             $pivot_table_name = $relation->getRelationName();
-            
+
             $builder = $builder->addMethod("public", "{$pivot_table_name}()", $function_string);
         }
 
@@ -222,7 +229,7 @@ class ClassBuilder
         if (array_has(Define::CUSTOM_VALUE_TRAITS, $table->table_name)) {
             $builder->addInUse(Define::CUSTOM_VALUE_TRAITS[$table->table_name]);
         }
-        
+
         $builder->build();
     }
 }

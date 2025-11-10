@@ -4226,3 +4226,23 @@ tr.header-right th {
     width: 1140px;
   }
 }
+
+.fc-event-container .tooltip {
+  word-break: break-all;
+}
+
+.fc-scroller.fc-day-grid-container {
+  overflow: visible !important;
+}
+
+label.checkbox-inline:has(input[readonly][type=checkbox]) {
+  pointer-events: none;
+}
+
+label.radio-inline:has(input[readonly][type=radio]) {
+  pointer-events: none;
+}
+
+label.checkboxone-label:has(input[readonly][type=checkbox]) {
+  pointer-events: none;
+}

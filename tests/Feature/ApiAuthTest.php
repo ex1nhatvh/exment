@@ -15,6 +15,9 @@ class ApiAuthTest extends ApiTestBase
 {
     use DatabaseTransactions;
 
+    /**
+     * @return void
+     */
     public function testApiAuthReadTrue()
     {
         $token = $this->getUser1AccessToken([ApiScope::VALUE_READ]);
@@ -34,6 +37,9 @@ class ApiAuthTest extends ApiTestBase
             ]);
     }
 
+    /**
+     * @return void
+     */
     public function testApiAuthWriteTrue()
     {
         $token = $this->getUser1AccessToken([ApiScope::VALUE_WRITE]);
@@ -57,6 +63,9 @@ class ApiAuthTest extends ApiTestBase
         ]);
     }
 
+    /**
+     * @return void
+     */
     public function testApiAuthReadFalse()
     {
         $this->be(LoginUser::find(TestDefine::TESTDATA_USER_LOGINID_USER1));
@@ -66,7 +75,7 @@ class ApiAuthTest extends ApiTestBase
 
         $this->get(admin_urls('api', 'data', 'custom_value_edit', 5))
             ->assertStatus(401);
-            
+
         $this->get(asset_urls('publicformapi', 'data', 'custom_value_edit'))
             ->assertStatus(404);
 
@@ -74,6 +83,9 @@ class ApiAuthTest extends ApiTestBase
             ->assertStatus(404);
     }
 
+    /**
+     * @return void
+     */
     public function testApiAuthWriteFalse()
     {
         $this->be(LoginUser::find(TestDefine::TESTDATA_USER_LOGINID_USER1));
@@ -86,7 +98,7 @@ class ApiAuthTest extends ApiTestBase
             ]
         ])
         ->assertStatus(401);
-        
+
         // not allowed
         $response = $this->post(asset_urls('publicformapi', 'data', 'custom_value_edit'), [
             'value' => [
@@ -97,6 +109,9 @@ class ApiAuthTest extends ApiTestBase
         ->assertStatus(404);
     }
 
+    /**
+     * @return void
+     */
     public function testWebApiAuthTrue()
     {
         $this->be(LoginUser::find(TestDefine::TESTDATA_USER_LOGINID_USER1));
@@ -129,6 +144,9 @@ class ApiAuthTest extends ApiTestBase
         ]);
     }
 
+    /**
+     * @return void
+     */
     public function testWebApiAuthReadFalse()
     {
         $token = $this->getUser1AccessToken([ApiScope::VALUE_READ]);
@@ -142,7 +160,7 @@ class ApiAuthTest extends ApiTestBase
             'Authorization' => "Bearer $token",
         ])->get(admin_urls('webapi', 'data', 'custom_value_edit', 5))
             ->assertStatus(401);
-            
+
         $this->withHeaders([
             'Authorization' => "Bearer $token",
         ])->get(asset_urls('publicformapi', 'data', 'custom_value_edit'))
@@ -154,6 +172,9 @@ class ApiAuthTest extends ApiTestBase
             ->assertStatus(404);
     }
 
+    /**
+     * @return void
+     */
     public function testWebApiAuthWriteFalse()
     {
         $token = $this->getUser1AccessToken([ApiScope::VALUE_WRITE]);
@@ -167,7 +188,7 @@ class ApiAuthTest extends ApiTestBase
                 'user' => 3
             ]
         ])->assertStatus(401);
-        
+
         // not allowed
         $response = $this->withHeaders([
             'Authorization' => "Bearer $token",
@@ -181,6 +202,10 @@ class ApiAuthTest extends ApiTestBase
 
 
     // public form api ----------------------------------------------------
+
+    /**
+     * @return void
+     */
     public function testPublicFormApiAuthTrue()
     {
         $uri = $this->getPublicFormApiUri(TestDefine::TESTDATA_USER_LOGINID_USER1);
@@ -196,6 +221,9 @@ class ApiAuthTest extends ApiTestBase
             ]);
     }
 
+    /**
+     * @return void
+     */
     public function testPublicFormApiAuthReadFalse()
     {
         // dummy uri
@@ -212,7 +240,7 @@ class ApiAuthTest extends ApiTestBase
         $this->withHeaders([
         ])->get(admin_urls('webapi', 'data', 'custom_value_edit', 5))
             ->assertStatus(401);
-            
+
         $this->withHeaders([
         ])->get(asset_urls('publicformapi', 'data', 'custom_value_edit'))
             ->assertStatus(404);
@@ -222,6 +250,9 @@ class ApiAuthTest extends ApiTestBase
             ->assertStatus(404);
     }
 
+    /**
+     * @return void
+     */
     public function testPublicFormApiAuthWriteFalse()
     {
         // dummy uri
@@ -236,7 +267,7 @@ class ApiAuthTest extends ApiTestBase
                 'user' => 3
             ]
         ])->assertStatus(404);
-        
+
         // not allowed
         $response = $this->withHeaders([
         ])->post(asset_urls('publicformapi', 'data', 'custom_value_edit'), [

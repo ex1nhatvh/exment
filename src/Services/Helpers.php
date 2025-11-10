@@ -1,4 +1,5 @@
 <?php
+
 use Exceedone\Exment\Services\ClassBuilder;
 use Exceedone\Exment\Services\ReplaceFormat\ReplaceFormatService;
 use Exceedone\Exment\Model\Define;
@@ -12,6 +13,7 @@ use Exceedone\Exment\Model\LoginUser;
 use Exceedone\Exment\Enums\SystemTableName;
 use Exceedone\Exment\Enums\CurrencySymbol;
 use Exceedone\Exment\Enums\ErrorCode;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Webpatser\Uuid\Uuid;
@@ -95,7 +97,7 @@ if (!function_exists('html_clean')) {
         if (is_nullorempty($html)) {
             return $html;
         }
-        
+
         try {
             // default setting for exment
             $config = HTMLPurifier_Config::createDefault();
@@ -138,7 +140,7 @@ if (!function_exists('is_nullorempty')) {
         if (is_array($obj) && count($obj) == 0) {
             return true;
         }
-        if ($obj instanceof \Illuminate\Support\Collection && $obj->count() == 0) {
+        if ($obj instanceof Collection && $obj->count() == 0) {
             return true;
         }
         return false;
@@ -150,8 +152,9 @@ if (!function_exists('parseIntN')) {
      * parseInt
      * if cannot parse, return null.
      * TODO:common lib
+     *
      * @param mixed $str
-     * @return double|integer|null
+     * @return string|null
      */
     function parseIntN($str)
     {
@@ -191,13 +194,15 @@ if (!function_exists('floorDigit')) {
         if ($digit < 0) {
             $digit = 0;
         }
+        /** @phpstan-ignore-next-line strpos expects string, float|int|null given */
         $numPointPosition = intval(strpos($num, '.'));
-        
+
         // if for display
         $result = null;
         if ($numPointPosition === 0) { //$num is an integer
             $result = $num;
         } else {
+            /** @phpstan-ignore-next-line substr expects string, float|int|null given */
             $result = floatval(substr($num, 0, $numPointPosition + $digit + 1));
             ;
         }
@@ -232,7 +237,7 @@ if (!function_exists('rmcomma')) {
         if (is_null($value)) {
             return null;
         }
-        
+
         return str_replace(",", "", $value);
     }
 }
@@ -430,7 +435,7 @@ if (!function_exists('join_paths')) {
             if (empty($value)) {
                 continue;
             }
-            
+
             if (is_array($value)) {
                 $ret_pass = $ret_pass.$trim_str.join_paths($trim_str, $value);
             } elseif ($ret_pass == "") {
@@ -472,7 +477,7 @@ if (!function_exists('path_ltrim')) {
     {
         foreach (['/', '\\'] as $split) {
             $l = str_replace($split, '/', $ltrim);
-            
+
             if (is_nullorempty($l)) {
                 $l = $split;
             }
@@ -504,7 +509,7 @@ if (!function_exists('path_rtrim')) {
     {
         foreach (['/', '\\'] as $split) {
             $l = str_replace($split, '/', $rtrim);
-            
+
             if (is_nullorempty($l)) {
                 $l = $split;
             }
@@ -607,7 +612,7 @@ if (!function_exists('isMatchRequest')) {
 
         foreach (toArray($uris) as $uri) {
             $uri = admin_base_path($uri);
-            
+
             if ($uri !== '/') {
                 $uri = trim($uri, '/');
             }
@@ -633,13 +638,13 @@ if (!function_exists('deleteDirectory')) {
         if (is_string($disk)) {
             $disk = \Storage::disk($disk);
         }
-        
+
         try {
             $directories = $disk->directories($path);
             foreach ($directories as $directory) {
                 deleteDirectory($disk, $directory);
             }
-    
+
             $disk->delete($disk->files($path));
             $disk->deleteDirectory($path);
         } catch (\Exception $ex) {
@@ -652,7 +657,7 @@ if (!function_exists('hasDuplicateDate')) {
     /**
      * Check dates Duplicate
      *
-     * @param array $dates array of between ['start':Carbon, 'end':Carbon]
+     * @param array|Collection $dates array of between ['start':Carbon, 'end':Carbon]
      * @return boolean Duplicate:true
      */
     function hasDuplicateDate($dates)
@@ -681,7 +686,7 @@ if (!function_exists('array_boolval')) {
      * get array_get and return boolval
      * @return bool
      */
-    function array_boolval($array, $key, $default = false) : bool
+    function array_boolval($array, $key, $default = false): bool
     {
         if (is_string($array)) {
             $array = [$array];
@@ -695,8 +700,8 @@ if (!function_exists('array_keys_exists')) {
     /**
      * array_keys_exists
      * $keys contains $array, return true.
-     * @param array $keys
-     * @param array $array
+     * @param mixed $keys
+     * @param mixed $array
      * @return bool
      */
     function array_keys_exists($keys, $array)
@@ -723,7 +728,7 @@ if (!function_exists('array_key_value_exists')) {
     /**
      * whether has array_key and array_get
      * @param mixed $key
-     * @param array|\Illuminate\Support\Collection $array
+     * @param mixed $array
      * @return bool
      */
     function array_key_value_exists($key, $array)
@@ -748,13 +753,15 @@ if (!function_exists('array_key_value_exists')) {
 }
 
 if (!function_exists('array_value_exists')) {
+
     /**
      * whether has array_value
-     * @param mixed $key
-     * @param array|\Illuminate\Support\Collection $array
+     *
+     * @param mixed $value
+     * @param mixed $array
      * @return bool
      */
-    function array_value_exists($value, $array) : bool
+    function array_value_exists($value, $array): bool
     {
         if (is_null($array)) {
             return false;
@@ -772,7 +779,9 @@ if (!function_exists('array_value_exists')) {
 if (!function_exists('array_dot_reverse')) {
     /**
      * convert dotted_array to array
-     * @return array
+     *
+     * @param $array
+     * @return array|null
      */
     function array_dot_reverse($array)
     {
@@ -805,7 +814,6 @@ if (!function_exists('array_dot_only')) {
 if (!function_exists('array_remove')) {
     /**
      * array remove as "array_forget"
-     * @return array|string $keys
      */
     function array_remove(array $array, $keys)
     {
@@ -820,19 +828,20 @@ if (!function_exists('jsonToArray')) {
      * json to array
      *
      * @param mixed $value
-     * @return array
+     * @return mixed
      */
     function jsonToArray($value)
     {
         if (!isset($value)) {
             return [];
         }
-        
+
         // convert json to array
         if (is_array($value)) {
             return $value;
         }
         // convert json to array
+        /** @phpstan-ignore-next-line Call to function is_array() with mixed will always evaluate to false. already checked is_array() */
         if (!is_array($value) && is_json($value)) {
             return json_decode_ex($value, true);
         }
@@ -853,13 +862,13 @@ if (!function_exists('stringToArray')) {
         if (is_nullorempty($value)) {
             return [];
         }
-        
+
         // convert json to array
         if (is_array($value)) {
             return $value;
         }
 
-        if ($value instanceof \Illuminate\Support\Collection) {
+        if ($value instanceof Collection) {
             return $value->toArray();
         }
 
@@ -884,13 +893,13 @@ if (!function_exists('breakCommaToArray')) {
         if (is_nullorempty($value)) {
             return [];
         }
-        
+
         // convert json to array
         if (is_array($value)) {
             return $value;
         }
 
-        if ($value instanceof \Illuminate\Support\Collection) {
+        if ($value instanceof Collection) {
             return $value->toArray();
         }
 
@@ -912,7 +921,7 @@ if (!function_exists('toArray')) {
      * @param mixed $value
      * @return ?array
      */
-    function toArray($value) : ?array
+    function toArray($value): ?array
     {
         if (is_null($value)) {
             return null;
@@ -922,7 +931,7 @@ if (!function_exists('toArray')) {
             return $value;
         }
 
-        if ($value instanceof \Illuminate\Support\Collection) {
+        if ($value instanceof Collection) {
             return $value->all();
         }
 
@@ -939,20 +948,20 @@ if (!function_exists('arrayToString')) {
     /**
      * array to string(comma) string
      *
-     * @param mixed $value
-     * @return string
+     * @param $value
+     * @return string|null
      */
     function arrayToString($value)
     {
         if (is_null($value)) {
             return null;
         }
-        
+
         // convert json to array
         if (is_array($value)) {
             return implode(',', $value);
         }
-        if ($value instanceof \Illuminate\Support\Collection) {
+        if ($value instanceof Collection) {
             return $value->implode(',');
         }
 
@@ -999,13 +1008,13 @@ if (!function_exists('is_list')) {
      * @param mixed $value
      * @return bool
      */
-    function is_list($value) : bool
+    function is_list($value): bool
     {
         if (is_null($value)) {
             return false;
         }
 
-        return is_array($value) || $value instanceof \Illuminate\Support\Collection;
+        return is_array($value) || $value instanceof Collection;
     }
 }
 
@@ -1017,7 +1026,7 @@ if (!function_exists('isMatchString')) {
      * @param mixed $v2
      * @return bool
      */
-    function isMatchString($v1, $v2) : bool
+    function isMatchString($v1, $v2): bool
     {
         if (is_array($v1) || is_array($v2)) {
             return false;
@@ -1034,7 +1043,7 @@ if (!function_exists('isMatchDecimal')) {
      * @param mixed $v2
      * @return bool
      */
-    function isMatchDecimal($v1, $v2) : bool
+    function isMatchDecimal($v1, $v2): bool
     {
         $v1 = rtrim((strpos($v1, ".") !== false ? rtrim($v1, "0") : $v1), ".");
         $v2 = rtrim((strpos($v2, ".") !== false ? rtrim($v2, "0") : $v2), ".");
@@ -1050,7 +1059,7 @@ if (!function_exists('isMatchArray')) {
      * @param array $v2
      * @return bool
      */
-    function isMatchArray(array $v1, array $v2) : bool
+    function isMatchArray(array $v1, array $v2): bool
     {
         if (count($v1) == count($v2)) {
             $dup = array_intersect($v1, $v2);
@@ -1129,7 +1138,7 @@ if (!function_exists('make_randomstr')) {
         if ($useNumber) {
             $chars .= "23456789";
         }
-        
+
         $str = '';
         for ($i = 0; $i < $length; ++$i) {
             $str .= $chars[mt_rand(0, strlen_ex($chars) -1)];
@@ -1157,7 +1166,7 @@ if (!function_exists('short_uuid')) {
 }
 
 if (!function_exists('is_uuid')) {
-    function is_uuid($uuid) : bool
+    function is_uuid($uuid): bool
     {
         return Uuid::validate($uuid);
     }
@@ -1189,7 +1198,7 @@ if (!function_exists('pascalize')) {
 if (!function_exists('get_password_rule')) {
     /**
      * get_password_rule(for validation)
-     * @return string
+     * @return array
      */
     function get_password_rule($required = true, ?LoginUser $login_user = null)
     {
@@ -1200,10 +1209,17 @@ if (!function_exists('get_password_rule')) {
 if (!function_exists('get_omitted_string')) {
     /**
      * if over string length. remove text, add "..."
-     * @return string
+     *
+     * @param $text
+     * @param $length
+     * @return mixed|string|null
      */
-    function get_omitted_string($text, $length = Define::GRID_MAX_LENGTH)
+    function get_omitted_string($text, $length = null)
     {
+        if (is_null($length)) {
+            $length = config('exment.grid_mat_length', Define::GRID_MAX_LENGTH);
+        }
+
         if (is_null($text)) {
             return $text;
         }
@@ -1269,7 +1285,7 @@ if (!function_exists('getYesNo')) {
      * get yes no label
      * @return string
      */
-    function getYesNo($value) : string
+    function getYesNo($value): string
     {
         return boolval($value) ? 'YES' : 'NO';
     }
@@ -1280,8 +1296,10 @@ if (!function_exists('getModelName')) {
     /**
      * Get custom_value's model fullpath.
      * this function contains flow creating eloquent class dynamically.
-     * @param string|CustomTable|CustomValue $obj
-     * @return string
+     *
+     * @param $obj
+     * @param $get_name_only
+     * @return string|null
      */
     function getModelName($obj, $get_name_only = false)
     {
@@ -1321,9 +1339,6 @@ if (!function_exists('getModelName')) {
         // if the model doesn't defined, and $get_name_only is false
         // create class dynamically.
         if (!$get_name_only && !class_exists($fillpath)) {
-            if (!isset($suuid)) {
-                return null;
-            }
             $table = CustomTable::findBySuuid($suuid);
             if (!is_null($table)) {
                 $table->createTable();
@@ -1355,7 +1370,7 @@ if (!function_exists('hasTable')) {
      * whether database has table
      * *CANNOT USE if create table dynamic (ex. install)
      * @param string $table_name *only table name
-     * @return string
+     * @return bool
      */
     function hasTable($table_name)
     {
@@ -1371,9 +1386,10 @@ if (!function_exists('hasTable')) {
 if (!function_exists('hasColumn')) {
     /**
      * whether database has column using table
+     *
      * @param string $table_name *only table name string. not object
      * @param string $column_name *only column name string. not object
-     * @return string
+     * @return bool
      */
     function hasColumn($table_name, $column_name)
     {
@@ -1390,9 +1406,11 @@ if (!function_exists('hasColumn')) {
 if (!function_exists('getDBTableName')) {
     /**
      * Get database table name.
+     *
      * @param string|CustomTable|array $obj
      * @param bool $isThrow if true and not has database, throwing
      * @return string
+     * @throws Exception
      */
     function getDBTableName($obj, $isThrow = true)
     {
@@ -1407,8 +1425,9 @@ if (!function_exists('getDBTableName')) {
 if (!function_exists('getEndpointName')) {
     /**
      * get endpoint name.
+     *
      * @param mixed $obj
-     * @return string
+     * @return string|null
      */
     function getEndpointName($obj)
     {
@@ -1433,7 +1452,7 @@ if (!function_exists('getCurrencySymbolLabel')) {
         }
 
         $currencyOption = $currencySymbol->getOption();
-        
+
         $symbol = $html ? array_get($currencyOption, 'html') : array_get($currencyOption, 'text');
 
         if (isset($currencyOption)) {
@@ -1602,7 +1621,7 @@ if (!function_exists('downloadFile')) {
 
         // get page name
         $name = rawurlencode(mb_basename($path));
-        
+
         if (ob_get_level()) {
             ob_end_clean();
         }
@@ -1667,13 +1686,13 @@ if (!function_exists('getCellAlphabet')) {
         $alphabet = "ZABCDEFGHIJKLMNOPQRSTUVWXY";
         $columnStr = '';
         $m = 0;
-            
+
         do {
             $m = $no % 26;
             $columnStr = substr($alphabet, $m, 1) . $columnStr;
             $no = floor($no / 26);
         } while (0 < $no && $m != 0);
-    
+
         return $columnStr;
     }
 }
@@ -1682,8 +1701,11 @@ if (!function_exists('getCellAlphabet')) {
 if (!function_exists('getUserName')) {
     /**
      * Get database user name.
-     * @param string $id
-     * @return string user name
+     *
+     * @param string|CustomValue $id
+     * @param $link
+     * @param $addAvatar
+     * @return array|\Illuminate\Contracts\Foundation\Application|\Illuminate\Contracts\Translation\Translator|mixed|string|null
      */
     function getUserName($id, $link = false, $addAvatar = false)
     {
@@ -1696,7 +1718,7 @@ if (!function_exists('getUserName')) {
         } else {
             $user = CustomTable::getEloquent(SystemTableName::USER)->getValueModel($id, true);
         }
-        
+
         if (!isset($user)) {
             if (CustomTable::getEloquent(SystemTableName::USER)->hasCustomValueInDB($id)) {
                 return exmtrans('common.message.no_permission');
@@ -1736,19 +1758,17 @@ if (!function_exists('admin_exclusion_path')) {
             $path = substr($path, strlen_ex($prefix));
         }
 
-        $path = trim($path, '/');
-
-        return $path?? '/';
+        return trim($path, '/');
     }
 
     if (!function_exists('unicode_decode')) {
+
         /**
          * Get admin exclusion url.
          * Ex. admin/data/testtable to data/testtable
          *
-         * @param string $path
-         *
-         * @return string
+         * @param string $str
+         * @return string|null
          */
         function unicode_decode($str)
         {
@@ -1764,9 +1784,8 @@ if (!function_exists('admin_exclusion_path')) {
          * Get admin exclusion url.
          * Ex. admin/data/testtable to data/testtable
          *
-         * @param string $path
-         *
-         * @return string
+         * @param string $str
+         * @return string|null
          */
         function unicode_encode($str)
         {
@@ -1780,12 +1799,12 @@ if (!function_exists('admin_exclusion_path')) {
             }, $str);
         }
     }
-    
+
     if (!function_exists('json_decode_ex')) {
         /**
          * Wrapper for json_decode that throws when an error occurs.
          *
-         * @param array|string $json    JSON data to parse
+         * @param array|string|null $json    JSON data to parse
          * @param bool   $assoc   When true, returned objects will be converted
          *                        into associative arrays.
          * @param int    $depth   User specified recursion depth.
@@ -1800,6 +1819,33 @@ if (!function_exists('admin_exclusion_path')) {
             }
 
             return json_decode($json, $assoc, $depth, $options);
+        }
+    }
+
+    if (!function_exists('convert_to_valid_filename')) {
+        /**
+         * Replace characters that cannot be used in filename
+         *
+         * @param string $filename The filename to be sanitized
+         * @return string The sanitized filename
+         */
+        function convert_to_valid_filename(string $filename): string
+        {
+            $from = ['/', ':', '*', '?', '"', '<', '>', '|'];
+            $to = ['_', '_', '_', '_', '_', '[', ']', '_'];
+    
+            $patterns = array_map(function($val) {
+                return '#\\'.$val.'#';
+            }, $from);
+    
+            // Replace characters that cannot be used in filename
+            $validName = preg_replace($patterns, $to, $filename);
+            
+            // Truncate the filename if it exceeds 255 characters
+            if (strlen($validName) > 255) {
+                $validName = substr($validName, 0, 255);
+            }
+            return $validName;
         }
     }
 }

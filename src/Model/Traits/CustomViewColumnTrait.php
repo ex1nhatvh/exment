@@ -13,11 +13,15 @@ use Exceedone\Exment\Enums\SystemColumn;
 use Exceedone\Exment\Enums\ViewKindType;
 use Exceedone\Exment\ConditionItems\ConditionItemBase;
 use Exceedone\Exment\ColumnItems;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
  * @method getOption($key, $default = null))
  * @method setOption($key, $val = null, $forgetIfNull = false)
  * @method static mixed findBySuuid($key)
+ * @property string $view_pivot_column_id
+ * @property string $view_pivot_table_id
+ * @property string $view_column_type
  */
 trait CustomViewColumnTrait
 {
@@ -25,26 +29,43 @@ trait CustomViewColumnTrait
 
     private $_custom_item;
 
-    public function custom_view()
+    /**
+     * @return BelongsTo
+     */
+    public function custom_view(): BelongsTo
     {
         return $this->belongsTo(CustomView::class, 'custom_view_id');
     }
-    
+
+    /**
+     * @return CustomColumn|void|null
+     */
     public function getCustomColumnAttribute()
     {
         if ($this->view_column_type == ConditionType::COLUMN) {
             return CustomColumn::getEloquent($this->view_column_target_id);
         }
     }
-    
-    public function custom_table()
+
+    /**
+     * @return BelongsTo
+     */
+    public function custom_table(): BelongsTo
     {
         return $this->belongsTo(CustomTable::class, 'view_column_table_id');
     }
+
+    /**
+     * @return CustomTable|null
+     */
     public function getCustomTableCacheAttribute()
     {
         return CustomTable::getEloquent($this->view_column_table_id);
     }
+
+    /**
+     * @return null
+     */
     public function getCustomViewCacheAttribute()
     {
         return CustomView::getEloquent($this->custom_view_id);
@@ -53,12 +74,17 @@ trait CustomViewColumnTrait
     /**
      * get ViewColumnTarget.
      * * we have to convert string if view_column_type is system for custom view form-display*
+     *
+     * @return string
      */
     public function getViewColumnTargetAttribute()
     {
         return $this->getViewColumnTarget();
     }
 
+    /**
+     * @return ColumnItems\ParentItem|ColumnItems\SystemItem|ColumnItems\WorkflowItem|mixed|null
+     */
     public function getColumnItemAttribute()
     {
         if (isset($this->_custom_item)) {
@@ -77,6 +103,10 @@ trait CustomViewColumnTrait
         elseif ($this->view_column_type == ConditionType::PARENT_ID) {
             $this->_custom_item = ColumnItems\ParentItem::getItem(CustomTable::getEloquent($this->view_column_table_id));
         }
+        // comment
+        elseif ($this->view_column_type == ConditionType::COMMENT) {
+            $this->_custom_item = ColumnItems\CommentItem::getItem(CustomTable::getEloquent($this->view_column_table_id));
+        }
         // system column
         else {
             $this->_custom_item = ColumnItems\SystemItem::getItem(CustomTable::getEloquent($this->view_column_table_id), $this->view_column_target);
@@ -88,16 +118,24 @@ trait CustomViewColumnTrait
 
         return $this->_custom_item;
     }
-    
+
     /**
      * set ViewColumnTarget.
-     * * we have to convert int if view_column_type is system for custom view form-display*
+     * we have to convert int if view_column_type is system for custom view form-display
+     * @param mixed $view_column_target
+     * @return void
      */
     public function setViewColumnTargetAttribute($view_column_target)
     {
         $this->setViewColumnTarget($view_column_target);
     }
 
+    /**
+     * @param string $column_table_id_key
+     * @param string $column_type_key
+     * @param string $column_type_target_key
+     * @return string|null
+     */
     protected function getViewColumnTarget($column_table_id_key = 'view_column_table_id', $column_type_key = 'view_column_type', $column_type_target_key = 'view_column_target_id')
     {
         // get option key
@@ -127,6 +165,14 @@ trait CustomViewColumnTrait
         return static::getOptionKey($column_type, true, $column_table_id, $optionKeyParams);
     }
 
+    /**
+     * @param mixed $view_column_target
+     * @param string $column_table_name_key
+     * @param string $column_table_id_key
+     * @param string $column_type_key
+     * @param string $column_type_target_key
+     * @return void
+     */
     protected function setViewColumnTarget($view_column_target, $column_table_name_key = 'custom_view', $column_table_id_key = 'view_column_table_id', $column_type_key = 'view_column_type', $column_type_target_key = 'view_column_target_id')
     {
         list($column_type, $column_table_id, $column_type_target, $view_pivot_column, $view_pivot_table) = $this->getViewColumnTargetItems($view_column_target, $column_table_name_key);
@@ -140,13 +186,16 @@ trait CustomViewColumnTrait
             $this->view_pivot_table_id = $view_pivot_table;
         }
     }
-    
+
     /**
      * get column item using view_column_target
+     * @param mixed $view_column_target
+     * @param CustomTable|null $custom_table
+     * @return mixed
      */
     public static function getColumnItem($view_column_target, ?CustomTable $custom_table = null)
     {
-        $model = new self;
+        $model = new self();
         $model->view_column_target = $view_column_target;
 
         // if not view_column_table_id, set custom table
@@ -162,16 +211,16 @@ trait CustomViewColumnTrait
         return $column_item;
     }
 
-    
+
     /**
      * Get column target id and target table id.
      *
      * @param string|null $view_column_type
      * @param string|null $column_name
      * @param string|CustomTable|null $custom_table
-     * @return array offset 0 : column id, 1 : table id
+     * @return array<mixed> offset 0 : column id, 1 : table id
      */
-    protected static function getColumnAndTableId($view_column_type, $column_name, $custom_table = null) : array
+    protected static function getColumnAndTableId($view_column_type, $column_name, $custom_table = null): array
     {
         if (!isset($view_column_type)) {
             $view_column_type = ConditionType::COLUMN;
@@ -190,10 +239,20 @@ trait CustomViewColumnTrait
     }
 
 
+    /**
+     * @param mixed $key
+     * @return mixed|null
+     */
     protected function getViewPivotIdTrait($key)
     {
         return $this->getOption($key);
     }
+
+    /**
+     * @param mixed $key
+     * @param mixed $view_pivot_id
+     * @return $this
+     */
     protected function setViewPivotIdTrait($key, $view_pivot_id)
     {
         if (!isset($view_pivot_id)) {
@@ -206,6 +265,8 @@ trait CustomViewColumnTrait
 
     /**
      * get Table And Column Name
+     *
+     * @return array<mixed>
      */
     public function getUniqueKeyValues()
     {
@@ -229,7 +290,7 @@ trait CustomViewColumnTrait
                     'column_name' => SystemColumn::getOption(['id' => $this->view_column_target_id])['name'],
                     'column_type' => $this->view_column_type,
                 ];
-            
+
             case ConditionType::PARENT_ID:
                 return [
                     'table_name' => $table_name,
@@ -239,12 +300,12 @@ trait CustomViewColumnTrait
         }
         return [];
     }
-    
+
     /**
      * get custom view column or summary record.
      *
      * @param string $column_keys "view_kind_type" _ "view_column_id or view_summary_id"
-     * @return CustomViewColumn|CustomViewSummary
+     * @return mixed|null
      */
     public static function getSummaryViewColumn($column_keys)
     {
@@ -265,7 +326,12 @@ trait CustomViewColumnTrait
         return null;
     }
 
-    
+
+    /**
+     * @param mixed $json
+     * @param array<mixed> $options
+     * @return void
+     */
     public static function importReplaceJson(&$json, $options = [])
     {
         $custom_view = array_get($options, 'parent');
@@ -294,26 +360,69 @@ trait CustomViewColumnTrait
 
         ///// set view_pivot_column_id and view_pivot_table_id
         if (array_key_value_exists("view_pivot_column_name", $json)) {
-            list($view_pivot_column_id, $view_pivot_table_id) = static::getColumnAndTableId(
-                array_get($json, "view_column_type"),
-                array_get($json, "view_pivot_column_name"),
-                array_get($json, "view_pivot_table_name")
-            );
+            $view_pivot_column_name = array_get($json, "view_pivot_column_name");
+            if ($view_pivot_column_name == 'parent_id') {
+                list($view_pivot_column_id, $view_pivot_table_id) = static::getColumnAndTableId(
+                    null,
+                    null,
+                    array_get($json, "view_pivot_table_name")
+                );
+                $json['view_pivot_column_id'] = $view_pivot_column_name;
+                $json['view_pivot_table_id'] = $view_pivot_table_id;
+            } elseif (array_key_value_exists("view_pivot_column_table", $json)) {
+                list($view_pivot_column_id, $view_pivot_table_id) = static::getColumnAndTableId(
+                    null,
+                    array_get($json, "view_pivot_column_name"),
+                    array_get($json, "view_pivot_column_table")
+                );
+                $json['view_pivot_column_id'] = $view_pivot_column_id;
+
+                list($view_pivot_column_id, $view_pivot_table_id) = static::getColumnAndTableId(
+                    null,
+                    null,
+                    array_get($json, "view_pivot_table_name")
+                );
+                $json['view_pivot_table_id'] = $view_pivot_table_id;
+            } else {
+                list($view_pivot_column_id, $view_pivot_table_id) = static::getColumnAndTableId(
+                    null,
+                    array_get($json, "view_pivot_column_name"),
+                    array_get($json, "view_pivot_table_name")
+                );
     
-            $json['view_pivot_column_id'] = $view_pivot_column_id;
-            $json['view_pivot_table_id'] = $view_pivot_table_id;
+                $json['view_pivot_column_id'] = $view_pivot_column_id;
+                $json['view_pivot_table_id'] = $view_pivot_table_id;
+            }
         }
         array_forget($json, 'view_pivot_column_name');
         array_forget($json, 'view_pivot_table_name');
+        array_forget($json, 'view_pivot_column_table');
+
+        ///// set options.end_date_target
+        if (array_key_value_exists("end_date_target_name", $json)) {
+            list($end_date_target, $end_date_table_id) = static::getColumnAndTableId(
+                array_get($json, "options.end_date_type"),
+                array_get($json, "end_date_target_name"),
+                $custom_table
+            );
+
+            array_set($json, 'options.end_date_target', $end_date_target);
+        }
+        array_forget($json, 'end_date_target_name');
     }
 
+    /**
+     * @param mixed $ckey
+     * @return mixed
+     */
     public static function findByCkey($ckey)
     {
         return static::findBySuuid(str_replace(Define::COLUMN_ITEM_UNIQUE_PREFIX, '', $ckey));
     }
-    
+
     /**
      * get Table And Column Name
+     * @return array<mixed>|null[]
      */
     public function getPivotUniqueKeyValues()
     {
@@ -325,18 +434,38 @@ trait CustomViewColumnTrait
         }
 
         $table_name = CustomTable::getEloquent($this->view_pivot_table_id)->table_name;
-        switch ($this->view_column_type) {
-            case ConditionType::COLUMN:
-                return [
-                    'table_name' => $table_name,
-                    'column_name' => CustomColumn::getEloquent($this->view_pivot_column_id)->column_name ?? null,
-                ];
-            case ConditionType::SYSTEM:
-                return [
-                    'table_name' => $table_name,
-                    'column_name' => SystemColumn::getOption(['id' => $this->view_pivot_column_id])['name'] ?? null,
-                ];
+
+        if ($this->view_pivot_column_id == 'parent_id') {
+            return [
+                'table_name' => $table_name,
+                'column_name' => $this->view_pivot_column_id,
+            ];
+        } else {
+            return [
+                'table_name' => $table_name,
+                'column_name' => CustomColumn::getEloquent($this->view_pivot_column_id)->column_name ?? null,
+            ];
         }
-        return [];
+
+    }
+
+    /**
+     * Export template replace json
+     *
+     * @param array $json
+     * @return void
+     */
+    protected function exportReplaceJson(&$json)
+    {
+        $view_pivot_column_id = array_get($json, 'options.view_pivot_column_id');
+        $view_pivot_table_id = array_get($json, 'options.view_pivot_table_id');
+
+        if ($view_pivot_column_id && $view_pivot_table_id) {
+            $view_pivot_column = CustomColumn::find($view_pivot_column_id);
+
+            if ($view_pivot_column && $view_pivot_column->custom_table_id != $view_pivot_table_id) {
+                $json['view_pivot_column_table'] = $view_pivot_column->custom_table->table_name;
+            }
+        }
     }
 }

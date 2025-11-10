@@ -11,6 +11,7 @@ trait EnumOptionTrait
 {
     public function option()
     {
+        /** @phpstan-ignore-next-line array_get expects array|ArrayAccess, static(Exceedone\Exment\Enums\SystemColumn) given  */
         return array_get(static::$options, $this->lowerKey(), null);
     }
 
@@ -24,7 +25,7 @@ trait EnumOptionTrait
         }
         return collect($options)->toArray();
     }
-    
+
     public static function getOption($filters = [])
     {
         return collect(static::getOptions($filters))->first() ?? null;

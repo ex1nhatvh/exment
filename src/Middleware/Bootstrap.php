@@ -41,9 +41,9 @@ class Bootstrap
 
         Ad::navbar(function (\Encore\Admin\Widgets\Navbar $navbar) {
             $navbar->left(Controllers\SearchController::renderSearchHeader());
-            $navbar->left(new \Exceedone\Exment\Form\Navbar\Hidden);
-            $navbar->right(new \Exceedone\Exment\Form\Navbar\HelpNav);
-            $navbar->right(new \Exceedone\Exment\Form\Navbar\NotifyNav);
+            $navbar->left(new \Exceedone\Exment\Form\Navbar\Hidden());
+            $navbar->right(new \Exceedone\Exment\Form\Navbar\HelpNav());
+            $navbar->right(new \Exceedone\Exment\Form\Navbar\NotifyNav());
         });
         Ad::js(asset('lib/js/jquery-ui.min.js'));
         Ad::css(asset('lib/css/jquery-ui.min.css'));
@@ -51,10 +51,6 @@ class Bootstrap
         Ad::js(asset('lib/js/bignumber.min.js'));
 
         static::setCssJsList([
-            'vendor/exment/fullcalendar/core/main.min.css',
-            'vendor/exment/fullcalendar/daygrid/main.min.css',
-            'vendor/exment/fullcalendar/list/main.min.css',
-            'vendor/exment/fullcalendar/timegrid/main.min.css',
             'vendor/exment/css/common.css',
             'vendor/exment/css/workflow.css',
             'vendor/exment/css/customform.css',
@@ -75,12 +71,9 @@ class Bootstrap
             'vendor/exment/jquery/jquery.color.min.js',
             'vendor/exment/mathjs/math.min.js',
             'vendor/exment/js/numberformat.js',
-            'vendor/exment/fullcalendar/core/main.min.js',
-            'vendor/exment/fullcalendar/core/locales-all.min.js',
-            'vendor/exment/fullcalendar/interaction/main.min.js',
-            'vendor/exment/fullcalendar/daygrid/main.min.js',
-            'vendor/exment/fullcalendar/list/main.min.js',
-            'vendor/exment/fullcalendar/timegrid/main.min.js',
+            'vendor/exment/fullcalendar/index.global.min.js',
+            'vendor/exment/fullcalendar/locales-all.global.min.js',
+            'vendor/exment/fullcalendar/UltraDate.min.js',
             'vendor/exment/jstree/jstree.min.js',
             'vendor/exment/js/common_all.js',
             'vendor/exment/js/common.js',
@@ -98,6 +91,7 @@ class Bootstrap
             'vendor/exment/js/admin.webapi.js',
             'vendor/exment/js/getbox.js',
             'vendor/exment/js/admin.getbox.js',
+            'vendor/exment/js/zxing.js',
         ], false);
 
         // set scripts
@@ -111,13 +105,14 @@ class Bootstrap
         if (!isset($ver)) {
             $ver = date('YmdHis');
         }
+        /** @phpstan-ignore-next-line jslast() expects null, string given */
         Ad::jslast(asset('vendor/exment/js/customscript.js?ver='.$ver));
 
         // delete object
         $delete_confirm = trans('admin.delete_confirm');
         $confirm = trans('admin.confirm');
         $cancel = trans('admin.cancel');
-        
+
         $script = <<<EOT
     ///// delete click event
     $(document).off('click', '[data-exment-delete]').on('click', '[data-exment-delete]', {}, function(ev){
@@ -125,7 +120,7 @@ class Bootstrap
 
         // get url
         let url = $(ev.target).closest('[data-exment-delete]').data('exment-delete');
-        
+
         Exment.CommonEvent.ShowSwal(url, {
             title: "$delete_confirm",
             confirm:"$confirm",

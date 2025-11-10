@@ -8,6 +8,9 @@ use Exceedone\Exment\Enums\MailKeyName;
 use Exceedone\Exment\Enums\SystemTableName;
 use Exceedone\Exment\Model\File as ExmentFile;
 
+/**
+ * @used-by \Exceedone\Exment\Services\ClassBuilder
+ */
 trait MailTemplateTrait
 {
     /**
@@ -35,20 +38,19 @@ trait MailTemplateTrait
 
         return implode("\n\n", $mail_bodies);
     }
-    
+
     /**
      * get mail template type
      */
     protected function getHeaderFooter($mailTemplateType)
     {
-        $mail_template = getModelName(SystemTableName::MAIL_TEMPLATE)
-            ::where('value->mail_template_type', $mailTemplateType)->first();
+        $mail_template = getModelName(SystemTableName::MAIL_TEMPLATE)::where('value->mail_template_type', $mailTemplateType)->first();
         if (!isset($mail_template)) {
             return null;
         }
         return $mail_template->getValue('mail_body');
     }
-    
+
     /**
      * Whether this model disable delete
      *

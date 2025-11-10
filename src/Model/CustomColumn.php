@@ -3,12 +3,34 @@
 namespace Exceedone\Exment\Model;
 
 use Exceedone\Exment\ColumnItems;
+use Exceedone\Exment\Database\Eloquent\ExtendedBuilder;
 use Exceedone\Exment\Enums\FormColumnType;
 use Exceedone\Exment\Enums\ColumnType;
 use Exceedone\Exment\Enums\ConditionType;
 use Exceedone\Exment\Enums\SystemTableName;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Collection;
 
+/**
+ * @phpstan-consistent-constructor
+ * @property mixed $id
+ * @property mixed $system_flg
+ * @property mixed $custom_table_id
+ * @property mixed $column_type
+ * @property mixed $column_name
+ * @property mixed $column_view_name
+ * @property mixed $options
+ * @property mixed $index_enabled
+ * @method static bool indexEnabled()
+ * @method static int count($columns = '*')
+ * @method static ExtendedBuilder whereIn($column, $values, $boolean = 'and', $not = false)
+ * @method static ExtendedBuilder whereNotIn($column, $values, $boolean = 'and')
+ * @method static ExtendedBuilder whereNotNull($columns, $boolean = 'and')
+ * @method static ExtendedBuilder orderBy($column, $direction = 'asc')
+ * @method static ExtendedBuilder create(array $attributes = [])
+ * @method static ExtendedBuilder where($column, $operator = null, $value = null, $boolean = 'and')
+ */
 class CustomColumn extends ModelBase implements Interfaces\TemplateImporterInterface
 {
     use Traits\UseRequestSessionTrait;
@@ -28,7 +50,7 @@ class CustomColumn extends ModelBase implements Interfaces\TemplateImporterInter
 
     /**
      * $custom available_characters
-     * @var \Closure[]
+     * @var array
      */
     protected static $customAvailableCharacters = [];
 
@@ -92,54 +114,54 @@ class CustomColumn extends ModelBase implements Interfaces\TemplateImporterInter
         ]
     ];
 
-    public function custom_table()
+    public function custom_table(): BelongsTo
     {
         return $this->belongsTo(CustomTable::class, 'custom_table_id');
     }
 
-    public function custom_form_columns()
+    public function custom_form_columns(): HasMany
     {
         return $this->hasMany(CustomFormColumn::class, 'form_column_target_id')
             ->where('form_column_type', FormColumnType::COLUMN);
     }
 
-    public function custom_view_columns()
+    public function custom_view_columns(): HasMany
     {
         return $this->hasMany(CustomViewColumn::class, 'view_column_target_id')
             ->where('view_column_type', ConditionType::COLUMN);
     }
 
-    public function custom_view_sorts()
+    public function custom_view_sorts(): HasMany
     {
         return $this->hasMany(CustomViewSort::class, 'view_column_target_id')
             ->where('view_column_type', ConditionType::COLUMN);
     }
 
-    public function custom_view_filters()
+    public function custom_view_filters(): HasMany
     {
         return $this->hasMany(CustomViewFilter::class, 'view_column_target_id')
             ->where('view_column_type', ConditionType::COLUMN);
     }
 
-    public function custom_view_summaries()
+    public function custom_view_summaries(): HasMany
     {
         return $this->hasMany(CustomViewSummary::class, 'view_column_target_id')
             ->where('view_column_type', ConditionType::COLUMN);
     }
 
-    public function custom_view_grid_filters()
+    public function custom_view_grid_filters(): HasMany
     {
         return $this->hasMany(CustomViewGridFilter::class, 'view_column_target_id')
             ->where('view_column_type', ConditionType::COLUMN);
     }
 
-    public function custom_operation_columns()
+    public function custom_operation_columns(): HasMany
     {
         return $this->hasMany(CustomOperationColumn::class, 'view_column_target_id')
             ->where('view_column_type', ConditionType::COLUMN);
     }
 
-    public function conditions()
+    public function conditions(): HasMany
     {
         return $this->hasMany(Condition::class, 'target_column_id')
             ->where('condition_type', ConditionType::COLUMN);
@@ -302,14 +324,14 @@ class CustomColumn extends ModelBase implements Interfaces\TemplateImporterInter
     protected static function boot()
     {
         parent::boot();
-                
+
         // add default order
         static::addGlobalScope(new OrderScope('order'));
 
         static::saving(function ($model) {
             $model->prepareJson('options');
         });
-        
+
         static::saved(function ($model) {
             // create or drop index --------------------------------------------------
             $model->alterColumn();
@@ -348,11 +370,11 @@ class CustomColumn extends ModelBase implements Interfaces\TemplateImporterInter
         if ($column_obj instanceof \stdClass) {
             $column_obj = array_get((array)$column_obj, 'id');
         }
-        
+
         if (is_array($column_obj)) {
             $column_obj = array_get($column_obj, 'id');
         }
-        
+
         if (is_numeric($column_obj)) {
             return static::allRecordsCache(function ($record) use ($column_obj) {
                 return $record->id == $column_obj;
@@ -366,14 +388,15 @@ class CustomColumn extends ModelBase implements Interfaces\TemplateImporterInter
             if (!isset($table_obj)) {
                 return null;
             }
-            
+
             return static::allRecordsCache(function ($record) use ($table_obj, $column_obj) {
                 return $record->column_name == $column_obj && $record->custom_table_id == $table_obj->id;
             })->first();
         }
+        /** @phpstan-ignore-next-line unreachable statement */
         return null;
     }
-    
+
     /**
      * Alter table column
      * For add table virtual column
@@ -395,7 +418,7 @@ class CustomColumn extends ModelBase implements Interfaces\TemplateImporterInter
 
         // get whether index_enabled column
         $index_enabled = $this->index_enabled;
-        
+
         // check table column field exists.
         $exists = hasColumn($db_table_name, $db_column_name);
 
@@ -421,7 +444,7 @@ class CustomColumn extends ModelBase implements Interfaces\TemplateImporterInter
             }
         }
     }
-    
+
     /**
      * Get index column column name. This function uses only search-enabled column.
      * @param boolean $alterColumn if not exists column on db, execute alter column. if false, only get name
@@ -454,7 +477,7 @@ class CustomColumn extends ModelBase implements Interfaces\TemplateImporterInter
      *
      * @return string|null
      */
-    public function getFontAwesomeClass() : ?string
+    public function getFontAwesomeClass(): ?string
     {
         return ColumnType::getFontAwesomeClass($this);
     }
@@ -509,6 +532,7 @@ class CustomColumn extends ModelBase implements Interfaces\TemplateImporterInter
         });
 
         ///// add user definitions
+        /** @var Collection $results */
         $results = $results->merge(
             collect(static::$customAvailableCharacters)->map(function ($val) {
                 return [
@@ -534,7 +558,7 @@ class CustomColumn extends ModelBase implements Interfaces\TemplateImporterInter
         $array_get_key = $column_type == 'select' ? 'select_item' : 'select_item_valtext';
         $select_item = array_get($column_options, $array_get_key);
         $isValueText = ($column_type == 'select_valtext');
-        
+
         $options = [];
         if (is_null($select_item)) {
             return $options;
@@ -557,7 +581,7 @@ class CustomColumn extends ModelBase implements Interfaces\TemplateImporterInter
 
         return $options;
     }
-    
+
     /**
      * Create laravel-admin select box option item.
      */
@@ -592,7 +616,7 @@ class CustomColumn extends ModelBase implements Interfaces\TemplateImporterInter
         //return expects array
         return ['options.available_characters'];
     }
-    
+
     public function importSaved($json, $options = [])
     {
         if (!$this->index_enabled) {
@@ -615,7 +639,7 @@ class CustomColumn extends ModelBase implements Interfaces\TemplateImporterInter
             'custom_table_id' => $custom_table->id,
             'column_name' => $column_name
         ]);
-        
+
         // importReplaceJsonCustomColumn using import and update column
         $update_flg = false;
         if (static::importReplaceJsonCustomColumn($json, 'options.select_import_column_id', 'options.select_import_column_name', 'options.select_import_table_name', $options)) {

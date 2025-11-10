@@ -5,12 +5,15 @@ namespace Exceedone\Exment\ColumnItems\CustomColumns;
 use Exceedone\Exment\ColumnItems\CustomItem;
 use Encore\Admin\Form;
 use Encore\Admin\Form\Field;
+use Exceedone\Exment\Database\Eloquent\ExtendedBuilder;
 use Exceedone\Exment\Model\File as ExmentFile;
 use Exceedone\Exment\Model\Define;
 use Exceedone\Exment\Model\System;
 use Exceedone\Exment\Enums\UrlTagType;
 use Exceedone\Exment\Enums\FileType;
 use Exceedone\Exment\Validator;
+use Illuminate\Contracts\Database\Query\Builder;
+use Illuminate\Support\Collection;
 use Illuminate\Http\UploadedFile;
 
 class File extends CustomItem
@@ -58,7 +61,7 @@ class File extends CustomItem
         if (!isset($url)) {
             return $url;
         }
-        
+
         return \Exment::getUrlTag($url, $file->filename, UrlTagType::BLANK, [], [
             'tooltipTitle' => exmtrans('common.download'),
         ]);
@@ -67,9 +70,9 @@ class File extends CustomItem
     /**
      * replace value for import
      *
-     * @param mixed $value
+     * @param $value
      * @param array $setting
-     * @return void
+     * @return array|true[]
      */
     public function getImportValue($value, $setting = [])
     {
@@ -80,20 +83,24 @@ class File extends CustomItem
         }
 
         if (is_array($value)) {
-            $value = collect($value)->implode(",");
-        }
-
-        // Get file info by url
-        // only check by uuid
-        $uuid = pathinfo(trim($value, '/'), PATHINFO_FILENAME);
-        if (is_nullorempty($uuid)) {
+            $file_path = [];
+            foreach ($value as $val) {
+                $result = $this->getImportFilePath($val);
+                if ($result === false) {
+                    return [
+                        'skip' => true,
+                    ];
+                }
+                $file_path[] = $result;
+            }
             return [
-                'skip' => true,
+                'result' => true,
+                'value' => $file_path
             ];
         }
 
-        $file = ExmentFile::where('uuid', $uuid)->first();
-        if (!isset($file)) {
+        $result = $this->getImportFilePath($value);
+        if ($result === false) {
             return [
                 'skip' => true,
             ];
@@ -102,8 +109,24 @@ class File extends CustomItem
         // return file path
         return [
             'result' => true,
-            'value' => $file->path,
+            'value' => $result
         ];
+    }
+
+    protected function getImportFilePath($value)
+    {
+        // Get file info by url
+        // only check by uuid
+        $uuid = pathinfo(trim($value, '/'), PATHINFO_FILENAME);
+        if (is_nullorempty($uuid)) {
+            return false;
+        }
+
+        $file = ExmentFile::where('uuid', $uuid)->first();
+        if (!isset($file)) {
+            return false;
+        }
+        return $file->path;
     }
 
     protected function getAdminFieldClass()
@@ -113,7 +136,7 @@ class File extends CustomItem
         }
         return Field\File::class;
     }
-    
+
 
     protected function setAdminOptions(&$field)
     {
@@ -121,7 +144,7 @@ class File extends CustomItem
         $fileOption = File::getFileOptions($this->custom_column, $this->id);
         $field->options($fileOption)->removable();
         $field->help(array_get($fileOption, 'maxFileSizeHelp'));
-        
+
         // set filename rule
         $custom_table = $this->getCustomTable();
         $multiple = $this->isMultipleEnabled();
@@ -160,7 +183,7 @@ class File extends CustomItem
                 if (!is_array($files)) {
                     $files = [$files];
                 }
-    
+
                 $result = [];
                 foreach ($files as $file) {
                     if (!($file instanceof UploadedFile)) {
@@ -182,14 +205,14 @@ class File extends CustomItem
                     session()->put(Define::SYSTEM_KEY_SESSION_PUBLIC_FORM_INPUT_FILENAMES, $sessions);
                     // and set request session for using removing UploadedFile
                     System::setRequestSession(Define::SYSTEM_KEY_SESSION_PUBLIC_FORM_INPUT_FILENAMES . $hashName, $fileName);
-                
+
                     $result[] = $fileName;
                 }
 
                 return $this->isMultipleEnabled() ? $result : (count($result) > 0 ? $result[0] : null);
             });
         }
-        
+
         if (!is_null($accept_extensions = array_get($this->custom_column->options, 'accept_extensions'))) {
             // append accept rule. And add dot.
             $accept_extensions = collect(stringToArray($accept_extensions))->map(function ($accept_extension) {
@@ -218,7 +241,7 @@ class File extends CustomItem
 
         $field->destroy($del_key); // delete file
         ExmentFile::deleteFileInfo($del_key); // delete file table
-        
+
         // updated value
         if (!$this->isMultipleEnabled()) {
             $updatedValue = null;
@@ -242,7 +265,7 @@ class File extends CustomItem
         $del_column_name = $this->custom_column->column_name;
         $value = $this->custom_value->value;
         $fileValue = array_get($value, $del_column_name);
-        
+
         if (is_nullorempty($fileValue)) {
             return null;
         }
@@ -264,7 +287,7 @@ class File extends CustomItem
             })->toArray();
         return $value;
     }
-    
+
     protected static function getFileOptions($custom_column, $id)
     {
         $options = [
@@ -295,7 +318,7 @@ class File extends CustomItem
     /**
      * Get File Value. checking array
      *
-     * @return string
+     * @return string|null
      */
     protected function fileValue($v)
     {
@@ -321,8 +344,9 @@ class File extends CustomItem
         if (!is_null($accept_extensions = array_get($options, 'accept_extensions'))) {
             $validates[] = new Validator\FileRule(stringToArray($accept_extensions));
         }
+        $validates[] = new Validator\FileNameRule();
     }
-    
+
     protected function getCustomField($classname, $column_name_prefix = null)
     {
         $field = parent::getCustomField($classname, $column_name_prefix);
@@ -350,8 +374,13 @@ class File extends CustomItem
 
         return $field;
     }
-    
 
+
+    /**
+     * @param \Exceedone\Exment\Database\Query\ExtendedBuilder $query
+     * @param $input
+     * @return void
+     */
     public function getAdminFilterWhereQuery($query, $input)
     {
         list($mark, $value) = \Exment::getQueryMarkAndValue(true, $input);
@@ -360,10 +389,10 @@ class File extends CustomItem
         if (is_nullorempty($ids)) {
             $query->whereNotMatch();
         }
-        
+
         $query->whereOrIn($this->getTableColumn('id'), $ids);
     }
-    
+
 
     /**
      * Get Search queries for free text search
@@ -384,7 +413,7 @@ class File extends CustomItem
         } else {
             $query->whereOrIn('id', $ids);
         }
-        
+
         $query->select('id')->take($takeCount);
 
         return [$query];
@@ -393,11 +422,11 @@ class File extends CustomItem
     /**
      * Set Search orWhere for free text search
      *
-     * @param Builder $mark
+     * @param $query
      * @param string $mark
      * @param string $value
      * @param string|null $q
-     * @return void
+     * @return $this
      */
     public function setSearchOrWhere(&$query, $mark, $value, $q)
     {
@@ -415,7 +444,7 @@ class File extends CustomItem
      *
      * @param string $mark
      * @param string $value
-     * @return array target custom values's id list
+     * @return Collection target custom values's id list
      */
     protected function getQueryIds($mark, $value)
     {
@@ -433,7 +462,7 @@ class File extends CustomItem
     {
         return $this->isMultipleEnabledTrait();
     }
-    
+
     /**
      * Set Custom Column Option Form. Using laravel-admin form option
      * https://laravel-admin.org/docs/#/en/model-form-fields
@@ -464,13 +493,13 @@ class File extends CustomItem
                 ->help(exmtrans("custom_column.help.accept_extensions"));
         }
     }
-    
+
     /**
      * Get separate word for multiple
      *
      * @return string|null
      */
-    protected function getSeparateWord() : ?string
+    protected function getSeparateWord(): ?string
     {
         if (boolval(array_get($this->options, 'asApi'))) {
             return ",";
@@ -482,7 +511,9 @@ class File extends CustomItem
      * Get tmp file info
      *
      * @param string $name
-     * @return array|null
+     * @return mixed|null
+     * @throws \Psr\Container\ContainerExceptionInterface
+     * @throws \Psr\Container\NotFoundExceptionInterface
      */
     protected function getTmpFileInfo(string $name)
     {
@@ -500,12 +531,12 @@ class File extends CustomItem
      * Get tmp file from tmp folder
      *
      * @param string $name
-     * @return string
+     * @return UploadedFile|null
      */
     protected function getTmpFile(string $name)
     {
         $localFileName = str_replace(Field\File::TMP_FILE_PREFIX, "", $name);
-        
+
         // get file info
         $fileInfo = $this->getTmpFileInfo($name);
 
@@ -538,7 +569,7 @@ class File extends CustomItem
     {
         foreach (System::requestSession(Define::SYSTEM_KEY_SESSION_PUBLIC_FORM_SAVED_FILENAMES) ?? [] as $name) {
             $localFileName = str_replace(Field\File::TMP_FILE_PREFIX, "", $name);
-        
+
             // get file info
             $fileInfo = $this->getTmpFileInfo($name);
 
@@ -564,7 +595,7 @@ class File extends CustomItem
      * @param string $v
      * @return string|null
      */
-    protected function getPublicFileName($v) : ?string
+    protected function getPublicFileName($v): ?string
     {
         // If public form tmp file, return Only file name.
         if (is_string($v) && strpos($v, Field\File::TMP_FILE_PREFIX) === 0) {

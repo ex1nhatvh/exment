@@ -2,8 +2,19 @@
 
 namespace Exceedone\Exment\Model;
 
+use Exceedone\Exment\Database\Eloquent\ExtendedBuilder;
 use Exceedone\Exment\Enums\ConditionType;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * @phpstan-consistent-constructor
+ * @property mixed $view_column_target_id
+ * @property mixed $view_column_table_id
+ * @property mixed $suuid
+ * @property mixed $custom_view_id
+ * @property mixed $custom_view
+ * @method static ExtendedBuilder create(array $attributes = [])
+ */
 class CustomViewSummary extends ModelBase
 {
     use Traits\CustomViewColumnTrait;
@@ -55,20 +66,20 @@ class CustomViewSummary extends ModelBase
         ],
     ];
 
-    public function custom_view()
+    public function custom_view(): BelongsTo
     {
         return $this->belongsTo(CustomView::class, 'custom_view_id');
     }
-    
-    public function custom_column()
+
+    public function custom_column(): ?BelongsTo
     {
         if ($this->view_column_type != ConditionType::COLUMN) {
             return null;
         }
         return $this->belongsTo(CustomColumn::class, 'view_column_target_id');
     }
-    
-    public function custom_table()
+
+    public function custom_table(): BelongsTo
     {
         return $this->belongsTo(CustomTable::class, 'view_column_table_id');
     }
@@ -81,7 +92,7 @@ class CustomViewSummary extends ModelBase
     {
         return $this->setViewPivotIdTrait('view_pivot_column_id', $view_pivot_column_id);
     }
-    
+
     public function getViewPivotTableIdAttribute()
     {
         return $this->getViewPivotIdTrait('view_pivot_table_id');

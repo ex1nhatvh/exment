@@ -10,7 +10,7 @@ class MySqlProcessor extends BaseMySqlProcessor
      * Process the results of a get version.
      *
      * @param  array  $results
-     * @return array
+     * @return string
      */
     public function processGetVersion($results)
     {
@@ -23,7 +23,7 @@ class MySqlProcessor extends BaseMySqlProcessor
      * Process the results of a mariadb
      *
      * @param  array  $results
-     * @return array
+     * @return array|bool
      */
     public function processIsMariaDB($results)
     {
@@ -54,7 +54,7 @@ class MySqlProcessor extends BaseMySqlProcessor
             return collect((object) $result)->first();
         }, $results);
     }
-    
+
     /**
      * Process the results of a Column Definitions query.
      *
@@ -73,7 +73,7 @@ class MySqlProcessor extends BaseMySqlProcessor
             ];
         })->toArray();
     }
-    
+
     /**
      * Process the results of a index listing query.
      *

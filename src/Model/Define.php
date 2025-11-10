@@ -17,7 +17,7 @@ class Define
 {
     public const COMPOSER_PACKAGE_NAME = 'exceedone/exment';
     public const COMPOSER_PACKAGE_NAME_LARAVEL_ADMIN = 'exceedone/laravel-admin';
-    public const COMPOSER_VERSION_CHECK_URL = 'https://repo.packagist.org/p/exceedone/exment.json';
+    public const COMPOSER_VERSION_CHECK_URL = 'https://packagist.org/packages/exceedone/exment.json';
     public const EXMENT_NEWS_API_URL = 'https://exment.net/wp-json/wp/v2/posts';
     public const EXMENT_NEWS_LINK = 'https://exment.net/archives/category/news';
     public const USER_IMAGE_LINK = 'vendor/exment/images/user.png';
@@ -28,7 +28,7 @@ class Define
     public const RULES_REGEX_SYSTEM_NAME = '^(?=[a-zA-Z])(?!.*[-_]$)[-_a-zA-Z0-9]+$';
     public const RULES_REGEX_LINK_FORMAT = "|<a href=[\"'](.*?)[\"'].*?>(.*?)</a>|mis";
     public const RULES_REGEX_BACKUP_FILENAME = '[ぁ-んァ-ヶ亜-熙a-zA-Z0-9]+';
-    
+
     public const DELETE_CONFIRM_KEYWORD = 'delete me';
     public const RESTORE_CONFIRM_KEYWORD = 'restore me';
     public const YES_KEYWORD = 'yes';
@@ -56,7 +56,8 @@ class Define
         'outside_api' => ['type' => 'boolean', 'group' => 'initialize', 'default' => true],
         'permission_available' => ['type' => 'boolean', 'default' => '1', 'group' => 'initialize'],
         'organization_available' => ['type' => 'boolean', 'default' => '1', 'group' => 'initialize'],
-        
+        'logging_toggle_available' => ['type' => 'boolean', 'default' => '0', 'group' => 'initialize'],
+
         // Advanced ----------------------------------
         'filter_search_type' => ['default' => 'forward', 'group' => 'advanced'],
 
@@ -67,7 +68,7 @@ class Define
         'header_user_info' => ['type' => 'array', 'default' => SystemColumn::CREATED_AT, 'group' => 'advanced'],
 
         // name is "flg", but array is OK.
-        'grid_filter_disable_flg' => ['type' => 'array', 'default' => '', 'group' => 'advanced'] ,
+        'grid_filter_disable_flg' => ['type' => 'array', 'default' => 'comment', 'group' => 'advanced'] ,
 
         'system_values_pos' => ['default' => 'top', 'group' => 'advanced'],
 
@@ -103,7 +104,7 @@ class Define
         'org_joined_type_custom_value' => ['type' => 'int', 'default' => '0', 'group' => 'advanced'],
         'custom_value_save_autoshare' => ['type' => 'int', 'default' => '0', 'group' => 'advanced'],
         'filter_multi_user' => ['type' => 'int', 'default' => '-1', 'group' => 'advanced'],
-        
+
 
         // notify
         'system_mail_host' => ['config' => 'mail.host', 'group' => 'notify'],
@@ -218,7 +219,7 @@ class Define
     public const AUTHENTICATE_KEY_WEB = 'admin';
     public const AUTHENTICATE_KEY_API = 'adminapi';
     public const AUTHENTICATE_KEY_PUBLIC_FORM = 'publicform';
-    
+
     /**
      * MENU SYSTEM DIFINITION
      */
@@ -340,6 +341,8 @@ class Define
         ['name' => 'operation', 'href' => 'operation/:table_name', 'icon' => 'fa-reply-all', 'roles' => [Permission::CUSTOM_TABLE], 'exmtrans' => 'change_page_menu.custom_operation', 'description' => 'custom_operation.description'],
         ['name' => 'notify', 'href' => 'notify/:table_name', 'icon' => 'fa-bell', 'roles' => [Permission::CUSTOM_TABLE], 'exmtrans' => 'change_page_menu.notify', 'description' => 'notify.description'],
         ['name' => 'data', 'href' => 'data/:table_name', 'icon' => 'fa-database', 'roles' => Permission::AVAILABLE_VIEW_CUSTOM_VALUE, 'exmtrans' => 'change_page_menu.custom_value', 'description' => 'custom_value.description'],
+        ['name' => 'qrcode', 'href' => 'table/:id/edit?qrcodesetting=1', 'icon' => 'fa-qrcode', 'roles' => Permission::CUSTOM_TABLE, 'exmtrans' => 'change_page_menu.qrcode', 'description' => 'qrcode.description'],
+        ['name' => 'jancode', 'href' => 'table/:id/edit?jancodesetting=1', 'icon' => 'fa-barcode', 'roles' => Permission::CUSTOM_TABLE, 'exmtrans' => 'change_page_menu.jancode', 'description' => 'jancode.description'],
     ];
 
     public const CUSTOM_VALUE_TRAITS = [
@@ -355,7 +358,7 @@ class Define
     public const PAGER_DATALIST_COUNTS = [5, 10, 20];
 
     public const WORKFLOW_START_KEYNAME = 'start';
-    
+
     // Template --------------------------------------------------
     public const TEMPLATE_IMPORT_EXCEL_SHEETNAME = [
         'custom_tables',
@@ -386,14 +389,14 @@ class Define
     ];
 
     public const DATABASE_VERSION = [
-        'mysql' => ['min' => '5.7.8', 'max_lt' => '8.0.0'],
+        'mysql' => ['min' => '5.7.8', 'max_lt' => '8.1.0'],
         'mariadb' => ['min' => '10.2.7'],
         'sqlsrv' => ['min' => '13.0.0.0'],
     ];
 
     public const PHP_VERSION = [
-        '8.0.0',
-        '8.2.0',
+        '8.1.0',
+        '8.3.0',
     ];
 
     public const CUSTOM_TABLE_ENDPOINTS = [
@@ -430,7 +433,7 @@ class Define
             'msgSizeTooLarge' => exmtrans('error.size_too_large'),
         ];
     }
-    
+
     public const HELP_URLS = [
         ['uri'=> 'template', 'help_uri'=> 'template'],
         ['uri'=> 'search', 'help_uri'=> 'search'],

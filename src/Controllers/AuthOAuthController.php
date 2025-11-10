@@ -49,7 +49,7 @@ class AuthOAuthController extends \Encore\Admin\Controllers\AuthController
             if ($ex->hasAdminError()) {
                 \Log::error($ex);
             }
-            
+
             return redirect($error_url)->withInput()->withErrors(
                 ['sso_error' => $ex->getSsoErrorMessage()]
             );
@@ -64,14 +64,16 @@ class AuthOAuthController extends \Encore\Admin\Controllers\AuthController
     /**
      * callback login provider and login exment
      *
-     * @return \Illuminate\Contracts\View\Factory|\Illuminate\Http\RedirectResponse|\Illuminate\View\View
+     * @param Request $request
+     * @param $provider_name
+     * @return \Illuminate\Contracts\Foundation\Application|\Illuminate\Http\RedirectResponse|\Illuminate\Routing\Redirector
      */
     public function callback(Request $request, $provider_name)
     {
         if ($this->guard()->check()) {
             return redirect($this->redirectPath());
         }
-        
+
         $error_url = admin_url('auth/login');
         try {
             $credentials = [
@@ -86,15 +88,15 @@ class AuthOAuthController extends \Encore\Admin\Controllers\AuthController
 
                 // set session access key
                 LoginService::setToken();
-                
+
                 return $this->sendLoginResponse($request);
             }
-    
+
             // If the login attempt was unsuccessful we will increment the number of attempts
             // to login and redirect the user back to the login form. Of course, when this
             // user surpasses their maximum number of attempts they will get locked out.
             $this->incrementLoginAttempts($request);
-    
+
             return back()->withInput()->withErrors([
                 'sso_error' => $this->getFailedLoginMessage(),
             ]);
@@ -104,7 +106,7 @@ class AuthOAuthController extends \Encore\Admin\Controllers\AuthController
             if ($ex->hasAdminError()) {
                 \Log::error($ex);
             }
-            
+
             return redirect($error_url)->withInput()->withErrors(
                 ['sso_error' => $ex->getSsoErrorMessage()]
             );

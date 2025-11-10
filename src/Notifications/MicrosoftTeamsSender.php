@@ -32,7 +32,7 @@ class MicrosoftTeamsSender extends SenderBase
      * @param string $body
      * @return MicrosoftTeamsSender
      */
-    public static function make($webhook_url, $subject, $body, array $options = []) : MicrosoftTeamsSender
+    public static function make($webhook_url, $subject, $body, array $options = []): MicrosoftTeamsSender
     {
         return new self($webhook_url, $subject, $body);
     }
@@ -64,6 +64,7 @@ class MicrosoftTeamsSender extends SenderBase
         $content = $this->body;
         preg_match_all(Define::RULES_REGEX_LINK_FORMAT, $content, $matches);
 
+        // @phpstan-ignore-next-line
         if (isset($matches)) {
             for ($i = 0; $i < count($matches[1]); $i++) {
                 $match = $matches[1][$i];

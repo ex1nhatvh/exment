@@ -10,6 +10,7 @@ class IMenuTest extends ExmentKitTestCase
 {
     /**
      * pre-excecute process before test.
+     * @return void
      */
     protected function setUp(): void
     {
@@ -17,7 +18,9 @@ class IMenuTest extends ExmentKitTestCase
         $this->login();
     }
 
+
     /**
+     * @return void
      */
     public function testDisplayMenu()
     {
@@ -33,8 +36,11 @@ class IMenuTest extends ExmentKitTestCase
             ->seeInElement('label', trans('admin.icon'))
             ->seeInElement('button', trans('admin.save'));
     }
-    
 
+
+    /**
+     * @return void
+     */
     public function testCreateMenuParent()
     {
         $this->_testCreateMenu('parent_menu_name', [
@@ -46,8 +52,11 @@ class IMenuTest extends ExmentKitTestCase
             'icon' =>'fa-user',
         ]);
     }
-    
 
+
+    /**
+     * @return void
+     */
     public function testCreateMenuSystem()
     {
         $menu_name  = short_uuid();
@@ -62,6 +71,9 @@ class IMenuTest extends ExmentKitTestCase
         ]);
     }
 
+    /**
+     * @return void
+     */
     public function testCreateMenuTable()
     {
         $menu_name  = short_uuid();
@@ -77,8 +89,11 @@ class IMenuTest extends ExmentKitTestCase
             'icon' => $custom_table->getOption('icon') ?? 'fa-table',
         ]);
     }
-    
 
+
+    /**
+     * @return void
+     */
     public function testCreateMenuTableView()
     {
         $menu_name  = short_uuid();
@@ -95,8 +110,11 @@ class IMenuTest extends ExmentKitTestCase
             'icon' => $custom_table->getOption('icon') ?? 'fa-table',
         ]);
     }
-    
 
+
+    /**
+     * @return void
+     */
     public function testCreateMenuCustomUrl()
     {
         $menu_name  = short_uuid();
@@ -112,6 +130,9 @@ class IMenuTest extends ExmentKitTestCase
     }
 
 
+    /**
+     * @return void
+     */
     public function testEditMenuParent()
     {
         $menu = $this->getMenuTestModel('parent_menu_name');
@@ -122,6 +143,9 @@ class IMenuTest extends ExmentKitTestCase
     }
 
 
+    /**
+     * @return void
+     */
     public function testEditMenuSystem()
     {
         $menu = $this->getMenuEditTestModel('system');
@@ -132,8 +156,11 @@ class IMenuTest extends ExmentKitTestCase
             'icon' => 'fa-table',
         ]);
     }
-    
 
+
+    /**
+     * @return void
+     */
     public function testEditMenuTable()
     {
         $custom_table = Model\CustomTable::getEloquent(TestDefine::TESTDATA_TABLE_NAME_VIEW);
@@ -144,8 +171,11 @@ class IMenuTest extends ExmentKitTestCase
             'icon' => $custom_table->getOption('icon') ?? 'fa-table',
         ]);
     }
-    
 
+
+    /**
+     * @return void
+     */
     public function testEditMenuCustomUrl()
     {
         $menu = $this->getMenuEditTestModel('custom');
@@ -156,9 +186,12 @@ class IMenuTest extends ExmentKitTestCase
     }
 
 
-
-
-
+    /**
+     * @param string $menu_name
+     * @param array<mixed> $data
+     * @param \Closure|null $checkFunc
+     * @return void
+     */
     protected function _testCreateMenu(string $menu_name, array $data, ?\Closure $checkFunc = null)
     {
         $data['menu_name'] = $menu_name;
@@ -177,13 +210,11 @@ class IMenuTest extends ExmentKitTestCase
         }
     }
 
-    
     /**
      * Test edit menu
      *
      * @param Menu $menu
-     * @param array $diffData
-     * @param \Closure|null $checkFunc
+     * @param array<mixed> $editData
      * @return void
      */
     protected function _testEditMenu(Menu $menu, array $editData)
@@ -206,7 +237,7 @@ class IMenuTest extends ExmentKitTestCase
 
         $this->put(admin_urls('auth', 'menu', $menu->id), $data);
         $this->assertPostResponse($this->response, admin_url('auth/menu'));
-        
+
         $model = Menu::find($menu->id);
         foreach ($data as $key => $value) {
             $this->assertMatch($model->{$key}, $value);
@@ -214,13 +245,20 @@ class IMenuTest extends ExmentKitTestCase
     }
 
 
-    protected function getParentMenuTestModel() : Menu
+    /**
+     * @return Menu
+     */
+    protected function getParentMenuTestModel(): Menu
     {
         return $this->getMenuTestModel('parent_menu_name');
     }
 
-    
-    protected function getMenuTestModel(string $menu_name) : Menu
+
+    /**
+     * @param string $menu_name
+     * @return Menu
+     */
+    protected function getMenuTestModel(string $menu_name): Menu
     {
         $model = Menu::where('menu_name', $menu_name)->first();
         $this->assertTrue(isset($model), 'menu not found');
@@ -228,7 +266,11 @@ class IMenuTest extends ExmentKitTestCase
     }
 
 
-    protected function getMenuEditTestModel(string $menu_type) : Menu
+    /**
+     * @param string $menu_type
+     * @return Menu
+     */
+    protected function getMenuEditTestModel(string $menu_type): Menu
     {
         $parent_menu = $this->getParentMenuTestModel();
         $model = Menu::where('menu_type', $menu_type)->where('parent_id', $parent_menu->id)->first();

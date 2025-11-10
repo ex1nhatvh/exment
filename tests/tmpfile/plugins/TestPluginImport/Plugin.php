@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Plugins\TestPluginImport;
 
 use Exceedone\Exment\Services\Plugin\PluginImportBase;
@@ -9,6 +10,8 @@ class Plugin extends PluginImportBase
 {
     /**
      * execute
+     *
+     * @return bool
      */
     public function execute()
     {
@@ -41,14 +44,13 @@ class Plugin extends PluginImportBase
             if (!isset($select_table_text)) {
                 break;
             }
-            $select_table = getModelName('custom_value_view_all')
-                ::where('value->index_text', $select_table_text)->first();
+            $select_table = getModelName('custom_value_view_all')::where('value->index_text', $select_table_text)->first();
             $child = [
                 'parent_id' => $record->id,
                 'parent_type' => 'parent_table',
                 'value->text' => getCellValue("A$i", $sheet, true),
                 'value->currency' => getCellValue("B$i", $sheet, true),
-                'value->select_table' => isset($select_table)? $select_table->id: null,
+                'value->select_table' => isset($select_table) ? $select_table->id : null,
                 'value->index_text' => getCellValue("D$i", $sheet, true),
                 'value->date' => getCellValue("E$i", $sheet, true),
                 'value->odd_even' => getCellValue("F$i", $sheet, true),
@@ -59,7 +61,11 @@ class Plugin extends PluginImportBase
 
         return true;
     }
-    
+
+    /**
+     * @return \PhpOffice\PhpSpreadsheet\Reader\IReader
+     * @throws \PhpOffice\PhpSpreadsheet\Reader\Exception
+     */
     protected function createReader()
     {
         return IOFactory::createReader('Xlsx');

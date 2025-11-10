@@ -42,7 +42,7 @@ var Exment;
             getdataKeys = $target.data('widgetmodal_getdata_fieldsgroup');
             if (hasValue(getdataKeys)) {
                 for (var key in getdataKeys) {
-                    data[key] = $target.closest('.form-group').find('.' + getdataKeys[key]).val();
+                    data[key] = $target.closest('.form-group, .form-group-vertical').find('.' + getdataKeys[key]).val();
                 }
             }
             // set uuid
@@ -174,7 +174,7 @@ var Exment;
                     }
                 }
                 if (res.title) {
-                    $('#modal-showmodal .modal-title').html(res.title);
+                    $('#modal-showmodal .modal-title').text(res.title);
                 }
                 if (res.actionurl) {
                     $('#modal-showmodal .modal-action-url').val(res.actionurl);
@@ -183,7 +183,7 @@ var Exment;
             else {
                 $('#modal-showmodal .modal-body').html(res);
                 if (hasValue(original_title)) {
-                    $('#modal-showmodal .modal-title').html(original_title);
+                    $('#modal-showmodal .modal-title').text(original_title);
                 }
                 $('#modal-showmodal button.modal-submit').addClass('d-none');
             }
@@ -320,7 +320,7 @@ var Exment;
             });
             // set based select item
             let widgetmodal_uuid = $target.data('selectitem-widgetmodal_uuid');
-            let $baseSelect = $('[data-widgetmodal_uuid="' + widgetmodal_uuid + '"]').closest('.form-group').find('.' + $target.data('selectitem-target_class'));
+            let $baseSelect = $('[data-widgetmodal_uuid="' + widgetmodal_uuid + '"]').closest('.form-group, .form-group-vertical').find('.' + $target.data('selectitem-target_class'));
             $baseSelect.val(null);
             for (let i = 0; i < values.length; i++) {
                 let v = values[i];

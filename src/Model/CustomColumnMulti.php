@@ -4,9 +4,14 @@ namespace Exceedone\Exment\Model;
 
 use Exceedone\Exment\Enums\CompareColumnType;
 use Exceedone\Exment\Enums\FilterOption;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
  * Custom column multiple settings
+ *
+ * @property mixed $custom_table_id
+ * @property mixed $multisetting_type
+ * @phpstan-consistent-constructor
  */
 class CustomColumnMulti extends ModelBase implements Interfaces\TemplateImporterInterface
 {
@@ -21,7 +26,7 @@ class CustomColumnMulti extends ModelBase implements Interfaces\TemplateImporter
     protected $guarded = ['id', 'suuid'];
     protected $table = 'custom_column_multisettings';
 
-    public function custom_table()
+    public function custom_table(): BelongsTo
     {
         return $this->belongsTo(CustomTable::class, 'custom_table_id');
     }
@@ -85,7 +90,7 @@ class CustomColumnMulti extends ModelBase implements Interfaces\TemplateImporter
                 'uniqueKeyFunction' => 'getUniqueKeyValues',
                 'uniqueKeyFunctionArgs' => ['unique3'],
             ],
-            
+
             [
                 'replaceNames' => [
                     [
@@ -166,7 +171,7 @@ class CustomColumnMulti extends ModelBase implements Interfaces\TemplateImporter
         $this->setOption('unique3_id', $unique3);
         return $this;
     }
-    
+
     public function getShareTriggerTypeAttribute()
     {
         return $this->getOption('share_trigger_type');
@@ -216,12 +221,12 @@ class CustomColumnMulti extends ModelBase implements Interfaces\TemplateImporter
         $this->setOption('compare_column2_id', $compare_column);
         return $this;
     }
-    
+
     public function getShareColumnAttribute()
     {
         return CustomColumn::getEloquent($this->share_column_id);
     }
-    
+
     public function getCompareColumn1Attribute()
     {
         return CustomColumn::getEloquent($this->compare_column1_id);
@@ -283,7 +288,7 @@ class CustomColumnMulti extends ModelBase implements Interfaces\TemplateImporter
                 return CompareColumnType::getCompareValue($column);
             }
 
-            $prefix = $options['addValue']? 'value.': '';
+            $prefix = $options['addValue'] ? 'value.' : '';
 
             // if key has value in input
             if (array_has($input, "$prefix{$column->column_name}")) {
@@ -307,11 +312,7 @@ class CustomColumnMulti extends ModelBase implements Interfaces\TemplateImporter
                     if (empty($value2)) {
                         return true;
                     }
-                } elseif (empty($value2)) {
-                    if (empty($value1)) {
-                        return true;
-                    }
-                } else {
+                } elseif (!empty($value2)) {
                     if ($value1 == $value2) {
                         return true;
                     }
@@ -325,9 +326,7 @@ class CustomColumnMulti extends ModelBase implements Interfaces\TemplateImporter
                         return true;
                     }
                 } elseif (empty($value2)) {
-                    if (!empty($value1)) {
-                        return true;
-                    }
+                    return true;
                 } else {
                     if ($value1 != $value2) {
                         return true;
@@ -367,7 +366,7 @@ class CustomColumnMulti extends ModelBase implements Interfaces\TemplateImporter
 
 
     // Template Output ----------------------------------------
-    
+
     /**
      * Set json value calling import
      *
@@ -412,11 +411,11 @@ class CustomColumnMulti extends ModelBase implements Interfaces\TemplateImporter
         array_forget($json, "options.{$key}_table_name");
         array_forget($json, "options.{$key}_column_name");
     }
-    
+
     protected static function boot()
     {
         parent::boot();
-        
+
         static::addGlobalScope(new OrderScope('priority'));
     }
 }
