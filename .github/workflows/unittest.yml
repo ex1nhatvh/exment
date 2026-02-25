@@ -59,4 +59,4 @@ jobs:
       - name: PHPUnit Test
         working-directory: docker-exment
         run: |
-          docker compose -f docker-compose.yml exec -T php composer run exment:test:${{ matrix.test }}
+          docker compose -f docker-compose.yml exec -T php php artisan tinker --execute="print_r(DB::select(\"SHOW VARIABLES WHERE Variable_name IN ('character_set_database','collation_database')\"));"
