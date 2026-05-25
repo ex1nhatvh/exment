@@ -3,6 +3,8 @@
 namespace Exceedone\Exment\Tests\Unit;
 
 use Illuminate\Validation\ValidationException;
+use Illuminate\Support\Facades\Validator;
+use Exceedone\Exment\Model\CustomColumn;
 use Exceedone\Exment\Model\CustomTable;
 use Exceedone\Exment\Model\LoginUser;
 use Exceedone\Exment\Enums\ColumnType;
