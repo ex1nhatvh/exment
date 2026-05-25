@@ -81,7 +81,47 @@ class CustomColumnValidationTest extends UnitTestBase
             ColumnType::TEXT => 1,
         ]);
     }
+/**
+     * @return void
+     */
+    public function testUniqueInTableMessageUsesJapaneseLocale()
+    {
+        $this->initAllTest();
 
+        $originalLocale = app()->getLocale();
+        $originalConfigLocale = config('app.locale');
+
+        config(['app.locale' => 'ja']);
+        app()->setLocale('ja');
+
+        try {
+            $customTable = CustomTable::getEloquent(TestDefine::TESTDATA_TABLE_NAME_ALL_COLUMNS_FORTEST);
+            $this->assertNotNull($customTable);
+
+            $existingColumnName = CustomColumn::query()
+                ->where('custom_table_id', $customTable->id)
+                ->value('column_name');
+
+            $this->assertNotNull($existingColumnName);
+
+            $attribute = exmtrans('custom_column.column_name');
+            $validator = Validator::make(
+                ['column_name' => $existingColumnName],
+                ['column_name' => 'uniqueInTable:' . CustomColumn::class . ',' . $customTable->id],
+                [],
+                ['column_name' => $attribute]
+            );
+
+            $this->assertFalse($validator->passes());
+            $this->assertSame(
+                trans('validation.unique', ['attribute' => $attribute], 'ja'),
+                $validator->errors()->first()
+            );
+        } finally {
+            config(['app.locale' => $originalConfigLocale]);
+            app()->setLocale($originalLocale);
+        }
+    }
     /**
      * @return void
      */
