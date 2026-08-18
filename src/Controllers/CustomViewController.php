@@ -2,11 +2,11 @@
 
 namespace Exceedone\Exment\Controllers;
 
-use Encore\Admin\Form;
-use Encore\Admin\Grid;
-use Encore\Admin\Grid\Linker;
-use Encore\Admin\Layout\Content;
-use Encore\Admin\Auth\Permission as Checker;
+use ExmentAdminCore\Admin\Form;
+use ExmentAdminCore\Admin\Grid;
+use ExmentAdminCore\Admin\Grid\Linker;
+use ExmentAdminCore\Admin\Layout\Content;
+use ExmentAdminCore\Admin\Auth\Permission as Checker;
 use Illuminate\Http\Request;
 use Exceedone\Exment\Model\System;
 use Exceedone\Exment\Model\Plugin;
@@ -128,7 +128,6 @@ class CustomViewController extends AdminControllerTableBase
         $grid->disableExport();
         $grid->actions(function (Grid\Displayers\Actions $actions) use ($custom_table) {
             $table_name = $custom_table->table_name;
-            // @phpstan-ignore-next-line
             if (boolval($actions->row->hasEditPermission())) {
                 if (boolval($actions->row->disabled_delete)) {
                     $actions->disableDelete();
@@ -170,9 +169,9 @@ class CustomViewController extends AdminControllerTableBase
 
         $grid->disableCreateButton();
         $grid->tools(function (Grid\Tools $tools) {
-            // @phpstan-ignore-next-line
+            /** @phpstan-ignore-next-line append() expects ExmentAdminCore\Admin\Grid\Tools\AbstractTool|string, Exceedone\Exment\Form\Tools\CustomViewMenuButton given */
             $tools->append(new Tools\CustomViewMenuButton($this->custom_table, null, false));
-            // @phpstan-ignore-next-line
+            /** @phpstan-ignore-next-line expects ExmentAdminCore\Admin\Grid\Tools\AbstractTool|string, Exceedone\Exment\Form\Tools\CustomTableMenuButton given */
             $tools->append(new Tools\CustomTableMenuButton('view', $this->custom_table));
         });
 
@@ -477,6 +476,11 @@ class CustomViewController extends AdminControllerTableBase
     {
         // get custom view
         $custom_view = CustomView::getEloquent($id);
+        // ensure the view actually belongs to the table from the URL (prevents cross-table id usage)
+        if (!isset($custom_view) || !isset($custom_view->custom_table)
+            || (CustomTable::getEloquent($tableKey)?->id ?? null) != $custom_view->custom_table_id) {
+            return getAjaxResponse(['result' => false, 'toastr' => trans('admin.deny')]);
+        }
         return DataShareAuthoritable::saveShareDialogForm($custom_view);
     }
 

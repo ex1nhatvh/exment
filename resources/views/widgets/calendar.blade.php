@@ -1,5 +1,5 @@
-<div class="box">
-    <div class="box-header with-border">
+<div class="box card p-2">
+    <div class="box-header with-border pb-2">
         <span>
             @foreach($tools as $tool)
             {!! $tool !!}
@@ -26,7 +26,7 @@
             weekNumbers: true,
             navLinks: true,
             eventDidMount: function(info) {
-                info.el.setAttribute('data-toggle', 'tooltip');
+                info.el.setAttribute('data-bs-toggle', 'tooltip');
                 info.el.setAttribute('data-original-title', info.event.title);
             },
             // call when reading event data

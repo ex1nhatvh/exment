@@ -2,7 +2,7 @@
 
 namespace Exceedone\Exment\Form\Field;
 
-use Encore\Admin\Form\Field\Hidden;
+use ExmentAdminCore\Admin\Form\Field\Hidden;
 
 /**
  * Gooele ReCaptcha
@@ -17,7 +17,6 @@ class ReCaptcha extends Hidden
     /**
      * @var string
      */
-    // @phpstan-ignore-next-line
     protected $rules = 'required';
 
     /**
@@ -48,7 +47,6 @@ class ReCaptcha extends Hidden
 
     public function setForm($form = null)
     {
-        // @phpstan-ignore-next-line
         $this->form = $form;
 
         $this->form->ignore($this->column);

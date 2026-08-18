@@ -9,7 +9,7 @@
             //height: 'auto',
             height: 395, // dashboard box height - 5
             eventDidMount: function(info) {
-                info.el.setAttribute('data-toggle', 'tooltip');
+                info.el.setAttribute('data-bs-toggle', 'tooltip');
                 info.el.setAttribute('data-original-title', info.event.title);
             },
             eventDataTransform: function(event) { // call when reading event data
@@ -93,6 +93,7 @@
 </script>
 
 <style>
+
 
 .fc-day-sun,.fc-day-hol {
     .fc-col-header-cell-cushion,.fc-daygrid-day-number,.fc-list-day-text,.fc-list-day-side-text{

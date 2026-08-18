@@ -39,7 +39,7 @@ class MySqlConnection extends BaseConnection implements ConnectionInterface
      */
     protected function getDefaultSchemaGrammar()
     {
-        return $this->withTablePrefix(new SchemaGrammar());
+        return new SchemaGrammar($this);
     }
 
     /**
@@ -49,7 +49,7 @@ class MySqlConnection extends BaseConnection implements ConnectionInterface
      */
     protected function getDefaultQueryGrammar()
     {
-        return $this->withTablePrefix(new QueryGrammar());
+        return new QueryGrammar($this);
     }
 
     /**
@@ -96,18 +96,18 @@ class MySqlConnection extends BaseConnection implements ConnectionInterface
             $mysqldump,
             $column_statistics,
             $set_gtid,
-            $host,
-            $username,
-            $password,
-            $dbport
+            escapeshellarg($host),
+            escapeshellarg($username),
+            escapeshellarg($password),
+            escapeshellarg($dbport)
         );
 
         if ($table == null) {
             $file = path_join($tempDir, config('exment.backup_info.def_file', 'table_definition.sql'));
-            $command = sprintf('%s -d %s > %s', $command, $database, $file);
+            $command = sprintf('%s -d %s > %s', $command, escapeshellarg($database), escapeshellarg($file));
         } else {
             $file = sprintf('%s.sql', path_join($tempDir, $table));
-            $command = sprintf('%s -t %s %s > %s', $command, $database, $table, $file);
+            $command = sprintf('%s -t %s %s > %s', $command, escapeshellarg($database), escapeshellarg($table), escapeshellarg($file));
         }
 
         exec($command);
@@ -264,17 +264,17 @@ class MySqlConnection extends BaseConnection implements ConnectionInterface
             $mysqlcmd = sprintf(
                 '%s -h %s -u %s --password=%s -P %s %s',
                 static::getMysqlPath(),
-                $host,
-                $username,
-                $password,
-                $dbport,
-                $database
+                escapeshellarg($host),
+                escapeshellarg($username),
+                escapeshellarg($password),
+                escapeshellarg($dbport),
+                escapeshellarg($database)
             );
 
             // restore table definition
             $def = path_join($dirFullPath, config('exment.backup_info.def_file'));
             if (\File::exists($def)) {
-                $command = sprintf('%s < %s', $mysqlcmd, $def);
+                $command = sprintf('%s < %s', $mysqlcmd, escapeshellarg($def));
                 exec($command);
                 \File::delete($def);
             }
@@ -287,7 +287,7 @@ class MySqlConnection extends BaseConnection implements ConnectionInterface
             });
 
             foreach ($files as $file) {
-                $command = sprintf('%s < %s', $mysqlcmd, $file->getRealPath());
+                $command = sprintf('%s < %s', $mysqlcmd, escapeshellarg($file->getRealPath()));
 
                 $table = $file->getBasename('.' . $file->getExtension());
                 if (\Schema::hasTable($table)) {
@@ -377,12 +377,16 @@ __EOT__;
     // @phpstan-ignore-next-line
     protected static function getMysqlPath()
     {
-        return path_join_os(config('exment.backup_info.mysql_dir', ''), 'mysql');
+        $path = path_join_os(config('exment.backup_info.mysql_dir', ''), 'mysql');
+        // Quote path if it contains spaces (Windows compatibility)
+        return (strpos($path, ' ') !== false) ? '"' . $path . '"' : $path;
     }
 
     // @phpstan-ignore-next-line
     protected static function getMysqlDumpPath()
     {
-        return path_join_os(config('exment.backup_info.mysql_dir', ''), 'mysqldump');
+        $path = path_join_os(config('exment.backup_info.mysql_dir', ''), 'mysqldump');
+        // Quote path if it contains spaces (Windows compatibility)
+        return (strpos($path, ' ') !== false) ? '"' . $path . '"' : $path;
     }
 }

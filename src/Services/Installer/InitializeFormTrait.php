@@ -2,8 +2,8 @@
 
 namespace Exceedone\Exment\Services\Installer;
 
-use Encore\Admin\Widgets\Form as WidgetForm;
-use Encore\Admin\Widgets\Box;
+use ExmentAdminCore\Admin\Widgets\Form as WidgetForm;
+use ExmentAdminCore\Admin\Widgets\Box;
 use Exceedone\Exment\Enums;
 use Exceedone\Exment\Model\CustomTable;
 use Exceedone\Exment\Model\Define;
@@ -132,7 +132,7 @@ trait InitializeFormTrait
             ->attribute(['data-senddata' => json_encode(['test_mail_to'])])
             ->button_label(exmtrans('system.submit_test_mail'))
             ->send_params('test_mail_to');
-        /** @phpstan-ignore-next-line constructor expects string, Encore\Admin\Widgets\Form given */
+        /** @phpstan-ignore-next-line constructor expects string, ExmentAdminCore\Admin\Widgets\Form given */
         return new Box(exmtrans("system.submit_test_mail"), $form);
     }
 
@@ -240,7 +240,9 @@ trait InitializeFormTrait
         //     ->options(Define::FILE_OPTION());
 
         // template search url
-        $template_search_url = admin_urls('api', 'template', 'search');
+        $template_search_url = System::initialized()
+            ? admin_urls('webapi', 'template', 'search')
+            : admin_urls('api', 'template', 'search');
         $script = <<<EOT
 
     $(function(){

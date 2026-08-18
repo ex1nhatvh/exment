@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Exceedone\Exment\Model\CustomTable;
 use Exceedone\Exment\Model\CustomColumn;
+use Exceedone\Exment\Model\CustomValueModelScope;
 use Exceedone\Exment\Model\CustomView;
 use Exceedone\Exment\Model\Plugin;
 use Exceedone\Exment\Model\File;
@@ -204,7 +205,7 @@ class ApiDataController extends AdminControllerTableBase
             $column_name = $values[0];
 
             // @phpstan-ignore-next-line
-            if (count($values) < 3 || !preg_match('/^eq|ne|gt|gte|lt|lte|like$/i', $values[1])) {
+            if (count($values) < 3 || !preg_match('/^(eq|ne|gt|gte|lt|lte|like)$/i', $values[1])) {
                 return abortJson(400, ErrorCode::INVALID_PARAMS());
             }
             if (SystemColumn::isSqlValid($column_name)) {
@@ -219,7 +220,6 @@ class ApiDataController extends AdminControllerTableBase
             }
 
             $operator = '=';
-            // @phpstan-ignore-next-line
             switch ($values[1]) {
                 case 'gt':
                     $operator = '>';
@@ -240,7 +240,6 @@ class ApiDataController extends AdminControllerTableBase
                     $operator = 'LIKE';
                     break;
             }
-            // @phpstan-ignore-next-line
             $paramInfos[] = [$column_name, $operator, $values[2]];
         }
 
@@ -273,7 +272,11 @@ class ApiDataController extends AdminControllerTableBase
     public function dataCreate(Request $request)
     {
         if (($code = $this->custom_table->enableCreate()) !== true) {
-            return abortJson(403, trans('admin.deny'), $code);
+            // use the ErrorCode's own message so a one-record table that already
+            // holds a record reports "このテーブルは1レコードのみ登録可能です。"
+            // (code 402) instead of the misleading generic "Permission denied".
+            // A real permission failure still yields admin.deny via getMessage().
+            return abortJson(403, $code);
         }
 
         return $this->saveData($request);
@@ -329,8 +332,7 @@ class ApiDataController extends AdminControllerTableBase
                 return $custom_value;
             }
             if (($code = $custom_value->enableDelete()) !== true) {
-                // @phpstan-ignore-next-line
-                return abortJson(403, $code());
+                return abortJson(403, $code);
             }
             if ($res = $this->custom_table->validateValueDestroy($i)) {
                 $message = array_get($res, 'message')?? exmtrans('error.delete_failed');
@@ -645,7 +647,8 @@ class ApiDataController extends AdminControllerTableBase
     protected function saveData($request, $custom_value = null)
     {
         $validator = Validator::make($request->all(), [
-            'value' => 'required_without:data',
+            'value' => 'required_without:data|array',
+            'data'  => 'nullable|array',
         ]);
         if ($validator->fails()) {
             return abortJson(400, [
@@ -659,6 +662,21 @@ class ApiDataController extends AdminControllerTableBase
         $max_create_count = config('exment.api_max_create_count', 100);
         if (count($rootValues) > $max_create_count) {
             return abortJson(400, exmtrans('api.errors.over_createlength', $max_create_count), ErrorCode::OVER_LENGTH());
+        }
+
+        // one-record limitation: a one-record table may hold at most one record.
+        // enableCreate() is only checked once before saveData(), so a vector body
+        // that creates several new rows in a single request would otherwise bypass
+        // it. Enforce the total (existing + new) here for the create case.
+        // The existing-row count MUST bypass CustomValueModelScope: that global scope
+        // filters rows to the ones the current user is row-level authorised on, so a
+        // non-admin user with custom_value_edit (but not edit_all) would count an
+        // existing record created by someone else as 0 and slip a 2nd record past the
+        // limit. one_record_flg is a table-wide constraint (mirrors the import path).
+        if (!isset($custom_value) && $this->custom_table->isOneRecord()
+            && (count($rootValues) + $this->custom_table->getValueModel()->query()
+                ->withoutGlobalScope(CustomValueModelScope::class)->count()) > 1) {
+            return abortJson(403, ErrorCode::ONE_RECORD_ALREADY());
         }
 
         $findResult = $this->convertFindKeys($rootValues, $request);
@@ -1064,7 +1082,7 @@ class ApiDataController extends AdminControllerTableBase
         $names = [];
         $result = [];
         foreach ($file_value as $file_v) {
-            if (!array_has($file_v, 'name') && !array_has($file_v, 'base64')) {
+            if (!array_has($file_v, 'name') || !array_has($file_v, 'base64')) {
                 continue;
             }
 
@@ -1166,7 +1184,7 @@ class ApiDataController extends AdminControllerTableBase
             // @phpstan-ignore-next-line
             $column_name = $values[0];
             // @phpstan-ignore-next-line
-            if (count($values) > 1 && !preg_match('/^asc|desc$/i', $values[1])) {
+            if (count($values) > 1 && !preg_match('/^(asc|desc)$/i', $values[1])) {
                 return abortJson(400, ErrorCode::INVALID_PARAMS());
             }
             if (SystemColumn::isSqlValid($column_name)) {

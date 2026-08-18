@@ -2,9 +2,9 @@
 
 namespace Exceedone\Exment\Form\Field;
 
-use Encore\Admin\Admin;
-use Encore\Admin\Form\NestedForm;
-use Encore\Admin\Form\Field\HasMany as AdminHasMany;
+use ExmentAdminCore\Admin\Admin;
+use ExmentAdminCore\Admin\Form\NestedForm;
+use ExmentAdminCore\Admin\Form\Field\HasMany as AdminHasMany;
 use Illuminate\Support\Arr;
 
 /**
@@ -134,7 +134,7 @@ EOT;
         return $script;
     }
 
-    public function getScript()
+    public function getScript(): string
     {
         // @phpstan-ignore-next-line
         list($template, $script) = $this->buildNestedForm($this->column, $this->builder)
@@ -183,7 +183,6 @@ EOT;
             $column = $field->column();
             // if NestedEmbeds, loop hasmany items
             if ($field instanceof NestedEmbeds) {
-                // @phpstan-ignore-next-line
                 $nestedValues = Arr::get($input, $this->column);
                 if (!is_array($nestedValues)) {
                     continue;
@@ -273,7 +272,6 @@ EOT;
         }
 
         if (!empty($v = $this->getOld())) {
-            // @phpstan-ignore-next-line
             return count($v);
         }
 

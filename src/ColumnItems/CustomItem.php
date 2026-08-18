@@ -2,10 +2,10 @@
 
 namespace Exceedone\Exment\ColumnItems;
 
-use Encore\Admin\Form\Field;
-use Encore\Admin\Grid;
-use Encore\Admin\Grid\Filter;
-use Encore\Admin\Form;
+use ExmentAdminCore\Admin\Form\Field;
+use ExmentAdminCore\Admin\Grid;
+use ExmentAdminCore\Admin\Grid\Filter;
+use ExmentAdminCore\Admin\Form;
 use Exceedone\Exment\Form\Field as ExmentField;
 use Exceedone\Exment\Model\CustomColumn;
 use Exceedone\Exment\Model\CustomTable;
@@ -363,7 +363,6 @@ abstract class CustomItem implements ItemInterface
         if (is_nullorempty($default)) {
             return null;
         }
-        // @phpstan-ignore-next-line
         return $this->getPureValueByQuery($default);
     }
 
@@ -417,7 +416,18 @@ abstract class CustomItem implements ItemInterface
         $this->custom_column->setOption('number_format', false);
         $this->options['disable_number_format'] = true;
 
-        return $this->getCustomField($classname);
+        $field = $this->getCustomField($classname);
+
+        // For day-count filter (X日前/X日後の日付): default value 0, integer in [0, 99999].
+        // - min 0: disallow negative input.
+        // - max 99999 / maxlength 5: a larger value overflows the Carbon date math on the server
+        //   (Carbon::today()->addDays(-x)) so the filter returns no rows; the spinner honours max
+        //   and maxlength caps typed/pasted input. The client also strips non-digit characters.
+        if ($value_type == FilterType::NUMBER) {
+            $field->default(0)->attribute(['min' => 0, 'max' => 99999, 'maxlength' => 5, 'data-day-count' => 1]);
+        }
+
+        return $field;
     }
 
 
@@ -737,7 +747,7 @@ abstract class CustomItem implements ItemInterface
             return new $className($custom_column, $custom_value, $view_column_target);
         }
 
-        admin_error('Error', "Field type [$column_type] does not exist.");
+        admin_error('Error', 'Field type [' . e($column_type) . '] does not exist.');
 
         return null;
     }

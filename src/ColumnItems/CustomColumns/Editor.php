@@ -3,7 +3,7 @@
 namespace Exceedone\Exment\ColumnItems\CustomColumns;
 
 use Exceedone\Exment\ColumnItems\CustomItem;
-use Encore\Admin\Form;
+use ExmentAdminCore\Admin\Form;
 use Exceedone\Exment\Form\Field;
 use Exceedone\Exment\Model\File as ExmentFile;
 use Exceedone\Exment\Model\System;
@@ -242,7 +242,6 @@ class Editor extends CustomItem
             'image/gif' => 'gif',
             'image/jpeg'=>'jpg',
             'image/png'=>'png',
-            'image/svg+xml'=>'svg',
             'image/bmp'=>'bmp',
         ];
         foreach ($types as $t => $ext) {

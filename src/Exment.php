@@ -24,8 +24,8 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Collection;
 use Illuminate\Contracts\Support\Renderable;
 use Illuminate\Contracts\Support\Htmlable;
-use Encore\Admin\Admin;
-use Encore\Admin\Form\Field\UploadField;
+use ExmentAdminCore\Admin\Admin;
+use ExmentAdminCore\Admin\Form\Field\UploadField;
 use Carbon\Carbon;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\Finder\Finder;
@@ -468,7 +468,7 @@ class Exment
         }
 
         if (isset($options['tooltipTitle'])) {
-            $attributes['data-toggle'] = 'tooltip';
+            $attributes['data-bs-toggle'] = 'tooltip';
             $attributes['title'] = esc_html($options['tooltipTitle']);
         }
 
@@ -992,7 +992,6 @@ class Exment
             return null;
         }
         $carbon = Carbon::parse($value);
-        // @phpstan-ignore-next-line
         return Carbon::create($carbon->year, $carbon->month, $carbon->day);
     }
 

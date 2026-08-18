@@ -1809,7 +1809,6 @@ class Api2Test extends ApiTestBase
         for ($i = 0; $i < 100; $i++) {
             $query = CustomTable::getEloquent('custom_value_edit')->getValueModel()->query();
             if ($isAlreadyTrashed) {
-                // @phpstan-ignore-next-line
                 $query->onlyTrashed();
             }
             $data = $query->find($id + $i);
@@ -1831,7 +1830,6 @@ class Api2Test extends ApiTestBase
         $data = CustomTable::getEloquent('custom_value_edit')->getValueModel()->find($id);
         $this->assertTrue(!isset($data));
 
-        // @phpstan-ignore-next-line
         $data = CustomTable::getEloquent('custom_value_edit')->getValueModel()->query()->onlyTrashed()->find($id);
         $this->assertTrue($isGetTrashed ? isset($data) : !isset($data));
     }
@@ -2791,12 +2789,36 @@ class Api2Test extends ApiTestBase
     }
 
     // Log ----------------------------------------------------
+
+    /**
+     * Ensure at least $minimum operation logs exist before asserting on the log endpoints.
+     * These endpoints would otherwise depend on logs accumulated by earlier tests, which is
+     * not guaranteed when this test runs first / in process isolation (fresh log table).
+     *
+     * @return void
+     */
+    private function ensureOperationLogs(int $minimum)
+    {
+        $userId = OperationLog::query()->value('user_id') ?? 1;
+        for ($i = OperationLog::count(); $i < $minimum; $i++) {
+            OperationLog::create([
+                'user_id' => $userId,
+                'path'    => 'api/version',
+                'method'  => 'GET',
+                'ip'      => '127.0.0.1',
+                'input'   => '[]',
+            ]);
+        }
+    }
+
     /**
      * @return void
      */
     public function testGetLogs()
     {
         $token = $this->getAdminAccessToken([ApiScope::LOG]);
+
+        $this->ensureOperationLogs(20);
 
         $this->withHeaders([
             'Authorization' => "Bearer $token",
@@ -2827,6 +2849,8 @@ class Api2Test extends ApiTestBase
     {
         $token = $this->getAdminAccessToken([ApiScope::LOG]);
 
+        $this->ensureOperationLogs(3);
+
         $this->withHeaders([
             'Authorization' => "Bearer $token",
         ])->get(admin_urls('api', 'log').'?count=3')
@@ -2840,6 +2864,8 @@ class Api2Test extends ApiTestBase
     public function testGetLogsById()
     {
         $token = $this->getAdminAccessToken([ApiScope::LOG]);
+
+        $this->ensureOperationLogs(1);
 
         $data = OperationLog::first();
 

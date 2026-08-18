@@ -25,9 +25,12 @@ class LoginUserProvider extends \Illuminate\Auth\EloquentUserProvider
 
     public function retrieveById($identifier)
     {
-        //return \Encore\Admin\Auth\Database\Administrator::find($identifier);
-        // @phpstan-ignore-next-line
-        return LoginUser::find($identifier);
+        try {
+            //return \ExmentAdminCore\Admin\Auth\Database\Administrator::find($identifier);
+            return LoginUser::find($identifier);
+        } catch (\Exception $e) {
+            return null;
+        }
     }
 
     /**
