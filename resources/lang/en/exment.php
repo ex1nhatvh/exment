@@ -218,6 +218,7 @@ return [
         'error' => [
             'cannot_write_env' => 'Failed to write the setting file. Please check if you have write permission or if the file is not open.',
             'database_canconnection' => 'Could not connect to the database. Please check your settings.',
+            'initialize_error' => 'An error occurred during data initialization. Please check your database connection settings.',
             'mistake_mysql_mariadb' => 'The database you are using is :database, but you have selected :database_select. Please check the settings.',
             'not_require_php_version' => 'The PHP you are using is :current, but you have selected :min or more and less than :max. Please check the settings.',
             'not_require_database_version_min' => ':database requires at least version :min. The version used is :current.',
@@ -1443,7 +1444,6 @@ return [
             'auto_number_type_random25' => 'Random(25-Length)',
             'auto_number_type_random32' => 'Random(UUID)',
             'auto_number_format' => 'Auto Number Format',
-            'auto_number_other' => 'Other',
             'multiple_enabled' => 'Approval Multiple Select',
             'calc_formula' => 'Calc Formula',
             'currency_symbol' => 'Currency Format',
@@ -2633,6 +2633,7 @@ return [
             'wrong_view_and_table' => 'The target table and view are different.',
             'unsupported_view_kind_type' => 'The view type is not supported by the API.',
             'not_contains_custom_form' => 'The specified API cannot be executed on this form.',
+            'one_record_already' => 'This table allows only one record.',
         ],
 
         'help' =>[

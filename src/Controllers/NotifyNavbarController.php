@@ -2,12 +2,12 @@
 
 namespace Exceedone\Exment\Controllers;
 
-use Encore\Admin\Form;
-use Encore\Admin\Grid;
-use Encore\Admin\Grid\Linker;
+use ExmentAdminCore\Admin\Form;
+use ExmentAdminCore\Admin\Grid;
+use ExmentAdminCore\Admin\Grid\Linker;
 use Exceedone\Exment\Model\CustomValue;
 use Illuminate\Http\Request;
-use Encore\Admin\Show;
+use ExmentAdminCore\Admin\Show;
 use Exceedone\Exment\Form\Tools\SwalMenuButton;
 use Exceedone\Exment\Grid\Tools\BatchCheck;
 use Exceedone\Exment\Model\CustomTable;
@@ -46,7 +46,7 @@ class NotifyNavbarController extends AdminControllerBase
         $grid->disableExport();
 
         $grid->tools(function (Grid\Tools $tools) {
-            // @phpstan-ignore-next-line
+            /** @phpstan-ignore-next-line append() expects ExmentAdminCore\Admin\Grid\Tools\AbstractTool|string, Exceedone\Exment\Form\Tools\SwalMenuButton given */
             $tools->append(new SwalMenuButton($this->getMenuList()));
             $tools->batch(function (Grid\Tools\BatchActions $batch) {
                 $batch->add(exmtrans('notify_navbar.all_check'), new BatchCheck());
@@ -179,8 +179,9 @@ class NotifyNavbarController extends AdminControllerBase
 
             if (isset($custom_value)) {
                 $show->field('target_custom_value', exmtrans('notify_navbar.target_custom_value'))->as(function ($v) use ($custom_value) {
+                    // getLabel() is plain text built from record values; let the Show field HTML-escape it to prevent stored XSS
                     return $custom_value->getLabel();
-                })->setEscape(false);
+                });
             }
             $show->field('notify_subject', exmtrans('notify_navbar.notify_subject'));
             $show->field('notify_body', exmtrans('notify_navbar.notify_body'))

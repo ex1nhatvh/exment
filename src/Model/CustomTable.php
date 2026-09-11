@@ -25,7 +25,8 @@ use Exceedone\Exment\Services\AuthUserOrgHelper;
 use Exceedone\Exment\Services\FormHelper;
 use Exceedone\Exment\Validator\EmptyRule;
 use Exceedone\Exment\Validator\CustomValueRule;
-use Encore\Admin\Facades\Admin;
+use Exceedone\Exment\ColumnItems\WorkflowItem;
+use ExmentAdminCore\Admin\Facades\Admin;
 use Exceedone\Exment\Enums\FormBlockType;
 use Exceedone\Exment\Enums\FormColumnType;
 use Exceedone\Exment\Enums\ViewType;
@@ -1247,7 +1248,6 @@ class CustomTable extends ModelBase implements Interfaces\TemplateImporterInterf
             // @phpstan-ignore-next-line
             if (isset($view) && array_key_exists($view, $settings)) {
 
-                // @phpstan-ignore-next-line
                 $parameters = array_get($settings, $view);
             }
 
@@ -2272,13 +2272,11 @@ class CustomTable extends ModelBase implements Interfaces\TemplateImporterInterf
     /**
      * Set select table's field info.
      *
-     * @param \Encore\Admin\Form\Field $field
+     * @param \ExmentAdminCore\Admin\Form\Field $field
      * @param array $options
-     * @return \Encore\Admin\Form\Field
+     * @return \ExmentAdminCore\Admin\Form\Field
      */
-
-    // @phpstan-ignore-next-line
-    public function setSelectTableField(\Encore\Admin\Form\Field $field, array $options = []): \Encore\Admin\Form\Field
+    public function setSelectTableField(\ExmentAdminCore\Admin\Form\Field $field, array $options = []): \ExmentAdminCore\Admin\Form\Field
     {
         $options = array_merge([
             'custom_value' => null, // select custom value, if called custom value's select table
@@ -3556,6 +3554,11 @@ class CustomTable extends ModelBase implements Interfaces\TemplateImporterInterf
             return ErrorCode::FORM_ACTION_DISABLED();
         }
 
+        if ($this->isOneRecord() && $this->getValueModel()->query()
+                ->withoutGlobalScope(CustomValueModelScope::class)->exists()) {
+            return ErrorCode::ONE_RECORD_ALREADY();
+        }
+
         return true;
     }
 
@@ -3855,9 +3858,11 @@ class CustomTable extends ModelBase implements Interfaces\TemplateImporterInterf
                                 $column_form_column_name = FormColumnType::getOption(['id' => array_get($custom_form_column, 'form_column_target_id')])['column_name'] ?? null;
                                 if ($column_form_column_name && $column_form_column_name == 'image') {
                                     $file = ExmentFile::getFileFromFormColumn($custom_form_column->id);
-                                    $new_file = $file->replicate(['uuid']);
-                                    $new_file->custom_form_column_id = $new_form_column->id;
-                                    $new_file->save();
+                                    if (isset($file)) {
+                                        $new_file = $file->replicate(['uuid']);
+                                        $new_file->custom_form_column_id = $new_form_column->id;
+                                        $new_file->save();
+                                    }
                                 }
                             }
                         }

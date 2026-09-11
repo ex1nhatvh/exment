@@ -218,6 +218,7 @@ return [
         'error' => [
             'cannot_write_env' => '設定ファイルの書き込みに失敗しました。書き込み権限が設定されているか、ファイルが開かれていないかどうかをご確認ください。',
             'database_canconnection' => 'データベースに接続できませんでした。設定内容をご確認ください。',
+            'initialize_error' => 'データの初期化中にエラーが発生しました。データベースの接続設定をご確認ください。',
             'mistake_mysql_mariadb' => 'お使いのデータベースは:databaseですが、:database_selectを選択しています。設定内容をご確認ください。',
             'not_require_php_version' => 'PHPはバージョン:min以上:max未満が必要です。ご利用のバージョンは:currentです。',
             'not_require_database_version_min' => ':databaseはバージョン:min以上が必要です。ご利用のバージョンは:currentです。',
@@ -279,7 +280,7 @@ return [
         'outside_api' => 'サーバー外部通信を行う',
         'permission_available' => '権限管理を使用する',
         'organization_available' => '組織管理を使用する',
-        'logging_toggle_available' => '操作ログを有効にする',
+        'logging_toggle_available' => 'システムパフォーマンスログを有効にする',
         'system_admin_users' => 'システム管理者',
         'system_mail' => 'システムメール設定',
         'system_mail_host' => 'ホスト名',
@@ -452,7 +453,7 @@ return [
             'datalist_pager_count' => 'キーワード検索や、ダッシュボードのデータ一覧で表示されるデータの、既定の表示件数です。システム全体に反映されます。',
             'permission_available' => 'YESにした場合、ユーザーや役割によって、アクセスできる項目を管理します。',
             'organization_available' => 'YESにした場合、ユーザーが所属する組織や部署を作成します。',
-            'logging_toggle_available' => 'YESに設定すると、操作ログ機能が有効になり、ユーザーのすべての操作が記録されます。',
+            'logging_toggle_available' => 'YESに設定すると、ログ機能が有効になり、ユーザーのすべての操作が記録されます。',
             'system_admin_users' => 'システム管理者となるユーザーを設定してください。',
             'system_mail' => 'システムからメールを送付する時の設定を行います。',
             'system_mail_from' => '送信元のメールアドレスです。このメールアドレスをFromとして、メールが送付されます。',
@@ -1444,7 +1445,6 @@ return [
             'auto_number_type_random25' => 'ランダム(ライセンスコード)',
             'auto_number_type_random32' => 'ランダム(UUID)',
             'auto_number_format' => '採番フォーマット',
-            'auto_number_other' => 'その他',
             'multiple_enabled' => '複数選択を許可する',
             'calc_formula' => '計算式',
             'currency_symbol' => '通貨の表示形式',
@@ -2633,6 +2633,7 @@ return [
             'wrong_view_and_table' => '対象のテーブルとビューが異なっています。',
             'unsupported_view_kind_type' => '指定したビューの種類は、APIでサポートされていません。',
             'not_contains_custom_form' => 'このフォームでは、指定のAPIは実行できません。',
+            'one_record_already' => 'このテーブルは1レコードのみ登録可能です。',
         ],
         
         'help' =>[
