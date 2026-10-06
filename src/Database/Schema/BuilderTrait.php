@@ -131,8 +131,9 @@ trait BuilderTrait
      *
      * @return array
      */
+
     // @phpstan-ignore-next-line
-    public function getTableListing()
+    public function getTableListing($schema = null, $schemaQualified = true)
     {
         $results = $this->connection->selectFromWriteConnection($this->grammar->compileGetTableListing());
 

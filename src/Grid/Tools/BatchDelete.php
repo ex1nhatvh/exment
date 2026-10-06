@@ -2,7 +2,7 @@
 
 namespace Exceedone\Exment\Grid\Tools;
 
-use Encore\Admin\Grid\Tools\BatchDelete as BatchDeleteBase;
+use ExmentAdminCore\Admin\Grid\Tools\BatchDelete as BatchDeleteBase;
 
 class BatchDelete extends BatchDeleteBase
 {
@@ -23,6 +23,7 @@ class BatchDelete extends BatchDeleteBase
         return <<<EOT
 
 $('{$this->getElementClass()}').on('click', function() {
+    event.preventDefault(); 
 
     swal({
         title: "{$trans['delete_confirm']}",

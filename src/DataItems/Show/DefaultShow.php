@@ -3,15 +3,15 @@
 namespace Exceedone\Exment\DataItems\Show;
 
 use Illuminate\Http\Request;
-use Encore\Admin\Facades\Admin;
-use Encore\Admin\Form;
-use Encore\Admin\Grid;
-use Encore\Admin\Layout\Row;
-use Encore\Admin\Widgets\Box;
-use Encore\Admin\Widgets\Form as WidgetForm;
-use Encore\Admin\Form\Field;
-use Encore\Admin\Show;
-use Encore\Admin\Show\Field as ShowField;
+use ExmentAdminCore\Admin\Facades\Admin;
+use ExmentAdminCore\Admin\Form;
+use ExmentAdminCore\Admin\Grid;
+use ExmentAdminCore\Admin\Layout\Row;
+use ExmentAdminCore\Admin\Widgets\Box;
+use ExmentAdminCore\Admin\Widgets\Form as WidgetForm;
+use ExmentAdminCore\Admin\Form\Field;
+use ExmentAdminCore\Admin\Show;
+use ExmentAdminCore\Admin\Show\Field as ShowField;
 use Exceedone\Exment\ColumnItems;
 use Exceedone\Exment\Revisionable\Revision;
 use Exceedone\Exment\Form\Widgets\ModalForm;
@@ -90,7 +90,7 @@ class DefaultShow extends ShowBase
     protected function setSystemValues($show)
     {
         $trashed = boolval(request()->get('trashed'));
-        // @phpstan-ignore-next-line
+        /** @phpstan-ignore-next-line class ExmentAdminCore\Admin\Show\Field constructor expects string, null given */
         $field = (new ShowField(null, null))->system_values([
             'withTrashed' => $trashed])->setWidth(12, 0);
 
@@ -200,7 +200,8 @@ class DefaultShow extends ShowBase
                     ]));
                 }
 
-                if (count($this->custom_table->getRelationTables()) > 0) {
+                // not for trashed data: relation search targets undeleted data only
+                if (count($this->custom_table->getRelationTables()) > 0 && !$this->custom_value->trashed()) {
                     $tools->append(view('exment::tools.button', [
                         'href' => $this->custom_value->getRelationSearchUrl(true),
                         'label' => exmtrans('search.header_relation'),
@@ -540,7 +541,11 @@ class DefaultShow extends ShowBase
                 query['trashed'] = 1;
             }
 
-            $.pjax({container:'#pjax-container-revision', url: url +'?' + $.param(query) });
+            $.pjax({
+                container: '#pjax-container-revision',
+                fragment: '#pjax-container-revision',
+                url: url +'?' + $.param(query)
+            });
         });
 
 EOT;
@@ -573,7 +578,6 @@ EOT;
                 'No.'.($revision->revision_no)
             )->setWidth(9, 2);
         }
-        // @phpstan-ignore-next-line
         $row->column(['xs' => 12, 'sm' => 6], (new Box(exmtrans('revision.update_history'), $form))->style('info'));
     }
 
@@ -680,7 +684,6 @@ EOT;
 
             Admin::script($script);
         }
-        // @phpstan-ignore-next-line
         $row->column(['xs' => 12, 'sm' => 6], (new Box(exmtrans("common.attachment"), $form))->style('info'));
     }
 
@@ -734,7 +737,6 @@ EOT;
             ->setLabelClass(['d-none'])
             ->setWidth(12, 0);
         }
-        // @phpstan-ignore-next-line
         $row->column(['xs' => 12, 'sm' => 6], (new Box(exmtrans("common.comment"), $form))->style('info'));
     }
 
@@ -849,8 +851,7 @@ EOT;
     /**
      * file delete custom column.
      */
-    // @phpstan-ignore-next-line
-    public function filedelete(Request $request, $form)
+   public function filedelete(Request $request, $form)
     {
         // get file delete flg column name
         $del_column_name = $request->input(Field::FILE_DELETE_FLAG);

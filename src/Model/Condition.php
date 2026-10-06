@@ -3,7 +3,7 @@
 namespace Exceedone\Exment\Model;
 
 use Exceedone\Exment\ConditionItems\ConditionItemBase;
-use Encore\Admin\Form;
+use ExmentAdminCore\Admin\Form;
 use Exceedone\Exment\Database\Eloquent\ExtendedBuilder;
 
 /**

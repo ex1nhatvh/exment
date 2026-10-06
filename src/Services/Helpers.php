@@ -81,6 +81,30 @@ if (!function_exists('esc_html')) {
     }
 }
 
+if (!function_exists('css_clean')) {
+    /**
+     * Sanitize user-supplied CSS before it is emitted inside a <style> block.
+     *
+     * Custom CSS (e.g. a public form's custom_css) is an intentional feature, so the CSS
+     * itself is preserved. But the value MUST stay inside the <style> element: "</style"
+     * is the only sequence that terminates a raw-text <style> element, so a payload such as
+     * "</style><script>...</script>" would break out and become stored XSS.
+     *
+     * Neutralize every "</" by inserting a backslash ("<\/"). "</" never occurs in a valid
+     * stylesheet outside a string, and inside a CSS string "\/" is a no-op escape for "/",
+     * so legitimate CSS is unchanged while HTML/script breakout is impossible. (Same
+     * technique used to escape "</script>" when embedding JSON in an inline <script>.)
+     */
+    // @phpstan-ignore-next-line
+    function css_clean($css)
+    {
+        if (is_nullorempty($css)) {
+            return $css;
+        }
+        return str_replace('</', '<\\/', $css);
+    }
+}
+
 if (!function_exists('esc_script_tag')) {
     /**
      * escape only script tag
@@ -1434,14 +1458,31 @@ if (!function_exists('hasTable')) {
      * @param string $table_name *only table name
      * @return bool
      */
-    function hasTable($table_name)
+    function hasTable(string $table_name): bool
     {
         $tables = System::cache(Define::SYSTEM_KEY_SESSION_ALL_DATABASE_TABLE_NAMES, function () {
             // get all table names
-            return DB::connection()->getDoctrineSchemaManager()->listTableNames();
+            try {
+                $config = DB::getConfig();
+
+                $conn = \Doctrine\DBAL\DriverManager::getConnection([
+                    'dbname'   => $config['database'],
+                    'user'     => $config['username'],
+                    'password' => $config['password'],
+                    'host'     => $config['host'],
+                    'port'     => $config['port'],
+                    'driver'   => 'pdo_mysql',
+                    'charset'  => $config['charset'] ?? 'utf8mb4',
+                ]);
+
+                return $conn->createSchemaManager()->listTableNames();
+            } catch (\Throwable $e) {
+                \Log::error('Error fetching table names: ' . $e->getMessage());
+                return [];
+            }
         }, true);
 
-        return in_array($table_name, $tables);
+        return in_array($table_name, $tables, true);
     }
 }
 
@@ -1926,5 +1967,17 @@ if (!function_exists('admin_exclusion_path')) {
             }
             return $validName;
         }
+    }
+}
+
+if (!function_exists('html_image')) {
+    function html_image($path, $alt = '', $attributes = [])
+    {
+        $src = asset($path);
+        $attrString = '';
+        foreach ($attributes as $key => $value) {
+            $attrString .= " {$key}=\"{$value}\"";
+        }
+        return "<img src=\"{$src}\" alt=\"{$alt}\"{$attrString}>";
     }
 }

@@ -2,9 +2,9 @@
 
 namespace Exceedone\Exment\Controllers;
 
-use Encore\Admin\Layout\Content;
-use Encore\Admin\Widgets\Box;
-use Encore\Admin\Widgets\Form as WidgetForm;
+use ExmentAdminCore\Admin\Layout\Content;
+use ExmentAdminCore\Admin\Widgets\Box;
+use ExmentAdminCore\Admin\Widgets\Form as WidgetForm;
 use Exceedone\Exment\Enums;
 use Exceedone\Exment\Enums\CustomValueAutoShare;
 use Exceedone\Exment\Enums\FilterSearchType;
@@ -63,7 +63,6 @@ class SystemController extends AdminControllerBase
     {
         $this->AdminContent($content);
         $form = $this->formBasic($request);
-        // @phpstan-ignore-next-line
         $box = new Box(exmtrans('common.basic_setting'), $form);
         $box->tools(new Tools\SystemChangePageMenu());
 
@@ -127,7 +126,6 @@ class SystemController extends AdminControllerBase
         $this->AdminContent($content);
 
         $form = $this->formAdvanced($request);
-        // @phpstan-ignore-next-line
         $box = new Box(exmtrans('common.detail_setting'), $form);
 
         $box->tools(new Tools\SystemChangePageMenu());

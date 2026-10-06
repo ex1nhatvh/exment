@@ -38,7 +38,7 @@ class CCustomColumnTest extends ExmentKitTestCase
                 ->seeInElement('th', '列種類')
                 ->visit(admin_url('column/test/create'))
                 ->matchStatusCode(200)
-                ->seeInElement('h3[class=box-title]', '作成')
+                ->seeInElement('h3.box-title', '作成')
                 ->seeInElement('label', '列名(英数字)')
                 ->seeInElement('label', '列表示名')
                 ->seeInElement('label', '列種類')
@@ -1174,6 +1174,10 @@ class CCustomColumnTest extends ExmentKitTestCase
             'column_view_name' => 'Image Column Update',
             'options[required]' => 1,
             'options[index_enabled]' => 1,
+            // Intentionally submit unique=1: attachment (image/file) columns
+            // must not persist unique even if the request contains it. The UI
+            // also hides this switch via data-filter; CustomColumn::saving()
+            // enforces the same rule server-side.
             'options[unique]' => 1,
         ];
         // Update custom column --Image--
@@ -1188,8 +1192,14 @@ class CCustomColumnTest extends ExmentKitTestCase
             ->seeInField('column_view_name', 'Image Column Update')
             ->seeInField('options[required]', "1")
             ->seeInField('options[index_enabled]', "1")
-            ->seeInField('options[unique]', "1")
         ;
+        // Regression guard: 'unique' is meaningless for attachment columns
+        // (file blobs cannot be equality-compared by the DB), so it must never
+        // be persisted regardless of what was submitted.
+        $this->assertEmpty(
+            CustomColumn::find($id)->getOption('unique'),
+            'unique must never be persisted on an attachment (image) column.'
+        );
     }
 
     // Create custom column --File--
@@ -1231,6 +1241,10 @@ class CCustomColumnTest extends ExmentKitTestCase
             'column_view_name' => 'File Column Update',
             'options[required]' => 1,
             'options[index_enabled]' => 1,
+            // Intentionally submit unique=1: attachment (image/file) columns
+            // must not persist unique even if the request contains it. The UI
+            // also hides this switch via data-filter; CustomColumn::saving()
+            // enforces the same rule server-side.
             'options[unique]' => 1,
         ];
         // Update custom column --File--
@@ -1245,8 +1259,14 @@ class CCustomColumnTest extends ExmentKitTestCase
             ->seeInField('column_view_name', 'File Column Update')
             ->seeInField('options[required]', "1")
             ->seeInField('options[index_enabled]', "1")
-            ->seeInField('options[unique]', "1")
         ;
+        // Regression guard: 'unique' is meaningless for attachment columns
+        // (file blobs cannot be equality-compared by the DB), so it must never
+        // be persisted regardless of what was submitted.
+        $this->assertEmpty(
+            CustomColumn::find($id)->getOption('unique'),
+            'unique must never be persisted on an attachment (file) column.'
+        );
     }
 
     // Create custom column --User--
@@ -1377,7 +1397,7 @@ class CCustomColumnTest extends ExmentKitTestCase
     {
         $this->visit(admin_url('column/test/create'))
                 ->seePageIs(admin_url('column/test/create'))
-                ->seeInElement('h3[class=box-title]', '作成')
+                ->seeInElement('h3.box-title', '作成')
                 ->press('admin-submit')
                 ->seePageIs(admin_url('column/test/create'))
         ;
@@ -1391,7 +1411,7 @@ class CCustomColumnTest extends ExmentKitTestCase
     {
         $this->visit(admin_url('column/test/create'))
                 ->seePageIs(admin_url('column/test/create'))
-                ->seeInElement('h3[class=box-title]', '作成')
+                ->seeInElement('h3.box-title', '作成')
                 ->type('onelinetext', 'column_name')
                 ->type('One Line Text Duplicate', 'column_view_name')
                 ->select('text', 'column_type')

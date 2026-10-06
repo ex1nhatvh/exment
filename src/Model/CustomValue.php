@@ -290,7 +290,7 @@ abstract class CustomValue extends ModelBase
     // @phpstan-ignore-next-line
     public function getWorkflowStatusTagAttribute()
     {
-        $icon = ' <i class="fa fa-lock" aria-hidden="true" data-toggle="tooltip" title="' . esc_html(exmtrans('workflow.message.locked')) . '"></i>';
+        $icon = ' <i class="fa fa-lock" aria-hidden="true" data-bs-toggle="tooltip" title="' . esc_html(exmtrans('workflow.message.locked')) . '"></i>';
         return esc_html($this->workflow_status_name) .
             ($this->lockedWorkflow() ? $icon : '');
     }
@@ -461,8 +461,10 @@ abstract class CustomValue extends ModelBase
         $results = [];
         foreach ($workflow_values as $v) {
             $v->append('created_user');
-            $v->workflow_action->append('status_from_name');
-            $v->workflow_action->status_from_to_name = exmtrans('workflow.status_from_to_format', $v->workflow_action_cache->status_from_name, $v->workflow_status_name);
+            if (isset($v->workflow_action)) {
+                $v->workflow_action->append('status_from_name');
+                $v->workflow_action->status_from_to_name = exmtrans('workflow.status_from_to_format', optional($v->workflow_action_cache)->status_from_name, $v->workflow_status_name);
+            }
 
             $results[] = $v->toArray();
         }
@@ -985,8 +987,8 @@ abstract class CustomValue extends ModelBase
         });
 
         // Feature 1: drop the "seen" marks of this record.
-        // WorkflowAction::forwardWorkflowValue() only clears them on a status change, so without
-        // this a hard-deleted record would leave one row per user in workflow_task_reads with
+        // WorkflowAction::forwardWorkflowValue() only clears them when an action is executed, so
+        // without this a hard-deleted record would leave one row per user in workflow_task_reads with
         // nothing left to point at - and nothing would ever clean them up.
         // withoutGlobalScopes(): the marks of every user have to go, not only those of the one
         // pressing delete. A soft delete deliberately keeps them, so a restore keeps its state.
@@ -1003,8 +1005,10 @@ abstract class CustomValue extends ModelBase
         }
 
         // the deleting user sees this record leave their own task list on their very next
-        // navbar poll; other users' caches expire within one poll interval
-        \Exceedone\Exment\Services\Workflow\WorkflowTaskService::navbarCacheForget();
+        // navbar poll; other users' caches expire within one poll interval. Once the delete has
+        // committed, when it runs in a transaction (see
+        // WorkflowTaskService::navbarCacheForgetAfterCommit()).
+        \Exceedone\Exment\Services\Workflow\WorkflowTaskService::navbarCacheForgetAfterCommit();
     }
 
     /**

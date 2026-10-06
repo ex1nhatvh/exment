@@ -2,13 +2,13 @@
 
 namespace Exceedone\Exment\Controllers;
 
-use Encore\Admin\Form;
-use Encore\Admin\Auth\Permission as Checker;
-use Encore\Admin\Facades\Admin;
-use Encore\Admin\Layout\Content;
-use Encore\Admin\Layout\Row;
-use Encore\Admin\Widgets\Box;
-use Encore\Admin\Grid;
+use ExmentAdminCore\Admin\Form;
+use ExmentAdminCore\Admin\Auth\Permission as Checker;
+use ExmentAdminCore\Admin\Facades\Admin;
+use ExmentAdminCore\Admin\Layout\Content;
+use ExmentAdminCore\Admin\Layout\Row;
+use ExmentAdminCore\Admin\Widgets\Box;
+use ExmentAdminCore\Admin\Grid;
 use Exceedone\Exment\Enums\ColumnType;
 use Illuminate\Http\Request;
 use Exceedone\Exment\Model\Define;
@@ -185,7 +185,7 @@ class CustomValueController extends AdminControllerTableBase
                 }
                 $form = $this->form($id)->edit($id);
                 $form->setAction(admin_url("data/{$this->custom_table->table_name}/$id"));
-                // @phpstan-ignore-next-line
+                /** @phpstan-ignore-next-line constructor expects string, ExmentAdminCore\Admin\Form given */
                 $row = new Row($form);
             }
             // no record
@@ -197,7 +197,7 @@ class CustomValueController extends AdminControllerTableBase
                 }
                 $form = $this->form(null);
                 $form->setAction(admin_url("data/{$this->custom_table->table_name}"));
-                // @phpstan-ignore-next-line
+                /** @phpstan-ignore-next-line constructor expects string, ExmentAdminCore\Admin\Form given*/
                 $row = new Row($form);
             }
 
@@ -321,7 +321,7 @@ class CustomValueController extends AdminControllerTableBase
             }
         }
 
-        // @phpstan-ignore-next-line
+        /** @phpstan-ignore-next-line constructor expects string, ExmentAdminCore\Admin\Form given */
         $row = new Row($form);
         $row->class([static::CLASSNAME_CUSTOM_VALUE_FORM, static::CLASSNAME_CUSTOM_VALUE_PREFIX . $this->custom_table->table_name]);
         $row->attribute([
@@ -366,7 +366,7 @@ class CustomValueController extends AdminControllerTableBase
             'page_type' => PluginPageType::EDIT,
             'custom_value' => $custom_value
         ]);
-        // @phpstan-ignore-next-line
+        /** @phpstan-ignore-next-line constructor expects string, ExmentAdminCore\Admin\Form given */
         $row = new Row($this->form($id)->edit($id));
         $row->class([static::CLASSNAME_CUSTOM_VALUE_FORM, static::CLASSNAME_CUSTOM_VALUE_PREFIX . $this->custom_table->table_name]);
         $row->attribute([
@@ -1361,9 +1361,7 @@ class CustomValueController extends AdminControllerTableBase
             // 一時ファイルの名前を生成する
             $fileName = '2D-barcode_' . Carbon::now()->format('YmdHis') . '.pdf';
             $tmpPath = getFullpath($fileName, Define::DISKNAME_ADMIN_TMP);
-            /** @phpstan-ignore-next-line Instantiated class Elibyy\TCPDF\Facades\TCPDF not found. */
             $pdf = new TCPDF;
-            // @phpstan-ignore-next-line
             $pdf::setAutoPageBreak(true, 0);
             // @phpstan-ignore-next-line
             $pdf::AddPage('P', 'mm', array(210, 297), true, 'UTF-8', false);
@@ -1374,7 +1372,6 @@ class CustomValueController extends AdminControllerTableBase
                 if (($checkWidth + 1) * $_img_width <= (210 - $margin_left * 2 - ($col_per_page - 1) * $col_spacing)) {
                     $pos_x = ($margin_left + ($_img_width + $col_spacing) * $checkWidth);
                     $pos_y = ($margin_top + ($_img_height  + $row_spacing) * $count);
-                    // @phpstan-ignore-next-line
                     $pdf::Image($img, $pos_x, $pos_y, $_img_width, $_img_height);
                     $checkWidth++;
                 } else {
@@ -1387,11 +1384,9 @@ class CustomValueController extends AdminControllerTableBase
                     }
                     $pos_x = $margin_left;
                     $pos_y = ($margin_top + ($_img_height  + $row_spacing) * $count);
-                    // @phpstan-ignore-next-line
                     $pdf::Image($img, $pos_x, $pos_y, $_img_width, $_img_height);
                 }
             }
-            // @phpstan-ignore-next-line
             $pdf::Output($tmpPath, 'F');
 
             foreach ($img_arr as $value) {
@@ -1431,13 +1426,10 @@ class CustomValueController extends AdminControllerTableBase
         $sticker_file_path = getFullpath($sticker_file_name, Define::DISKNAME_ADMIN_TMP);
         $sticker_img = imagecreatetruecolor($sticker_img_width, $sticker_img_height);
 
-        // @phpstan-ignore-next-line
         $white  = imagecolorallocate($sticker_img, 255, 255, 255);
-        // @phpstan-ignore-next-line
         $black = imagecolorallocate($sticker_img, 0, 0, 0);
         $font = base_path('public/font/MS_Gothic.ttf');
         imagefilledrectangle(
-            // @phpstan-ignore-next-line
             $sticker_img,
             0,
             0,
@@ -1459,7 +1451,6 @@ class CustomValueController extends AdminControllerTableBase
         $x_cordinate = $text_center_x - $width_ww / 2;
         $font_size = ($sticker_img_width > 280) ? (floor($size_ww * 0.6)) : (floor($size_ww * 0.5));
         imagettftext(
-            // @phpstan-ignore-next-line
             $sticker_img,
             $font_size,
             0,
@@ -1480,7 +1471,6 @@ class CustomValueController extends AdminControllerTableBase
             foreach ($lines as $key => $line) {
                 if ($key < 2) {
                     imagettftext(
-                        // @phpstan-ignore-next-line
                         $sticker_img,
                         $font_size,
                         0,
@@ -1496,7 +1486,6 @@ class CustomValueController extends AdminControllerTableBase
             }
         }
         imagecopyresized(
-            // @phpstan-ignore-next-line
             $sticker_img,
             // @phpstan-ignore-next-line
             $qr_img,
@@ -1509,10 +1498,8 @@ class CustomValueController extends AdminControllerTableBase
             200,
             200
         );
-        // @phpstan-ignore-next-line
         imagepng($sticker_img, $sticker_file_path);
 
-        // @phpstan-ignore-next-line
         imagedestroy($sticker_img);
         // @phpstan-ignore-next-line
         imagedestroy($qr_img);

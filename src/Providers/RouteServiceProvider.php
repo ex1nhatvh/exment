@@ -3,7 +3,7 @@
 namespace Exceedone\Exment\Providers;
 
 use Illuminate\Support\Facades\Route;
-use Illuminate\Foundation\Support\Providers\RouteServiceProvider as ServiceProvider;
+use Exceedone\Exment\Providers\ExmentRouteServiceProvider as ServiceProvider;
 use Illuminate\Routing\Router;
 use Exceedone\Exment\Model\Define;
 use Exceedone\Exment\Model\System;
@@ -78,9 +78,7 @@ class RouteServiceProvider extends ServiceProvider
 
             $router->get('system', 'SystemController@index');
             $router->post('system', 'SystemController@post');
-            $router->get('system/update', 'SystemController@updatePackage');
             $router->put('system/filedelete', 'SystemController@filedelete');
-            $router->get('system/version', 'SystemController@version');
             $router->post('system/send_testmail', 'SystemController@sendTestMail');
 
             $router->post('system/call_update', 'SystemController@callUpdate');
@@ -115,6 +113,10 @@ class RouteServiceProvider extends ServiceProvider
             $router->post("workflow_task/readAll", 'WorkflowTaskController@readAll');
             $router->post("workflow_task/unreadAll", 'WorkflowTaskController@unreadAll');
             $router->post("workflow_task/rowCheck", 'WorkflowTaskController@rowCheck');
+            // takes tasks off the user's own list; the records themselves are never deleted
+            $router->post("workflow_task/rowDelete", 'WorkflowTaskController@rowDelete');
+            // and puts them back (the 削除済み filter of the list)
+            $router->post("workflow_task/rowRestore", 'WorkflowTaskController@rowRestore');
 
             $router->post('login_setting/{id}/activate', 'LoginSettingController@activate')->name('exment.login_activate');
             $router->post('login_setting/{id}/deactivate', 'LoginSettingController@deactivate')->name('exment.login_deactivate');
@@ -153,7 +155,6 @@ class RouteServiceProvider extends ServiceProvider
 
             $router->post('workflow/{id}/modal/target', 'WorkflowController@targetModal');
             $router->post('workflow/{id}/modal/condition', 'WorkflowController@conditionModal');
-            $router->get("workflow/{id}/filter-value", 'WorkflowController@getFilterValue');
             $router->post('workflow/{id}/activate', 'WorkflowController@activate');
             $router->get('workflow/{id}/activateModal', 'WorkflowController@activateModal');
             $router->post('workflow/{id}/deactivate', 'WorkflowController@deactivate');
@@ -237,7 +238,6 @@ class RouteServiceProvider extends ServiceProvider
             $router->get("copy/{tableKey}/newModal", 'CustomCopyController@newModal');
 
             $router->get("operation/{tableKey}/filter-value", 'CustomOperationController@getFilterValue');
-            $router->get('form/{tableKey}/relationFilterModal', 'CustomFormController@relationFilterModal');
             $router->post('form/{tableKey}/settingModal', 'CustomFormController@settingModal');
             $router->get('form/{tableKey}/preview/{suuid}', 'CustomFormController@previewBySuuid');
             $router->post('form/{tableKey}/preview', 'CustomFormController@preview');
@@ -301,7 +301,6 @@ class RouteServiceProvider extends ServiceProvider
         ], function (Router $router) {
             $router->get('initialize', 'InitializeController@index');
             $router->post('initialize', 'InitializeController@post');
-            $router->put('initialize/filedelete', 'InitializeController@filedelete');
             $router->get('auth/login', 'AuthController@getLoginExment')->name('exment.login');
             $router->get('auth/logout', 'AuthController@getLogout')->name('exment.logout');
             $router->post('auth/login', 'AuthController@postLogin');
@@ -461,7 +460,8 @@ class RouteServiceProvider extends ServiceProvider
                     $router->get("version", 'ApiController@version');
 
                     $router->get("notifyPage", 'ApiController@notifyPage')->middleware(ApiScope::getScopeString($route['addScope'], ApiScope::NOTIFY_READ));
-                    $router->get("workflowTaskPage", 'ApiController@workflowTaskPage')->middleware(ApiScope::getScopeString($route['addScope'], ApiScope::NOTIFY_READ));
+                    // workflow data - tables, record labels, statuses - so the scopes of the wf/ read endpoints
+                    $router->get("workflowTaskPage", 'ApiController@workflowTaskPage')->middleware(ApiScope::getScopeString($route['addScope'], ApiScope::WORKFLOW_READ, ApiScope::WORKFLOW_EXECUTE));
                     $router->get("notify", 'ApiController@notifyList')->middleware(ApiScope::getScopeString($route['addScope'], ApiScope::NOTIFY_READ, ApiScope::NOTIFY_WRITE));
                     $router->post("notify", 'ApiController@notifyCreate')->middleware(ApiScope::getScopeString($route['addScope'], ApiScope::NOTIFY_WRITE));
 

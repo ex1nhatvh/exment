@@ -17,9 +17,9 @@ use Exceedone\Exment\Enums\ViewKindType;
 use Exceedone\Exment\Enums\ColumnType;
 use Exceedone\Exment\Enums\SystemTableName;
 use Exceedone\Exment\Enums\FilterOption;
-use Encore\Admin\Form;
-use Encore\Admin\Form\Field;
-use Encore\Admin\Grid\Filter;
+use ExmentAdminCore\Admin\Form;
+use ExmentAdminCore\Admin\Form\Field;
+use ExmentAdminCore\Admin\Grid\Filter;
 use Illuminate\Support\Collection;
 
 /**
@@ -229,7 +229,7 @@ class SelectTable extends CustomItem
                         'target_view_id' => $this->custom_column->getOption('select_target_view'),
                         'display_table_id' => $this->custom_table->id,
                         'linkage' => $linkage_expand,
-                        'target_column_multiple' => $field instanceof \Encore\Admin\Form\Field\MultipleSelect ? 1 : 0,
+                        'target_column_multiple' => $field instanceof \ExmentAdminCore\Admin\Form\Field\MultipleSelect ? 1 : 0,
                     ]),
                     'data-widgetmodal_getdata_fieldsgroup' => json_encode(['selected_items' => 'class_' . $this->uniqueName()]),
                 ],
@@ -408,7 +408,7 @@ class SelectTable extends CustomItem
     // @phpstan-ignore-next-line
     protected function getRemoveValidates()
     {
-        return [\Encore\Admin\Validator\HasOptionRule::class];
+        return [\ExmentAdminCore\Admin\Validator\HasOptionRule::class];
     }
 
     /**
@@ -589,7 +589,6 @@ class SelectTable extends CustomItem
             $searchAsId = $use_table_label_id && substr($items[0], 0, 1) == '#';
 
             if ($searchAsId) {
-                // @phpstan-ignore-next-line
                 $searchId = substr($items[0], 1);
                 $query->where('id', $searchId);
 
@@ -603,7 +602,6 @@ class SelectTable extends CustomItem
                     return null;
                 }
 
-                // @phpstan-ignore-next-line
                 if ($this->setSelectTableQuery($query, array_get($labelColumns[$labelColumnIndex++], 'table_label_id'), $items[$i])) {
                     $executeSearch = true;
                 }

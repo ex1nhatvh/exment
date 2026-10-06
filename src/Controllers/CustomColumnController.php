@@ -2,9 +2,9 @@
 
 namespace Exceedone\Exment\Controllers;
 
-use Encore\Admin\Form;
-use Encore\Admin\Grid;
-use Encore\Admin\Layout\Content;
+use ExmentAdminCore\Admin\Form;
+use ExmentAdminCore\Admin\Grid;
+use ExmentAdminCore\Admin\Layout\Content;
 use Illuminate\Http\Request;
 use Exceedone\Exment\Services\Calc\CalcService;
 use Symfony\Component\HttpFoundation\Response;
@@ -164,7 +164,7 @@ class CustomColumnController extends AdminControllerTableBase
         });
 
         $grid->tools(function (Grid\Tools $tools) {
-            // @phpstan-ignore-next-line
+            /** @phpstan-ignore-next-line append() expects ExmentAdminCore\Admin\Grid\Tools\AbstractTool|string, Exceedone\Exment\Form\Tools\CustomTableMenuButton given */
             $tools->append(new Tools\CustomTableMenuButton('column', $this->custom_table));
         });
 
@@ -304,6 +304,7 @@ class CustomColumnController extends AdminControllerTableBase
                 ->help(exmtrans("custom_column.help.freeword_search"));
 
             $form->switchbool('unique', exmtrans("custom_column.options.unique"))
+                ->attribute(['data-filter' => json_encode(['parent' => 1, 'key' => 'column_type', 'notValue' => ColumnType::COLUMN_TYPE_ATTACHMENT()])])
                 ->help(exmtrans("custom_column.help.unique"));
 
             $form->switchbool('init_only', exmtrans("custom_column.options.init_only"))
