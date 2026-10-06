@@ -14,8 +14,11 @@ jobs:
       matrix:
         php: [ "8.1", "8.2", "8.3"]
     steps:
+      # Code cua chinh PR (head), lay theo repo + sha cua head: PR chay CI o repo base, ma repo
+      # base co the la repo khac (vi du ex1nhatvh/exment) khong co nhanh head.
       - uses: actions/checkout@v4
         with:
+          repository: ${{ github.event.pull_request.head.repo.full_name }}
           ref: ${{ github.event.pull_request.head.sha }}
 
       - name: Setup PHP
