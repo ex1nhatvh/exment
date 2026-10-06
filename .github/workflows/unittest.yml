@@ -13,7 +13,6 @@ env:
   DOCKER_EXMENT_REPOSITORY: exceedone/docker-exment
   EXMENT_BOILERPLATE_REPOSITORY: exceedone/exment-boilerplate
   EXMENT_ADMIN_CORE_REPOSITORY: exceedone/exment-admin-core
-  
 
 jobs:
   exment-testing:
